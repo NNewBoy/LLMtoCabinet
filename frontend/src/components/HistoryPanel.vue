@@ -86,65 +86,80 @@ watch(() => cabinetStore.cabinet, () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-bg-secondary);
+  background: transparent;
 }
 
 .snapshot-list {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
 }
 
 .empty {
   color: var(--color-text-muted);
   text-align: center;
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
   font-size: 13px;
 }
 
 .snapshot-item {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md);
   border-radius: var(--radius-md);
   cursor: pointer;
-  margin-bottom: var(--spacing-xs);
-  transition: background var(--transition-fast);
+  margin-bottom: var(--spacing-sm);
+  transition: all var(--transition-fast);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 44px;
+  min-height: 48px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
 }
 
 .snapshot-item:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateX(4px);
 }
 
 .snapshot-item.current {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(129, 140, 248, 0.15) 100%);
+  border-color: rgba(129, 140, 248, 0.3);
   color: white;
 }
 
 .snap-info {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
 }
 
 .snap-index {
   font-weight: 600;
   font-size: 12px;
-  color: var(--color-success);
+  color: var(--color-primary);
+  background: rgba(129, 140, 248, 0.15);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
 }
 
 .snapshot-item.current .snap-index {
-  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .snap-desc {
   font-size: 12px;
-  max-width: 160px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.snapshot-item.current .snap-desc {
+  color: white;
 }
 
 .snap-time {
@@ -159,11 +174,11 @@ watch(() => cabinetStore.cabinet, () => {
 /* 移动端适配 */
 @media (max-width: 767px) {
   .snap-desc {
-    max-width: 200px;
+    max-width: 180px;
   }
 
   .snapshot-item {
-    min-height: 48px;
+    min-height: 52px;
   }
 }
 </style>

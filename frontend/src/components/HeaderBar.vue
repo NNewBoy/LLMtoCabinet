@@ -69,30 +69,32 @@ defineExpose({ fetchHistoryStatus })
 <template>
   <header class="header-bar">
     <div class="header-left">
-      <h1 class="logo">Cabinet3D</h1>
+      <div class="logo-wrapper">
+        <h1 class="logo">Cabinet3D</h1>
+      </div>
       <span class="project-name">{{ projectName }}</span>
     </div>
     <div class="header-center">
       <button
-        class="btn btn-icon"
+        class="btn"
         @click="handleUndo"
         :disabled="!wsStore.isConnected || !canUndo"
         title="撤销"
       >
-        <span class="btn-icon-text">↩</span>
+        <span class="btn-icon">↩</span>
         <span class="btn-label">撤销</span>
       </button>
       <button
-        class="btn btn-icon"
+        class="btn"
         @click="handleRedo"
         :disabled="!wsStore.isConnected || !canRedo"
         title="重做"
       >
-        <span class="btn-icon-text">↪</span>
+        <span class="btn-icon">↪</span>
         <span class="btn-label">重做</span>
       </button>
       <button class="btn btn-save" @click="handleSave">
-        <span class="btn-icon-text">💾</span>
+        <span class="btn-icon">💾</span>
         <span class="btn-label">保存</span>
       </button>
     </div>
@@ -111,22 +113,43 @@ defineExpose({ fetchHistoryStatus })
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--spacing-lg);
-  height: 48px;
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
+  height: 56px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.header-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(129, 140, 248, 0.05) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  position: relative;
+  z-index: 1;
+}
+
+.logo-wrapper {
+  position: relative;
 }
 
 .logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: -0.5px;
 }
 
@@ -134,65 +157,100 @@ defineExpose({ fetchHistoryStatus })
   font-size: 13px;
   color: var(--color-text-secondary);
   display: none;
+  padding-left: var(--spacing-md);
+  border-left: 1px solid var(--glass-border);
 }
 
 .header-center {
   display: flex;
   gap: var(--spacing-sm);
+  position: relative;
+  z-index: 1;
 }
 
 .btn {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
+  padding: 8px 14px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   cursor: pointer;
   font-size: 13px;
   transition: all var(--transition-fast);
   min-height: 36px;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0) 0%, rgba(129, 140, 248, 0.1) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-primary);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .btn-label {
   display: none;
+  position: relative;
+  z-index: 1;
 }
 
-.btn-icon-text {
-  font-size: 14px;
+.btn-icon {
+  font-size: 15px;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-save {
-  border-color: var(--color-success);
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
   color: var(--color-success);
 }
 
 .btn-save:hover {
-  background: var(--color-success);
-  color: var(--color-bg-primary);
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 4px 16px rgba(52, 211, 153, 0.2);
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .status {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   font-size: 12px;
   color: var(--color-text-muted);
 }
@@ -202,11 +260,22 @@ defineExpose({ fetchHistoryStatus })
   height: 8px;
   border-radius: 50%;
   background: var(--color-text-muted);
+  transition: all var(--transition-normal);
 }
 
 .status.connected .status-dot {
   background: var(--color-success);
-  box-shadow: 0 0 6px var(--color-success);
+  box-shadow: 0 0 8px var(--color-success-glow);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--color-success-glow);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--color-success-glow);
+  }
 }
 
 .status.connected {

@@ -141,36 +141,60 @@ html, body, #app {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #0f172a;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
   color: #e2e8f0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 颜色变量 */
+/* Glassmorphism + Dark Mode 颜色变量 */
 :root {
-  --color-primary: #e94560;
-  --color-primary-hover: #d63851;
-  --color-success: #4ecca3;
-  --color-warning: #ffa500;
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-tertiary: #334155;
-  --color-border: #334155;
-  --color-text-primary: #e2e8f0;
+  /* 主色调 */
+  --color-primary: #818cf8;
+  --color-primary-hover: #6366f1;
+  --color-primary-glow: rgba(129, 140, 248, 0.3);
+  
+  /* 语义色 */
+  --color-success: #34d399;
+  --color-success-glow: rgba(52, 211, 153, 0.3);
+  --color-warning: #fbbf24;
+  --color-warning-glow: rgba(251, 191, 36, 0.3);
+  --color-error: #f87171;
+  --color-error-glow: rgba(248, 113, 113, 0.3);
+  
+  /* Glassmorphism 背景 */
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-bg-hover: rgba(30, 41, 59, 0.7);
+  --glass-bg-active: rgba(51, 65, 85, 0.8);
+  --glass-border: rgba(148, 163, 184, 0.15);
+  --glass-border-hover: rgba(148, 163, 184, 0.25);
+  --glass-blur: 12px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  
+  /* 文字颜色 */
+  --color-text-primary: #f1f5f9;
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
+  
+  /* 间距系统 */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
   --spacing-lg: 16px;
   --spacing-xl: 24px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --transition-fast: 150ms ease;
-  --transition-normal: 200ms ease;
+  --spacing-2xl: 32px;
+  
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  
+  /* 动画 */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 应用容器 */
@@ -198,15 +222,18 @@ html, body, #app {
   width: 360px;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-secondary);
-  border-left: 1px solid var(--color-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-left: 1px solid var(--glass-border);
   flex-shrink: 0;
 }
 
 .tool-tabs {
   display: flex;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
 }
 
 .tab-btn {
@@ -215,7 +242,7 @@ html, body, #app {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 10px 8px;
+  padding: 12px 8px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -223,26 +250,50 @@ html, body, #app {
   font-size: 11px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-height: 44px;
+  min-height: 48px;
+  position: relative;
+}
+
+.tab-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(129, 140, 248, 0) 0%, rgba(129, 140, 248, 0.1) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 .tab-btn:hover {
-  color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+}
+
+.tab-btn:hover::before {
+  opacity: 1;
 }
 
 .tab-btn.active {
-  color: var(--color-text-primary);
+  color: var(--color-primary);
   border-bottom-color: var(--color-primary);
-  background: var(--color-bg-secondary);
+}
+
+.tab-btn.active::before {
+  opacity: 1;
 }
 
 .tab-icon {
-  font-size: 16px;
+  font-size: 18px;
+  filter: grayscale(0.3);
+}
+
+.tab-btn.active .tab-icon {
+  filter: grayscale(0);
 }
 
 .tab-label {
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .tool-content {
@@ -275,9 +326,10 @@ html, body, #app {
 
 .mobile-tabs {
   display: flex;
-  background: var(--color-bg-tertiary);
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .mobile-tab-btn {
@@ -286,32 +338,33 @@ html, body, #app {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 8px 4px;
+  padding: 10px 4px;
   background: none;
   border: none;
   color: var(--color-text-muted);
   font-size: 10px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-height: 48px;
+  min-height: 56px;
 }
 
 .mobile-tab-btn:hover,
 .mobile-tab-btn:active {
-  color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+  background: rgba(129, 140, 248, 0.1);
 }
 
 .mobile-tab-btn.active {
   color: var(--color-primary);
-  background: var(--color-bg-secondary);
+  background: rgba(129, 140, 248, 0.15);
 }
 
 .mobile-tool-panel {
   flex: 1;
   overflow: hidden;
   position: relative;
-  background: var(--color-bg-secondary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
 }
 
 /* 响应式断点 */
@@ -331,5 +384,44 @@ html, body, #app {
   .tool-panel {
     width: 400px;
   }
+}
+
+/* Glassmorphism 通用样式类 */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-hover:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+/* 选中文本样式 */
+::selection {
+  background: rgba(129, 140, 248, 0.3);
+  color: var(--color-text-primary);
 }
 </style>

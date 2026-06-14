@@ -63,91 +63,119 @@ defineExpose({ addToast })
 <style scoped>
 .toast-container {
   position: fixed;
-  top: 60px;
-  right: var(--spacing-lg);
+  top: 72px;
+  right: var(--spacing-xl);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  max-width: 350px;
-  width: calc(100% - 32px);
+  gap: var(--spacing-md);
+  max-width: 380px;
+  width: calc(100% - 48px);
 }
 
 .toast {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--glass-border);
   color: var(--color-text-primary);
   font-size: 13px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(8px);
-  transition: all var(--transition-fast);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.toast::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.toast:hover {
+  transform: translateX(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .toast.success {
-  border-color: var(--color-success);
-  background: rgba(78, 204, 163, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
 }
 
 .toast.error {
-  border-color: var(--color-primary);
-  background: rgba(233, 69, 96, 0.15);
+  border-color: rgba(248, 113, 113, 0.3);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
 }
 
 .toast.warning {
-  border-color: var(--color-warning);
-  background: rgba(255, 165, 0, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
 }
 
 .toast.info {
-  border-color: #4a90d9;
-  background: rgba(74, 144, 217, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
 }
 
 .toast-icon {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
 }
 
 .toast.success .toast-icon {
+  background: rgba(52, 211, 153, 0.2);
   color: var(--color-success);
 }
 
 .toast.error .toast-icon {
-  color: var(--color-primary);
+  background: rgba(248, 113, 113, 0.2);
+  color: var(--color-error);
 }
 
 .toast.warning .toast-icon {
+  background: rgba(251, 191, 36, 0.2);
   color: var(--color-warning);
 }
 
 .toast.info .toast-icon {
-  color: #4a90d9;
+  background: rgba(129, 140, 248, 0.2);
+  color: var(--color-primary);
 }
 
 .toast-message {
   flex: 1;
-  line-height: 1.4;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
 }
 
 /* 动画 */
 .toast-enter-active {
-  animation: slideIn 0.3s ease;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast-leave-active {
-  animation: slideOut 0.3s ease;
+  animation: slideOut 0.3s cubic-bezier(0.4, 0, 1, 1);
 }
 
 @keyframes slideIn {
   from {
-    transform: translateX(100%);
+    transform: translateX(120%);
     opacity: 0;
   }
   to {
@@ -162,7 +190,7 @@ defineExpose({ addToast })
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(120%);
     opacity: 0;
   }
 }
@@ -171,11 +199,15 @@ defineExpose({ addToast })
 @media (max-width: 767px) {
   .toast-container {
     top: auto;
-    bottom: 80px;
-    right: var(--spacing-md);
-    left: var(--spacing-md);
+    bottom: 100px;
+    right: var(--spacing-lg);
+    left: var(--spacing-lg);
     max-width: none;
     width: auto;
+  }
+
+  .toast {
+    padding: var(--spacing-md);
   }
 }
 </style>

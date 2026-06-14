@@ -45,7 +45,7 @@ function initScene() {
   if (!canvasRef.value) return
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x2a2a3e)
+  scene.background = new THREE.Color(0x0f172a)
 
   const aspect = canvasRef.value.clientWidth / canvasRef.value.clientHeight
   camera = new THREE.PerspectiveCamera(45, aspect, 1, 10000)

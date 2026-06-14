@@ -253,17 +253,18 @@ async function updateMaterial(material: string) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-bg-secondary);
+  background: transparent;
 }
 
 .section-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-muted);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-tertiary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(15, 23, 42, 0.4);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .tree-section {
@@ -271,7 +272,7 @@ async function updateMaterial(material: string) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .tree-content {
@@ -296,8 +297,8 @@ async function updateMaterial(material: string) {
 .empty {
   color: var(--color-text-muted);
   text-align: center;
-  margin-top: var(--spacing-xl);
-  font-size: 12px;
+  margin-top: var(--spacing-2xl);
+  font-size: 13px;
 }
 
 .tree {
@@ -309,26 +310,29 @@ async function updateMaterial(material: string) {
 }
 
 .tree-item.selected > .item-content {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(129, 140, 248, 0.15) 100%);
+  border-color: rgba(129, 140, 248, 0.3);
 }
 
 .item-content {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background var(--transition-fast);
-  min-height: 32px;
+  transition: all var(--transition-fast);
+  min-height: 36px;
+  border: 1px solid transparent;
 }
 
 .item-content:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border);
 }
 
 .tree-item.selected > .item-content:hover {
-  background: var(--color-primary-hover);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.4) 0%, rgba(129, 140, 248, 0.2) 100%);
 }
 
 .expand-btn {
@@ -337,13 +341,19 @@ async function updateMaterial(material: string) {
   color: var(--color-text-muted);
   cursor: pointer;
   padding: 0;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  transition: transform var(--transition-fast);
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+
+.expand-btn:hover {
+  background: var(--glass-bg);
+  color: var(--color-text-secondary);
 }
 
 .expand-btn.expanded {
@@ -351,11 +361,11 @@ async function updateMaterial(material: string) {
 }
 
 .tree-item.selected .expand-btn {
-  color: #fff;
+  color: var(--color-primary);
 }
 
 .expand-placeholder {
-  width: 16px;
+  width: 18px;
 }
 
 .component-name {
@@ -369,27 +379,30 @@ async function updateMaterial(material: string) {
 .component-type {
   font-size: 10px;
   color: var(--color-text-muted);
-  background: var(--color-bg-tertiary);
-  padding: 2px 6px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
 
 .tree-item.selected .component-type {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: rgba(129, 140, 248, 0.2);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: var(--color-primary);
 }
 
 .children-count {
   font-size: 10px;
   color: var(--color-success);
-  background: var(--color-bg-tertiary);
-  padding: 2px 6px;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
 
 .tree-item.selected .children-count {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.3);
 }
 
 .children {
@@ -411,8 +424,13 @@ async function updateMaterial(material: string) {
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
-  padding: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--glass-border);
+  transition: background var(--transition-fast);
+}
+
+.prop-row:hover {
+  background: var(--glass-bg);
 }
 
 .prop-label {
@@ -428,57 +446,79 @@ async function updateMaterial(material: string) {
 }
 
 .prop-select {
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   color: var(--color-text-primary);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   font-size: 12px;
   cursor: pointer;
   outline: none;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(8px);
 }
 
 .prop-select:focus {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.prop-select option {
+  background: #1e293b;
+  color: var(--color-text-primary);
 }
 
 .color-row {
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
 }
 
 .color-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   width: 100%;
 }
 
 .color-option {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
   border: 2px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
+  position: relative;
 }
 
 .color-option:hover {
-  transform: scale(1.1);
-  border-color: var(--color-text-muted);
+  transform: scale(1.15);
+  border-color: var(--glass-border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .color-option.active {
   border-color: var(--color-primary);
-  box-shadow: 0 0 6px var(--color-primary);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+.color-option.active::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .empty-hint {
   color: var(--color-text-muted);
-  font-size: 12px;
-  margin-top: var(--spacing-xl);
+  font-size: 13px;
+  margin-top: var(--spacing-2xl);
   text-align: center;
 }
 
@@ -489,13 +529,13 @@ async function updateMaterial(material: string) {
   }
 
   .item-content {
-    min-height: 44px;
-    padding: var(--spacing-sm);
+    min-height: 48px;
+    padding: var(--spacing-md);
   }
 
   .color-option {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 }
 </style>
