@@ -1,10 +1,33 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
+import { useWebSocketStore } from '../stores/websocketStore'
 import type { CabinetComponent } from '../utils/types'
 
 const cabinetStore = useCabinetStore()
-const expandedIds = ref<Set<string>>(new Set())
+const wsStore = useWebSocketStore()
+
+// 预设颜色
+const presetColors = [
+  { name: '原木色', value: '#D2B48C' },
+  { name: '白色', value: '#FFFFFF' },
+  { name: '深胡桃', value: '#5C3A21' },
+  { name: '浅橡木', value: '#C4A882' },
+  { name: '灰色', value: '#B0B0B0' },
+  { name: '黑色', value: '#333333' },
+  { name: '蓝色', value: '#4A90D9' },
+  { name: '绿色', value: '#4ECCA3' },
+  { name: '红色', value: '#E94560' },
+]
+
+// 预设材料
+const presetMaterials = [
+  { name: '多层板', value: 'plywood' },
+  { name: '中密度板', value: 'mdf' },
+  { name: '刨花板', value: 'particleboard' },
+  { name: '橡木', value: 'oak' },
+  { name: '胡桃木', value: 'walnut' },
+]
 
 const components = computed(() => {
   return cabinetStore.cabinet?.components || []
@@ -20,11 +43,11 @@ function selectComponent(id: string) {
 
 function toggleExpand(id: string, event: Event) {
   event.stopPropagation()
-  if (expandedIds.value.has(id)) {
-    expandedIds.value.delete(id)
-  } else {
-    expandedIds.value.add(id)
-  }
+  cabinetStore.toggleExpand(id)
+}
+
+function isExpanded(id: string): boolean {
+  return cabinetStore.isExpanded(id)
 }
 
 function hasChildren(comp: CabinetComponent): boolean {
@@ -49,6 +72,46 @@ function getComponentTypeLabel(type: string): string {
   }
   return labels[type] || type
 }
+
+function getMaterialLabel(material: string): string {
+  const found = presetMaterials.find(m => m.value === material)
+  return found ? found.name : material
+}
+
+async function updateComponentProperty(componentId: string, properties: Record<string, any>) {
+  const projectId = wsStore.currentProjectId
+  if (!projectId) return
+
+  try {
+    const res = await fetch(`/api/projects/${projectId}/components/${componentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        component_id: componentId,
+        properties: properties
+      })
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      if (data.cabinet) {
+        cabinetStore.setCabinet(data.cabinet)
+      }
+    }
+  } catch (e) {
+    console.error('修改组件属性失败:', e)
+  }
+}
+
+async function updateColor(color: string) {
+  if (!selectedComponent.value) return
+  await updateComponentProperty(selectedComponent.value.id, { color })
+}
+
+async function updateMaterial(material: string) {
+  if (!selectedComponent.value) return
+  await updateComponentProperty(selectedComponent.value.id, { material })
+}
 </script>
 
 <template>
@@ -68,7 +131,7 @@ function getComponentTypeLabel(type: string): string {
                 <button
                   v-if="hasChildren(comp)"
                   class="expand-btn"
-                  :class="{ expanded: expandedIds.has(comp.id) }"
+                  :class="{ expanded: isExpanded(comp.id) }"
                   @click="toggleExpand(comp.id, $event)"
                 >
                   ▶
@@ -80,7 +143,7 @@ function getComponentTypeLabel(type: string): string {
                   {{ getChildrenCount(comp) }}
                 </span>
               </div>
-              <div v-if="expandedIds.has(comp.id) && hasChildren(comp)" class="children">
+              <div v-if="isExpanded(comp.id) && hasChildren(comp)" class="children">
                 <div
                   v-for="child in comp.children"
                   :key="child.id"
@@ -92,7 +155,7 @@ function getComponentTypeLabel(type: string): string {
                     <button
                       v-if="hasChildren(child)"
                       class="expand-btn"
-                      :class="{ expanded: expandedIds.has(child.id) }"
+                      :class="{ expanded: isExpanded(child.id) }"
                       @click="toggleExpand(child.id, $event)"
                     >
                       ▶
@@ -101,7 +164,7 @@ function getComponentTypeLabel(type: string): string {
                     <span class="component-name">{{ child.name }}</span>
                     <span class="component-type">{{ getComponentTypeLabel(child.type) }}</span>
                   </div>
-                  <div v-if="expandedIds.has(child.id) && hasChildren(child)" class="children">
+                  <div v-if="isExpanded(child.id) && hasChildren(child)" class="children">
                     <div
                       v-for="grandchild in child.children"
                       :key="grandchild.id"
@@ -152,14 +215,29 @@ function getComponentTypeLabel(type: string): string {
           </div>
           <div class="prop-row">
             <span class="prop-label">材料</span>
-            <span class="prop-value">{{ selectedComponent.material }}</span>
+            <select
+              class="prop-select"
+              :value="selectedComponent.material"
+              @change="updateMaterial(($event.target as HTMLSelectElement).value)"
+            >
+              <option v-for="mat in presetMaterials" :key="mat.value" :value="mat.value">
+                {{ mat.name }}
+              </option>
+            </select>
           </div>
-          <div class="prop-row">
+          <div class="prop-row color-row">
             <span class="prop-label">颜色</span>
-            <span class="prop-value">
-              <span class="color-swatch" :style="{ background: selectedComponent.color }"></span>
-              {{ selectedComponent.color }}
-            </span>
+            <div class="color-picker">
+              <div
+                v-for="color in presetColors"
+                :key="color.value"
+                class="color-option"
+                :class="{ active: selectedComponent.color === color.value }"
+                :style="{ background: color.value }"
+                :title="color.name"
+                @click="updateColor(color.value)"
+              ></div>
+            </div>
           </div>
         </div>
         <div v-else class="empty-hint">
@@ -201,7 +279,7 @@ function getComponentTypeLabel(type: string): string {
 }
 
 .detail-section {
-  height: 200px;
+  height: 280px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -327,6 +405,7 @@ function getComponentTypeLabel(type: string): string {
 .prop-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 11px;
   padding: 4px 8px;
   border-bottom: 1px solid #1a1a2e;
@@ -334,6 +413,7 @@ function getComponentTypeLabel(type: string): string {
 
 .prop-label {
   color: #888;
+  min-width: 40px;
 }
 
 .prop-value {
@@ -343,12 +423,51 @@ function getComponentTypeLabel(type: string): string {
   gap: 4px;
 }
 
-.color-swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  border: 1px solid #444;
+.prop-select {
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  color: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+}
+
+.prop-select:focus {
+  border-color: #e94560;
+}
+
+.color-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+}
+
+.color-option {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  border-color: #888;
+}
+
+.color-option.active {
+  border-color: #e94560;
+  box-shadow: 0 0 4px #e94560;
 }
 
 .empty-hint {

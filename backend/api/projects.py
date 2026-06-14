@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database.connection import get_session
@@ -12,6 +13,11 @@ from utils.serialization import cabinet_to_json, json_to_cabinet
 logger = logging.getLogger("cabinet3d.api")
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
+
+
+class UpdateComponentRequest(BaseModel):
+    component_id: str
+    properties: dict
 
 
 async def _ensure_user(session: AsyncSession, user_id: str = "default_user") -> User:
@@ -163,6 +169,21 @@ async def get_cabinet(project_id: str, session: AsyncSession = Depends(get_sessi
         manager.load(cabinet)
 
     return {"cabinet": manager.to_dict()}
+
+
+@router.put("/{project_id}/components/{component_id}")
+async def update_component(project_id: str, component_id: str, request: UpdateComponentRequest):
+    """修改组件属性（颜色、材料等）"""
+    logger.info(f"修改组件属性: {component_id}, 属性: {request.properties}")
+    manager = get_manager(project_id)
+    result = manager.modify(target_id=component_id, properties=request.properties)
+
+    if "error" in result:
+        logger.warning(f"修改失败: {result['error']}")
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    logger.info(f"修改成功: {component_id}")
+    return result
 
 
 @router.post("/{project_id}/undo")

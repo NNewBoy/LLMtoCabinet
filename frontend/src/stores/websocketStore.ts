@@ -4,6 +4,19 @@ import type { WsMessage, Cabinet } from '../utils/types'
 import { useCabinetStore } from './cabinetStore'
 import { useChatStore } from './chatStore'
 
+// Toast 通知回调（由 App.vue 注入）
+let toastCallback: ((message: string, type: string) => void) | null = null
+
+export function setToastCallback(callback: (message: string, type: string) => void) {
+  toastCallback = callback
+}
+
+function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
+  if (toastCallback) {
+    toastCallback(message, type)
+  }
+}
+
 export const useWebSocketStore = defineStore('websocket', () => {
   const isConnected = ref(false)
   const reconnectAttempts = ref(0)
@@ -34,6 +47,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
       isConnected.value = true
       reconnectAttempts.value = 0
       console.log(`WebSocket 已连接: ${pid}`)
+      showToast('已连接到服务器', 'success')
     }
 
     ws.onmessage = (event) => {
@@ -46,6 +60,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
       if (myGeneration !== connectionGeneration) return
       isConnected.value = false
       console.log(`WebSocket 已断开: ${pid}`)
+      showToast('连接已断开，正在尝试重连...', 'warning')
       // 自动重连
       if (reconnectAttempts.value < 5) {
         reconnectAttempts.value++
@@ -53,11 +68,14 @@ export const useWebSocketStore = defineStore('websocket', () => {
           if (myGeneration !== connectionGeneration) return
           connect(pid)
         }, 2000 * reconnectAttempts.value)
+      } else {
+        showToast('重连失败，请刷新页面', 'error')
       }
     }
 
     ws.onerror = (error) => {
       console.error('WebSocket 错误:', error)
+      showToast('连接出现错误', 'error')
     }
   }
 
@@ -86,14 +104,19 @@ export const useWebSocketStore = defineStore('websocket', () => {
         chatStore.finishStream()
         break
       case 'error':
-        chatStore.addMessage('system', `错误: ${data.message}`)
+        const errorMsg = data.message || '未知错误'
+        chatStore.addMessage('system', `错误: ${errorMsg}`)
         chatStore.finishStream()
+        showToast(errorMsg, 'error')
         break
     }
   }
 
   function sendChatMessage(text: string) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      showToast('未连接到服务器，请稍后重试', 'warning')
+      return
+    }
     const chatStore = useChatStore()
     chatStore.addMessage('user', text)
     chatStore.startStream()

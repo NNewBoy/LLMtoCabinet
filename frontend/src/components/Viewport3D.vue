@@ -29,6 +29,12 @@ const isExploded = ref(false)
 const isTransparent = ref(false)
 const doorsOpen = ref(false)
 
+// 选中高亮相关
+let raycaster: THREE.Raycaster
+let mouse: THREE.Vector2
+let selectedMesh: THREE.Mesh | null = null
+let highlightMaterial: THREE.MeshStandardMaterial | null = null
+
 function hexToNumber(hex: string): number {
   const cleaned = hex.replace('#', '')
   const parsed = parseInt(cleaned, 16)
@@ -78,7 +84,79 @@ function initScene() {
   controls.target.set(0, 1000, 0)
   controls.update()
 
+  // 初始化 Raycaster 用于点击检测
+  raycaster = new THREE.Raycaster()
+  mouse = new THREE.Vector2()
+
+  // 高亮材质
+  highlightMaterial = new THREE.MeshStandardMaterial({
+    color: 0xe94560,
+    roughness: 0.4,
+    metalness: 0.2,
+    emissive: 0xe94560,
+    emissiveIntensity: 0.3,
+  })
+
+  // 添加鼠标点击事件
+  canvasRef.value.addEventListener('click', onMouseClick)
+
   window.addEventListener('resize', onResize)
+}
+
+function onMouseClick(event: MouseEvent) {
+  if (!canvasRef.value) return
+
+  // 计算鼠标在归一化设备坐标中的位置
+  const rect = canvasRef.value.getBoundingClientRect()
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  // 更新射线
+  raycaster.setFromCamera(mouse, camera)
+
+  // 计算与所有网格的交点
+  const meshArray = Array.from(meshes.values())
+  const intersects = raycaster.intersectObjects(meshArray)
+
+  if (intersects.length > 0) {
+    const clickedMesh = intersects[0].object as THREE.Mesh
+    const componentId = clickedMesh.userData.componentId as string
+
+    if (componentId) {
+      // 选中组件
+      selectMesh(clickedMesh)
+      cabinetStore.selectComponent(componentId)
+    }
+  } else {
+    // 点击空白处取消选中
+    deselectMesh()
+    cabinetStore.selectComponent(null)
+  }
+}
+
+function selectMesh(mesh: THREE.Mesh) {
+  // 取消之前选中的网格
+  deselectMesh()
+
+  // 保存原始材质
+  const originalMat = mesh.material as THREE.Material
+  originalMaterials.set('selected_' + mesh.userData.componentId, originalMat.clone())
+
+  // 应用高亮材质
+  mesh.material = highlightMaterial!
+  selectedMesh = mesh
+}
+
+function deselectMesh() {
+  if (selectedMesh) {
+    const componentId = selectedMesh.userData.componentId as string
+    const originalMat = originalMaterials.get('selected_' + componentId)
+    if (originalMat) {
+      selectedMesh.material = originalMat.clone()
+      originalMaterials.delete('selected_' + componentId)
+    }
+    selectedMesh = null
+  }
 }
 
 function onResize() {
@@ -97,6 +175,7 @@ function renderCabinet(cabinet: Cabinet) {
   originalPositions.clear()
   originalMaterials.clear()
   originalRotations.clear()
+  selectedMesh = null
 
   // 将柜体中心平移到世界坐标原点
   const ox = cabinet.position.x - cabinet.length / 2
@@ -264,11 +343,6 @@ let doorOriginals: Map<string, {
 // 查找某个组件的所有子组件 mesh ID
 function findChildMeshIds(parentId: string): string[] {
   const ids: string[] = []
-  meshes.forEach((mesh, id) => {
-    // 子组件 ID 格式为 "parentName_childName" 或直接查找 userData
-    // 通过 cabinet 数据查找 children
-  })
-  // 从 cabinetStore 中查找
   const cabinet = cabinetStore.cabinet
   if (!cabinet) return ids
   const parent = cabinet.components.find(c => c.id === parentId)
@@ -462,6 +536,10 @@ function resetAll() {
     }
   })
 
+  // 取消选中
+  deselectMesh()
+  cabinetStore.selectComponent(null)
+
   isExploded.value = false
   isTransparent.value = false
   doorsOpen.value = false
@@ -481,10 +559,21 @@ function animate(time: number = 0) {
 // 监听 cabinet 变化
 watch(() => cabinetStore.cabinet, (newCabinet) => {
   if (newCabinet && scene) {
-    console.error(newCabinet)
     renderCabinet(newCabinet)
   }
 }, { deep: true })
+
+// 监听选中组件变化（从 ComponentPanel 点击时同步到 3D 视图）
+watch(() => cabinetStore.selectedComponentId, (newId) => {
+  if (newId) {
+    const mesh = meshes.get(newId)
+    if (mesh && mesh !== selectedMesh) {
+      selectMesh(mesh)
+    }
+  } else {
+    deselectMesh()
+  }
+})
 
 onMounted(() => {
   initScene()
@@ -494,6 +583,7 @@ onMounted(() => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
   window.removeEventListener('resize', onResize)
+  canvasRef.value?.removeEventListener('click', onMouseClick)
   renderer?.dispose()
 })
 
@@ -512,6 +602,9 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, resetAll })
       <button class="tool-btn" :class="{ active: doorsOpen }" @click="toggleDoors" title="门板/抽屉打开">开门</button>
       <button class="tool-btn" @click="resetAll" title="复原">复原</button>
     </div>
+    <div class="hint">
+      <span>点击组件可选中查看属性</span>
+    </div>
   </div>
 </template>
 
@@ -527,6 +620,7 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, resetAll })
   width: 100%;
   height: 100%;
   display: block;
+  cursor: pointer;
 }
 
 .loading-overlay {
@@ -571,5 +665,18 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, resetAll })
   background: #e94560;
   border-color: #e94560;
   color: white;
+}
+
+.hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26, 26, 46, 0.85);
+  padding: 6px 16px;
+  border-radius: 4px;
+  color: #888;
+  font-size: 12px;
+  backdrop-filter: blur(4px);
 }
 </style>
