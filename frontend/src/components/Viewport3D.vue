@@ -15,17 +15,11 @@ let controls: OrbitControls
 let animationId: number
 let meshes: Map<string, THREE.Mesh> = new Map()
 
-const COLOR_MAP: Record<string, number> = {
-  '#D2B48C': 0xD2B48C,
-  '#C4A882': 0xC4A882,
-  '#FFFFFF': 0xFFFFFF,
-  '#5C3A21': 0x5C3A21,
-  '#B0B0B0': 0xB0B0B0,
-  '#8B4513': 0x8B4513,
-}
-
 function hexToNumber(hex: string): number {
-  return COLOR_MAP[hex.toUpperCase()] ?? 0xD2B48C
+  // 支持任意 hex 颜色，如 "#D2B48C"、"#ff0000"
+  const cleaned = hex.replace('#', '')
+  const parsed = parseInt(cleaned, 16)
+  return isNaN(parsed) ? 0xD2B48C : parsed
 }
 
 function initScene() {
@@ -36,8 +30,8 @@ function initScene() {
 
   const aspect = canvasRef.value.clientWidth / canvasRef.value.clientHeight
   camera = new THREE.PerspectiveCamera(45, aspect, 1, 10000)
-  camera.position.set(1500, 1200, 1500)
-  camera.lookAt(400, 1000, 300)
+  camera.position.set(-1200, 2400, -2800)
+  camera.lookAt(0, 1000, 0)
 
   renderer = new THREE.WebGLRenderer({
     canvas: canvasRef.value,
@@ -68,7 +62,7 @@ function initScene() {
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.1
-  controls.target.set(400, 1000, 300)
+  controls.target.set(0, 1000, 0)
   controls.update()
 
   // 窗口大小调整
@@ -89,10 +83,11 @@ function renderCabinet(cabinet: Cabinet) {
   meshes.forEach(mesh => scene.remove(mesh))
   meshes.clear()
 
-  // 柜体原点坐标
-  const ox = cabinet.position.x
+  // 将柜体中心平移到世界坐标原点
+  // 柜体左下前角原点偏移: (-length/2, -height/2, -width/2)
+  const ox = cabinet.position.x - cabinet.length / 2
   const oy = cabinet.position.y
-  const oz = cabinet.position.z
+  const oz = cabinet.position.z - cabinet.width / 2
 
   // 渲染每个组件
   for (const comp of cabinet.components) {

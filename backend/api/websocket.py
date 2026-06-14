@@ -49,13 +49,14 @@ ws_manager = ConnectionManager()
 async def websocket_endpoint(ws: WebSocket, project_id: str):
     await ws_manager.connect(project_id, ws)
 
-    # 发送当前柜子状态
+    # 发送当前柜子状态（如果没有则加载默认柜子）
     manager = get_manager(project_id)
-    if manager.cabinet:
-        await ws.send_json({
-            "type": "cabinet_update",
-            "cabinet": cabinet_to_dict(manager.cabinet),
-        })
+    if manager.cabinet is None:
+        manager.load_default()
+    await ws.send_json({
+        "type": "cabinet_update",
+        "cabinet": cabinet_to_dict(manager.cabinet),
+    })
 
     try:
         while True:
@@ -74,7 +75,8 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                     # 创建 Agent 并执行
                     agent = create_cabinet_agent(project_id)
 
-                    # 使用流式调用
+                    # 使用流式调用，同时收集最终响应
+                    response_content = ""
                     async for event in agent.astream_events(
                         {"messages": [{"role": "user", "content": text}]},
                         version="v2",
@@ -83,22 +85,11 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                         if kind == "on_chat_model_stream":
                             chunk = event.get("data", {}).get("chunk")
                             if chunk and hasattr(chunk, "content") and chunk.content:
+                                response_content += chunk.content
                                 await ws.send_json({
                                     "type": "agent_thinking",
                                     "content": chunk.content,
                                 })
-
-                    # 获取最终结果
-                    result = agent.invoke(
-                        {"messages": [{"role": "user", "content": text}]}
-                    )
-                    last_msg = result["messages"][-1]
-                    response_content = last_msg.content if hasattr(last_msg, "content") else str(last_msg)
-
-                    await ws.send_json({
-                        "type": "agent_response",
-                        "content": response_content,
-                    })
 
                     # 发送更新后的柜子模型
                     if manager.cabinet:

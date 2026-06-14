@@ -103,7 +103,7 @@ def create_default_cabinet() -> Cabinet:
                 name="左侧板",
                 type=ComponentType.SIDE_PANEL,
                 length=18.0, width=600.0, height=2000.0,
-                position=Vector3(x=0, y=0, z=300),
+                position=Vector3(x=0, y=0, z=0),
                 material="plywood", color="#D2B48C", thickness=18.0,
             ),
             CabinetComponent(
@@ -111,7 +111,7 @@ def create_default_cabinet() -> Cabinet:
                 name="右侧板",
                 type=ComponentType.SIDE_PANEL,
                 length=18.0, width=600.0, height=2000.0,
-                position=Vector3(x=782, y=0, z=300),
+                position=Vector3(x=782, y=0, z=0),
                 material="plywood", color="#D2B48C", thickness=18.0,
             ),
             CabinetComponent(
@@ -119,7 +119,7 @@ def create_default_cabinet() -> Cabinet:
                 name="顶板",
                 type=ComponentType.TOP_PANEL,
                 length=800.0, width=600.0, height=18.0,
-                position=Vector3(x=0, y=1982, z=300),
+                position=Vector3(x=0, y=1982, z=0),
                 material="plywood", color="#D2B48C", thickness=18.0,
             ),
             CabinetComponent(
@@ -127,7 +127,7 @@ def create_default_cabinet() -> Cabinet:
                 name="底板",
                 type=ComponentType.BOTTOM_PANEL,
                 length=800.0, width=600.0, height=18.0,
-                position=Vector3(x=0, y=0, z=300),
+                position=Vector3(x=0, y=0, z=0),
                 material="plywood", color="#D2B48C", thickness=18.0,
             ),
             CabinetComponent(
@@ -135,7 +135,7 @@ def create_default_cabinet() -> Cabinet:
                 name="背板",
                 type=ComponentType.BACK_PANEL,
                 length=800.0, width=5.0, height=2000.0,
-                position=Vector3(x=0, y=0, z=0),
+                position=Vector3(x=0, y=0, z=597.5),
                 material="plywood", color="#C4A882", thickness=5.0,
             ),
         ],

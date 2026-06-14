@@ -39,8 +39,8 @@ LLM_MODEL=deepseek:deepseek-chat
 LLM_API_KEY=your-api-key-here
 EOF
 
-# 启动服务（默认端口 8000）
-uvicorn main:app --reload
+# 启动服务（默认端口 8001）
+uvicorn main:app --port 8001 --reload
 ```
 
 ### 2. 前端启动
@@ -51,11 +51,11 @@ cd frontend
 # 安装依赖
 npm install
 
-# 启动开发服务器（默认端口 5173）
+# 启动开发服务器（默认端口 5174）
 npm run dev
 ```
 
-打开浏览器访问 `http://localhost:5173`。
+打开浏览器访问 `http://localhost:5174`。
 
 ## 项目结构
 
