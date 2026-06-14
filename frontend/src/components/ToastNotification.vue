@@ -64,41 +64,43 @@ defineExpose({ addToast })
 .toast-container {
   position: fixed;
   top: 60px;
-  right: 20px;
+  right: var(--spacing-lg);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
   max-width: 350px;
+  width: calc(100% - 32px);
 }
 
 .toast {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: #16213e;
-  border: 1px solid #0f3460;
-  color: #e0e0e0;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
   font-size: 13px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
+  transition: all var(--transition-fast);
 }
 
 .toast.success {
-  border-color: #4ecca3;
+  border-color: var(--color-success);
   background: rgba(78, 204, 163, 0.15);
 }
 
 .toast.error {
-  border-color: #e94560;
+  border-color: var(--color-primary);
   background: rgba(233, 69, 96, 0.15);
 }
 
 .toast.warning {
-  border-color: #ffa500;
+  border-color: var(--color-warning);
   background: rgba(255, 165, 0, 0.15);
 }
 
@@ -108,20 +110,21 @@ defineExpose({ addToast })
 }
 
 .toast-icon {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
 .toast.success .toast-icon {
-  color: #4ecca3;
+  color: var(--color-success);
 }
 
 .toast.error .toast-icon {
-  color: #e94560;
+  color: var(--color-primary);
 }
 
 .toast.warning .toast-icon {
-  color: #ffa500;
+  color: var(--color-warning);
 }
 
 .toast.info .toast-icon {
@@ -130,6 +133,7 @@ defineExpose({ addToast })
 
 .toast-message {
   flex: 1;
+  line-height: 1.4;
 }
 
 /* 动画 */
@@ -160,6 +164,18 @@ defineExpose({ addToast })
   to {
     transform: translateX(100%);
     opacity: 0;
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .toast-container {
+    top: auto;
+    bottom: 80px;
+    right: var(--spacing-md);
+    left: var(--spacing-md);
+    max-width: none;
+    width: auto;
   }
 }
 </style>

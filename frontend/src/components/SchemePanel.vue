@@ -160,98 +160,108 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--color-bg-secondary);
 }
 
 .action-bar {
   display: flex;
-  gap: 6px;
-  padding: 8px 10px;
-  border-bottom: 1px solid #0f3460;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
 }
 
 .name-input {
   flex: 1;
-  padding: 5px 8px;
-  border: 1px solid #0f3460;
-  border-radius: 4px;
-  background: #1a1a2e;
-  color: #e0e0e0;
-  font-size: 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 13px;
   outline: none;
+  transition: border-color var(--transition-fast);
 }
 
 .name-input:focus {
-  border-color: #e94560;
+  border-color: var(--color-primary);
 }
 
 .action-btn {
-  padding: 5px 10px;
-  border: 1px solid #0f3460;
-  border-radius: 4px;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
+  min-height: 44px;
 }
 
 .action-btn:hover {
-  background: #0f3460;
+  background: var(--color-bg-tertiary);
 }
 
 .action-btn.create {
-  border-color: #4ecca3;
-  color: #4ecca3;
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.action-btn.create:hover {
+  background: var(--color-success);
+  color: var(--color-bg-primary);
 }
 
 .scheme-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--spacing-sm);
 }
 
 .empty {
-  color: #555;
+  color: var(--color-text-muted);
   text-align: center;
-  margin-top: 40px;
+  margin-top: var(--spacing-xl);
   font-size: 13px;
 }
 
 .scheme-item {
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  margin-bottom: 4px;
-  transition: background 0.15s;
+  margin-bottom: var(--spacing-xs);
+  transition: background var(--transition-fast);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 44px;
 }
 
 .scheme-item:hover {
-  background: #0f3460;
+  background: var(--color-bg-tertiary);
 }
 
 .scheme-item.current {
-  background: #e94560;
+  background: var(--color-primary);
   color: white;
 }
 
 .scheme-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .rename-input {
   flex: 1;
-  padding: 2px 6px;
-  border: 1px solid #4ecca3;
-  border-radius: 3px;
-  background: #1a1a2e;
-  color: #e0e0e0;
-  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 13px;
   outline: none;
 }
 
@@ -259,38 +269,65 @@ onMounted(() => {
 .delete-btn {
   background: none;
   border: none;
-  color: #888;
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: 16px;
   cursor: pointer;
-  padding: 0 4px;
+  padding: var(--spacing-xs);
   line-height: 1;
   display: none;
+  min-width: 28px;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
 }
 
 .scheme-item:hover .action-icon-btn,
 .scheme-item:hover .delete-btn {
-  display: block;
+  display: flex;
 }
 
 .action-icon-btn:hover {
-  color: #4ecca3;
+  color: var(--color-success);
 }
 
 .delete-btn:hover {
-  color: #e94560;
+  color: var(--color-primary);
 }
 
 .scheme-name {
   font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scheme-time {
   font-size: 11px;
-  color: #888;
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 
 .scheme-item.current .scheme-time {
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .scheme-item {
+    min-height: 48px;
+    padding: var(--spacing-md);
+  }
+
+  .action-icon-btn,
+  .delete-btn {
+    display: flex;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .name-input {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
 }
 </style>

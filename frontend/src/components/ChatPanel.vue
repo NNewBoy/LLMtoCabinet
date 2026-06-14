@@ -44,10 +44,12 @@ watch(() => chatStore.currentStreamContent, () => {
   <div class="chat-panel">
     <div class="messages" ref="messagesContainer">
       <div v-if="chatStore.messages.length === 0 && !chatStore.isStreaming" class="empty-hint">
-        <p>输入自然语言指令来编辑柜子</p>
-        <p class="example">例如："在中间加一块隔板"</p>
-        <p class="example">例如："把左侧板加高10cm"</p>
-        <p class="example">例如："换成橡木材料"</p>
+        <p class="empty-title">输入自然语言指令来编辑柜子</p>
+        <div class="examples">
+          <p class="example">"在中间加一块隔板"</p>
+          <p class="example">"把左侧板加高10cm"</p>
+          <p class="example">"换成橡木材料"</p>
+        </div>
       </div>
 
       <div
@@ -70,7 +72,7 @@ watch(() => chatStore.currentStreamContent, () => {
       <textarea
         v-model="inputText"
         @keydown="handleKeydown"
-        placeholder="输入编辑指令，如：在中间加一块隔板..."
+        placeholder="输入编辑指令..."
         rows="2"
         :disabled="!wsStore.isConnected"
       ></textarea>
@@ -90,68 +92,84 @@ watch(() => chatStore.currentStreamContent, () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--color-bg-secondary);
 }
 
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .empty-hint {
   text-align: center;
-  color: #666;
-  margin-top: 40px;
-  font-size: 14px;
+  padding: var(--spacing-xl) var(--spacing-lg);
 }
 
-.empty-hint .example {
-  margin-top: 8px;
+.empty-title {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-bottom: var(--spacing-md);
+}
+
+.examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.example {
   font-size: 12px;
-  color: #555;
-  background: #1a1a2e;
-  padding: 6px 10px;
-  border-radius: 4px;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
 }
 
 .message {
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   font-size: 13px;
   line-height: 1.5;
+  max-width: 85%;
 }
 
 .message.user {
-  background: #0f3460;
+  background: var(--color-primary);
+  color: white;
   align-self: flex-end;
 }
 
 .message.assistant {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  align-self: flex-start;
 }
 
 .message.system {
-  background: #3a1a1a;
-  border: 1px solid #e94560;
+  background: rgba(233, 69, 96, 0.15);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  align-self: center;
+  font-size: 12px;
 }
 
 .role-label {
   font-size: 11px;
   font-weight: 600;
-  margin-bottom: 4px;
-  color: #888;
+  margin-bottom: 2px;
+  color: var(--color-text-muted);
 }
 
 .message.user .role-label {
-  color: #4ecca3;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .message.assistant .role-label {
-  color: #e94560;
+  color: var(--color-success);
 }
 
 .content {
@@ -160,31 +178,33 @@ watch(() => chatStore.currentStreamContent, () => {
 }
 
 .content.streaming {
-  color: #a0a0b0;
+  color: var(--color-text-secondary);
 }
 
 .chat-input {
-  padding: 10px;
-  border-top: 1px solid #0f3460;
+  padding: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
+  background: var(--color-bg-tertiary);
 }
 
 .chat-input textarea {
   flex: 1;
-  padding: 8px 10px;
-  border: 1px solid #0f3460;
-  border-radius: 6px;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   font-size: 13px;
   font-family: inherit;
   resize: none;
   outline: none;
+  transition: border-color var(--transition-fast);
 }
 
 .chat-input textarea:focus {
-  border-color: #e94560;
+  border-color: var(--color-primary);
 }
 
 .chat-input textarea:disabled {
@@ -192,24 +212,37 @@ watch(() => chatStore.currentStreamContent, () => {
 }
 
 .send-btn {
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
-  border-radius: 6px;
-  background: #e94560;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
   white-space: nowrap;
+  min-height: 44px;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #c73a52;
+  background: var(--color-primary-hover);
 }
 
 .send-btn:disabled {
-  background: #444;
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .message {
+    max-width: 90%;
+    font-size: 14px;
+  }
+
+  .chat-input textarea {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
 }
 </style>

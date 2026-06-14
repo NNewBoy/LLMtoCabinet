@@ -253,15 +253,17 @@ async function updateMaterial(material: string) {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--color-bg-secondary);
 }
 
 .section-title {
   font-size: 11px;
   font-weight: 600;
-  color: #888;
-  padding: 6px 12px;
-  background: #1a1a2e;
+  color: var(--color-text-muted);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-tertiary);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .tree-section {
@@ -269,13 +271,13 @@ async function updateMaterial(material: string) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-bottom: 1px solid #0f3460;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .tree-content {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--spacing-sm);
 }
 
 .detail-section {
@@ -288,13 +290,13 @@ async function updateMaterial(material: string) {
 .detail-content {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--spacing-sm);
 }
 
 .empty {
-  color: #555;
+  color: var(--color-text-muted);
   text-align: center;
-  margin-top: 20px;
+  margin-top: var(--spacing-xl);
   font-size: 12px;
 }
 
@@ -307,40 +309,41 @@ async function updateMaterial(material: string) {
 }
 
 .tree-item.selected > .item-content {
-  background: #e94560;
+  background: var(--color-primary);
 }
 
 .item-content {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border-radius: 4px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
+  min-height: 32px;
 }
 
 .item-content:hover {
-  background: #0f3460;
+  background: var(--color-bg-tertiary);
 }
 
 .tree-item.selected > .item-content:hover {
-  background: #e94560;
+  background: var(--color-primary-hover);
 }
 
 .expand-btn {
   background: none;
   border: none;
-  color: #888;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
-  transition: transform 0.2s;
+  font-size: 10px;
+  transition: transform var(--transition-fast);
 }
 
 .expand-btn.expanded {
@@ -352,7 +355,7 @@ async function updateMaterial(material: string) {
 }
 
 .expand-placeholder {
-  width: 14px;
+  width: 16px;
 }
 
 .component-name {
@@ -360,14 +363,15 @@ async function updateMaterial(material: string) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-text-primary);
 }
 
 .component-type {
   font-size: 10px;
-  color: #888;
-  background: #1a1a2e;
-  padding: 1px 5px;
-  border-radius: 3px;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
 }
 
 .tree-item.selected .component-type {
@@ -377,10 +381,10 @@ async function updateMaterial(material: string) {
 
 .children-count {
   font-size: 10px;
-  color: #4ecca3;
-  background: #1a1a2e;
-  padding: 1px 5px;
-  border-radius: 3px;
+  color: var(--color-success);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
 }
 
 .tree-item.selected .children-count {
@@ -389,11 +393,11 @@ async function updateMaterial(material: string) {
 }
 
 .children {
-  padding-left: 18px;
+  padding-left: var(--spacing-lg);
 }
 
 .grandchild {
-  padding-left: 14px;
+  padding-left: var(--spacing-md);
 }
 
 .properties {
@@ -406,74 +410,92 @@ async function updateMaterial(material: string) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
-  padding: 4px 8px;
-  border-bottom: 1px solid #1a1a2e;
+  font-size: 12px;
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .prop-label {
-  color: #888;
+  color: var(--color-text-muted);
   min-width: 40px;
 }
 
 .prop-value {
-  color: #e0e0e0;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .prop-select {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  color: #e0e0e0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
   cursor: pointer;
   outline: none;
+  transition: border-color var(--transition-fast);
 }
 
 .prop-select:focus {
-  border-color: #e94560;
+  border-color: var(--color-primary);
 }
 
 .color-row {
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: var(--spacing-sm);
 }
 
 .color-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--spacing-xs);
   width: 100%;
 }
 
 .color-option {
-  width: 20px;
-  height: 20px;
-  border-radius: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
   border: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .color-option:hover {
   transform: scale(1.1);
-  border-color: #888;
+  border-color: var(--color-text-muted);
 }
 
 .color-option.active {
-  border-color: #e94560;
-  box-shadow: 0 0 4px #e94560;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 6px var(--color-primary);
 }
 
 .empty-hint {
-  color: #555;
-  font-size: 11px;
-  margin-top: 20px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  margin-top: var(--spacing-xl);
   text-align: center;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .detail-section {
+    height: 200px;
+  }
+
+  .item-content {
+    min-height: 44px;
+    padding: var(--spacing-sm);
+  }
+
+  .color-option {
+    width: 28px;
+    height: 28px;
+  }
 }
 </style>

@@ -73,13 +73,33 @@ defineExpose({ fetchHistoryStatus })
       <span class="project-name">{{ projectName }}</span>
     </div>
     <div class="header-center">
-      <button class="btn" @click="handleUndo" :disabled="!wsStore.isConnected || !canUndo">↩ 撤销</button>
-      <button class="btn" @click="handleRedo" :disabled="!wsStore.isConnected || !canRedo">↪ 重做</button>
-      <button class="btn btn-save" @click="handleSave">💾 保存</button>
+      <button
+        class="btn btn-icon"
+        @click="handleUndo"
+        :disabled="!wsStore.isConnected || !canUndo"
+        title="撤销"
+      >
+        <span class="btn-icon-text">↩</span>
+        <span class="btn-label">撤销</span>
+      </button>
+      <button
+        class="btn btn-icon"
+        @click="handleRedo"
+        :disabled="!wsStore.isConnected || !canRedo"
+        title="重做"
+      >
+        <span class="btn-icon-text">↪</span>
+        <span class="btn-label">重做</span>
+      </button>
+      <button class="btn btn-save" @click="handleSave">
+        <span class="btn-icon-text">💾</span>
+        <span class="btn-label">保存</span>
+      </button>
     </div>
     <div class="header-right">
       <span class="status" :class="{ connected: wsStore.isConnected }">
-        {{ wsStore.isConnected ? '● 已连接' : '○ 未连接' }}
+        <span class="status-dot"></span>
+        <span class="status-text">{{ wsStore.isConnected ? '已连接' : '未连接' }}</span>
       </span>
     </div>
   </header>
@@ -90,64 +110,78 @@ defineExpose({ fetchHistoryStatus })
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 var(--spacing-lg);
   height: 48px;
-  background: #16213e;
-  border-bottom: 1px solid #0f3460;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 .logo {
   font-size: 18px;
   font-weight: 700;
-  color: #e94560;
+  color: var(--color-primary);
+  letter-spacing: -0.5px;
 }
 
 .project-name {
-  font-size: 14px;
-  color: #a0a0b0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  display: none;
 }
 
 .header-center {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .btn {
-  padding: 6px 14px;
-  border: 1px solid #0f3460;
-  border-radius: 6px;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   cursor: pointer;
   font-size: 13px;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
+  min-height: 36px;
 }
 
 .btn:hover:not(:disabled) {
-  background: #0f3460;
-  border-color: #e94560;
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-primary);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
+.btn-label {
+  display: none;
+}
+
+.btn-icon-text {
+  font-size: 14px;
+}
+
 .btn-save {
-  border-color: #4ecca3;
-  color: #4ecca3;
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
 .btn-save:hover {
-  background: #4ecca3;
-  color: #1a1a2e;
+  background: var(--color-success);
+  color: var(--color-bg-primary);
 }
 
 .header-right {
@@ -156,11 +190,45 @@ defineExpose({ fetchHistoryStatus })
 }
 
 .status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-muted);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+}
+
+.status.connected .status-dot {
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
 }
 
 .status.connected {
-  color: #4ecca3;
+  color: var(--color-success);
+}
+
+.status-text {
+  display: none;
+}
+
+/* 平板及以上显示更多内容 */
+@media (min-width: 768px) {
+  .project-name {
+    display: block;
+  }
+
+  .btn-label {
+    display: inline;
+  }
+
+  .status-text {
+    display: inline;
+  }
 }
 </style>

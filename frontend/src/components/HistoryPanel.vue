@@ -86,51 +86,53 @@ watch(() => cabinetStore.cabinet, () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--color-bg-secondary);
 }
 
 .snapshot-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--spacing-sm);
 }
 
 .empty {
-  color: #555;
+  color: var(--color-text-muted);
   text-align: center;
-  margin-top: 40px;
+  margin-top: var(--spacing-xl);
   font-size: 13px;
 }
 
 .snapshot-item {
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  margin-bottom: 4px;
-  transition: background 0.15s;
+  margin-bottom: var(--spacing-xs);
+  transition: background var(--transition-fast);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 44px;
 }
 
 .snapshot-item:hover {
-  background: #0f3460;
+  background: var(--color-bg-tertiary);
 }
 
 .snapshot-item.current {
-  background: #e94560;
+  background: var(--color-primary);
   color: white;
 }
 
 .snap-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .snap-index {
   font-weight: 600;
   font-size: 12px;
-  color: #4ecca3;
+  color: var(--color-success);
 }
 
 .snapshot-item.current .snap-index {
@@ -139,7 +141,7 @@ watch(() => cabinetStore.cabinet, () => {
 
 .snap-desc {
   font-size: 12px;
-  max-width: 180px;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -147,10 +149,21 @@ watch(() => cabinetStore.cabinet, () => {
 
 .snap-time {
   font-size: 11px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .snapshot-item.current .snap-time {
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .snap-desc {
+    max-width: 200px;
+  }
+
+  .snapshot-item {
+    min-height: 48px;
+  }
 }
 </style>
