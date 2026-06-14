@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,6 +8,8 @@ from models.cabinet import create_default_cabinet
 from engine.cabinet_manager import CabinetManager
 from agent.tools import get_manager
 from utils.serialization import cabinet_to_json, json_to_cabinet
+
+logger = logging.getLogger("cabinet3d.api")
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -19,6 +22,7 @@ async def _ensure_user(session: AsyncSession, user_id: str = "default_user") -> 
         user = User(id=user_id, name="默认用户")
         session.add(user)
         await session.commit()
+        logger.info(f"创建默认用户: {user_id}")
     return user
 
 
@@ -27,6 +31,7 @@ async def list_projects(session: AsyncSession = Depends(get_session)):
     """获取所有方案列表"""
     result = await session.execute(select(Project).order_by(Project.updated_at.desc()))
     projects = result.scalars().all()
+    logger.info(f"获取方案列表，共 {len(projects)} 个方案")
     return [
         {
             "id": p.id,
@@ -59,6 +64,7 @@ async def create_project(name: str = "新柜子项目", session: AsyncSession = 
     manager = get_manager(project.id)
     manager.load(cabinet)
 
+    logger.info(f"创建新项目: {project.id} - {name}")
     return {
         "id": project.id,
         "name": project.name,
@@ -73,6 +79,7 @@ async def get_project(project_id: str, session: AsyncSession = Depends(get_sessi
     result = await session.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
     if not project:
+        logger.warning(f"项目不存在: {project_id}")
         raise HTTPException(status_code=404, detail="项目不存在")
 
     cabinet = json_to_cabinet(project.cabinet_json)
@@ -81,6 +88,7 @@ async def get_project(project_id: str, session: AsyncSession = Depends(get_sessi
     manager = get_manager(project_id)
     manager.load(cabinet)
 
+    logger.info(f"加载项目: {project_id} - {project.name}")
     return {
         "id": project.id,
         "name": project.name,
@@ -109,13 +117,16 @@ async def update_project(project_id: str, name: str = None, session: AsyncSessio
             cabinet_json=cabinet_to_json(cabinet),
         )
         session.add(project)
+        logger.info(f"新建项目: {project_id}")
     else:
         if name:
             project.name = name
+            logger.info(f"重命名项目 {project_id}: {name}")
         if manager.cabinet:
             project.cabinet_json = cabinet_to_json(manager.cabinet)
 
     await session.commit()
+    logger.info(f"保存项目: {project_id}")
     return {"id": project.id, "name": project.name, "message": "保存成功"}
 
 
@@ -125,6 +136,7 @@ async def delete_project(project_id: str, session: AsyncSession = Depends(get_se
     result = await session.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
     if not project:
+        logger.warning(f"删除失败，项目不存在: {project_id}")
         raise HTTPException(status_code=404, detail="项目不存在")
 
     await session.delete(project)
@@ -134,6 +146,7 @@ async def delete_project(project_id: str, session: AsyncSession = Depends(get_se
     from agent.tools import _managers
     _managers.pop(project_id, None)
 
+    logger.info(f"删除项目: {project_id} - {project.name}")
     return {"message": "项目已删除"}
 
 
@@ -155,16 +168,20 @@ async def get_cabinet(project_id: str, session: AsyncSession = Depends(get_sessi
 @router.post("/{project_id}/undo")
 async def undo_operation(project_id: str):
     """撤销上一步操作"""
+    logger.info(f"撤销操作: {project_id}")
     manager = get_manager(project_id)
     result = manager.undo()
+    logger.info(f"撤销结果: {result.get('message', '未知')}")
     return result
 
 
 @router.post("/{project_id}/redo")
 async def redo_operation(project_id: str):
     """重做已撤销操作"""
+    logger.info(f"重做操作: {project_id}")
     manager = get_manager(project_id)
     result = manager.redo()
+    logger.info(f"重做结果: {result.get('message', '未知')}")
     return result
 
 
@@ -184,22 +201,27 @@ async def get_history(project_id: str):
 async def get_snapshots(project_id: str):
     """获取历史版本快照列表"""
     manager = get_manager(project_id)
+    snapshots = manager.history.get_snapshot_list()
+    logger.info(f"获取快照列表: {project_id}, 共 {len(snapshots)} 个快照")
     return {
         "current_index": manager.history.get_current_index(),
-        "snapshots": manager.history.get_snapshot_list(),
+        "snapshots": snapshots,
     }
 
 
 @router.post("/{project_id}/snapshots/{index}/restore")
 async def restore_snapshot(project_id: str, index: int):
     """恢复到指定历史版本"""
+    logger.info(f"恢复快照: {project_id} -> 版本 {index}")
     manager = get_manager(project_id)
     snapshot = manager.history.get_snapshot(index)
     if not snapshot:
+        logger.warning(f"快照不存在: {project_id} 版本 {index}")
         raise HTTPException(status_code=404, detail="快照不存在")
     from utils.serialization import json_to_cabinet
     manager.cabinet = json_to_cabinet(snapshot)
     manager.history._current_index = index
+    logger.info(f"已恢复到版本 {index}")
     return {
         "success": True,
         "message": f"已恢复到版本 {index}",

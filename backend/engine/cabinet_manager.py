@@ -1,7 +1,10 @@
+import logging
 from typing import Optional
 from models.cabinet import Cabinet, CabinetComponent, Vector3, ComponentType, create_default_cabinet
 from engine.history import OperationHistory
 from utils.serialization import cabinet_to_dict, component_summary, component_detail, json_to_cabinet
+
+logger = logging.getLogger("cabinet3d.engine")
 
 
 class CabinetManager:
@@ -16,22 +19,28 @@ class CabinetManager:
         self.cabinet = cabinet
         self.history = OperationHistory()
         self.history.save_snapshot(cabinet, "初始状态")
+        logger.info(f"加载柜子: {cabinet.name} ({len(cabinet.components)} 个组件)")
 
     def load_default(self):
         """加载默认柜子模板"""
         self.cabinet = create_default_cabinet().model_copy(deep=True)
+        logger.info("加载默认柜子模板")
 
     def query(self, detail_level: str = "summary", component_id: str = None) -> dict:
         """查询柜子信息"""
         if not self.cabinet:
+            logger.warning("查询失败: 柜子未加载")
             return {"error": "柜子未加载"}
 
         if component_id:
             comp = self.cabinet.find_component(component_id)
             if not comp:
+                logger.warning(f"查询失败: 组件 {component_id} 不存在")
                 return {"error": f"组件 {component_id} 不存在"}
+            logger.info(f"查询组件: {comp.name} ({component_id})")
             return {"component": component_detail(comp)}
 
+        logger.info(f"查询柜子: detail_level={detail_level}, 组件数={len(self.cabinet.components)}")
         if detail_level == "summary":
             return {
                 "cabinet": {
@@ -68,6 +77,7 @@ class CabinetManager:
         try:
             comp_type = ComponentType(type)
         except ValueError:
+            logger.error(f"未知组件类型: {type}")
             return {"error": f"未知组件类型: {type}，有效类型: {[t.value for t in ComponentType]}"}
 
         component = CabinetComponent(
@@ -85,9 +95,11 @@ class CabinetManager:
         if parent_id:
             parent = self.cabinet.find_component(parent_id)
             if not parent:
+                logger.warning(f"父组件不存在: {parent_id}")
                 return {"error": f"父组件 {parent_id} 不存在"}
             parent.children.append(component)
             self.history.save_snapshot(self.cabinet, f"添加 {name} 到 {parent.name}")
+            logger.info(f"添加子组件: {name} -> {parent.name} (type={type})")
             return {
                 "success": True,
                 "message": f"已添加 {name} 到 {parent.name} 的子组件",
@@ -97,6 +109,7 @@ class CabinetManager:
 
         self.cabinet.components.append(component)
         self.history.save_snapshot(self.cabinet, f"添加 {name}")
+        logger.info(f"添加组件: {name} (type={type}, position={position})")
         return {
             "success": True,
             "message": f"已添加 {name}",
@@ -111,12 +124,14 @@ class CabinetManager:
 
         comp = self.cabinet.find_component(component_id)
         if not comp:
+            logger.warning(f"删除失败: 组件 {component_id} 不存在")
             return {"error": f"组件 {component_id} 不存在"}
 
         self.history.push(self.cabinet, f"删除 {comp.name}")
 
         removed = self.cabinet.remove_component(component_id)
         self.history.save_snapshot(self.cabinet, f"删除 {removed.name}")
+        logger.info(f"删除组件: {removed.name} ({component_id})")
         return {
             "success": True,
             "message": f"已删除 {removed.name}",
@@ -134,6 +149,7 @@ class CabinetManager:
         else:
             target = self.cabinet.find_component(target_id)
             if not target:
+                logger.warning(f"修改失败: 组件 {target_id} 不存在")
                 return {"error": f"组件 {target_id} 不存在"}
             self.history.push(self.cabinet, f"修改 {target.name}")
 
@@ -148,6 +164,7 @@ class CabinetManager:
 
         desc = f"修改柜子" if target_id == "cabinet" else f"修改 {target.name}"
         self.history.save_snapshot(self.cabinet, desc)
+        logger.info(f"{desc}: {properties}")
         return {
             "success": True,
             "message": f"修改完成",
@@ -161,10 +178,12 @@ class CabinetManager:
 
         entry = self.history.undo(self.cabinet)
         if not entry:
+            logger.info("撤销失败: 没有可撤销的操作")
             return {"success": False, "message": "没有可以撤销的操作"}
 
         self.cabinet = json_to_cabinet(entry["snapshot"])
         self.history.save_snapshot(self.cabinet, f"撤销: {entry['description']}")
+        logger.info(f"撤销操作: {entry['description']}")
         return {
             "success": True,
             "message": f"已撤销: {entry['description']}",
@@ -178,10 +197,12 @@ class CabinetManager:
 
         entry = self.history.redo(self.cabinet)
         if not entry:
+            logger.info("重做失败: 没有可重做的操作")
             return {"success": False, "message": "没有可以重做的操作"}
 
         self.cabinet = json_to_cabinet(entry["snapshot"])
         self.history.save_snapshot(self.cabinet, f"重做: {entry['description']}")
+        logger.info(f"重做操作: {entry['description']}")
         return {
             "success": True,
             "message": f"已重做: {entry['description']}",

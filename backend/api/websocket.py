@@ -1,10 +1,13 @@
 import json
+import logging
 import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from agent.cabinet_agent import create_cabinet_agent
 from agent.tools import get_manager
 from engine.cabinet_manager import CabinetManager
 from utils.serialization import cabinet_to_dict, json_to_cabinet
+
+logger = logging.getLogger("cabinet3d.websocket")
 
 router = APIRouter()
 
@@ -20,10 +23,13 @@ class ConnectionManager:
         if project_id not in self._connections:
             self._connections[project_id] = []
         self._connections[project_id].append(ws)
+        logger.info(f"WebSocket 连接建立: project={project_id}, 当前连接数={len(self._connections[project_id])}")
 
     def disconnect(self, project_id: str, ws: WebSocket):
         if project_id in self._connections:
-            self._connections[project_id].remove(ws)
+            if ws in self._connections[project_id]:
+                self._connections[project_id].remove(ws)
+                logger.info(f"WebSocket 连接断开: project={project_id}, 剩余连接数={len(self._connections[project_id])}")
 
     async def send_to_project(self, project_id: str, message: dict):
         if project_id in self._connections:
@@ -52,6 +58,7 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
     # 页面初始化时：manager 有数据则直接用，否则从数据库加载
     manager = get_manager(project_id)
     if manager.cabinet is None:
+        logger.info(f"从数据库加载项目: {project_id}")
         # 尝试从数据库加载
         from database.connection import async_session
         from models.database import Project
@@ -61,8 +68,11 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
             project = result.scalar_one_or_none()
             if project:
                 manager.load(json_to_cabinet(project.cabinet_json))
+                logger.info(f"成功加载项目: {project_id}")
             else:
                 manager.load_default()
+                logger.info(f"项目不存在，加载默认模板: {project_id}")
+
     await ws.send_json({
         "type": "cabinet_update",
         "cabinet": cabinet_to_dict(manager.cabinet),
@@ -72,17 +82,22 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
         while True:
             data = await ws.receive_text()
             message = json.loads(data)
+            msg_type = message.get("type")
+            logger.info(f"收到 WebSocket 消息: type={msg_type}, project={project_id}")
 
-            if message.get("type") == "chat_message":
+            if msg_type == "chat_message":
                 text = message.get("text", "")
                 if not text:
                     continue
+
+                logger.info(f"用户消息: {text}")
 
                 # 发送思考状态
                 await ws.send_json({"type": "agent_thinking", "content": "正在分析您的指令..."})
 
                 try:
                     # 创建 Agent 并执行
+                    logger.info(f"创建 Agent 处理消息: project={project_id}")
                     agent = create_cabinet_agent(project_id)
 
                     # 使用流式调用，同时收集最终响应
@@ -102,6 +117,8 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                                     "content": chunk.content,
                                 })
 
+                    logger.info(f"Agent 响应完成: {response_content[:100]}...")
+
                     # 发送更新后的柜子模型
                     if manager.cabinet:
                         await ws.send_json({
@@ -110,6 +127,7 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                         })
 
                 except Exception as e:
+                    logger.error(f"Agent 执行失败: {str(e)}", exc_info=True)
                     await ws.send_json({
                         "type": "error",
                         "code": "AGENT_ERROR",
@@ -118,7 +136,7 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
 
                 await ws.send_json({"type": "stream_end"})
 
-            elif message.get("type") == "request_sync":
+            elif msg_type == "request_sync":
                 if manager.cabinet:
                     await ws.send_json({
                         "type": "cabinet_update",
@@ -127,7 +145,9 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
 
     except WebSocketDisconnect:
         ws_manager.disconnect(project_id, ws)
+        logger.info(f"WebSocket 客户端断开: {project_id}")
     except Exception as e:
+        logger.error(f"WebSocket 错误: {str(e)}", exc_info=True)
         ws_manager.disconnect(project_id, ws)
         try:
             await ws.send_json({"type": "error", "code": "WS_ERROR", "message": str(e)})

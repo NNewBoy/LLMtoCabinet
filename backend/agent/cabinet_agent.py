@@ -1,3 +1,4 @@
+import logging
 from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
 from agent.tools import (
@@ -8,6 +9,8 @@ from agent.tools import (
     undo_redo as _undo_redo,
 )
 from config import LLM_MODEL, LLM_API_KEY, LLM_BASE_URL, SKILLS_DIR
+
+logger = logging.getLogger("cabinet3d.agent")
 
 CABINET_SYSTEM_PROMPT = """
 你是一个专业的柜子家具设计助手。你可以帮助用户通过自然语言来编辑柜子的3D模型。
@@ -29,10 +32,13 @@ CABINET_SYSTEM_PROMPT = """
 
 def create_cabinet_agent(project_id: str):
     """为指定项目创建柜子编辑 Agent"""
+    logger.info(f"创建 Agent: project={project_id}")
 
     def query_cabinet(detail_level: str = "summary", component_id: str = None) -> dict:
         """查询当前柜子的结构信息、板件列表、尺寸等属性。detail_level: summary=概览, full=完整信息。component_id: 指定查询的组件ID。"""
-        return _query_cabinet(project_id=project_id, detail_level=detail_level, component_id=component_id)
+        logger.info(f"Agent 调用: query_cabinet(detail_level={detail_level}, component_id={component_id})")
+        result = _query_cabinet(project_id=project_id, detail_level=detail_level, component_id=component_id)
+        return result
 
     def add_component(
         type: str, name: str, position: dict, dimensions: dict,
@@ -40,25 +46,38 @@ def create_cabinet_agent(project_id: str):
         parent_id: str = None,
     ) -> dict:
         """向柜子添加新的板件或组件。type: 组件类型(side_panel/shelf/door等), name: 名称, position: 位置{x,y,z}, dimensions: 尺寸{length,width,height}, material: 材料, color: 颜色hex, thickness: 板厚mm, parent_id: 父组件ID(可选,用于添加拉手等子组件到指定板件的children中)。"""
-        return _add_component(project_id=project_id, type=type, name=name, position=position,
+        logger.info(f"Agent 调用: add_component(type={type}, name={name}, position={position})")
+        result = _add_component(project_id=project_id, type=type, name=name, position=position,
                               dimensions=dimensions, material=material, color=color, thickness=thickness,
                               parent_id=parent_id)
+        logger.info(f"添加结果: {result.get('message', result.get('error', '未知'))}")
+        return result
 
     def remove_component(component_id: str) -> dict:
         """从柜子中删除指定的板件或组件。component_id: 要删除的组件ID。"""
-        return _remove_component(project_id=project_id, component_id=component_id)
+        logger.info(f"Agent 调用: remove_component(component_id={component_id})")
+        result = _remove_component(project_id=project_id, component_id=component_id)
+        logger.info(f"删除结果: {result.get('message', result.get('error', '未知'))}")
+        return result
 
     def modify_component(target_id: str, properties: dict) -> dict:
         """修改柜子或组件的属性。target_id: 修改目标ID, "cabinet"表示修改柜子整体。properties: 要修改的属性键值对{name,length,width,height,position,rotation,material,color,thickness}。"""
-        return _modify_component(project_id=project_id, target_id=target_id, properties=properties)
+        logger.info(f"Agent 调用: modify_component(target_id={target_id}, properties={properties})")
+        result = _modify_component(project_id=project_id, target_id=target_id, properties=properties)
+        logger.info(f"修改结果: {result.get('message', result.get('error', '未知'))}")
+        return result
 
     def undo_redo(action: str) -> dict:
         """撤销或重做上一步编辑操作。action: "undo"撤销 或 "redo"重做。"""
-        return _undo_redo(project_id=project_id, action=action)
+        logger.info(f"Agent 调用: undo_redo(action={action})")
+        result = _undo_redo(project_id=project_id, action=action)
+        logger.info(f"操作结果: {result.get('message', result.get('error', '未知'))}")
+        return result
 
     tools = [query_cabinet, add_component, remove_component, modify_component, undo_redo]
 
     # 使用 init_chat_model 初始化模型实例，传入自定义 API Key 和 Base URL
+    logger.info(f"初始化 LLM 模型: {LLM_MODEL}")
     model = init_chat_model(
         model=f"openai:{LLM_MODEL}",
         api_key=LLM_API_KEY,
@@ -72,4 +91,5 @@ def create_cabinet_agent(project_id: str):
         system_prompt=CABINET_SYSTEM_PROMPT,
     )
 
+    logger.info(f"Agent 创建完成: project={project_id}")
     return agent
