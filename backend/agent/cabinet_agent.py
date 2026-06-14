@@ -37,10 +37,12 @@ def create_cabinet_agent(project_id: str):
     def add_component(
         type: str, name: str, position: dict, dimensions: dict,
         material: str = "plywood", color: str = "#D2B48C", thickness: float = 18.0,
+        parent_id: str = None,
     ) -> dict:
-        """向柜子添加新的板件或组件。type: 组件类型(side_panel/shelf/door等), name: 名称, position: 位置{x,y,z}, dimensions: 尺寸{length,width,height}, material: 材料, color: 颜色hex, thickness: 板厚mm。"""
+        """向柜子添加新的板件或组件。type: 组件类型(side_panel/shelf/door等), name: 名称, position: 位置{x,y,z}, dimensions: 尺寸{length,width,height}, material: 材料, color: 颜色hex, thickness: 板厚mm, parent_id: 父组件ID(可选,用于添加拉手等子组件到指定板件的children中)。"""
         return _add_component(project_id=project_id, type=type, name=name, position=position,
-                              dimensions=dimensions, material=material, color=color, thickness=thickness)
+                              dimensions=dimensions, material=material, color=color, thickness=thickness,
+                              parent_id=parent_id)
 
     def remove_component(component_id: str) -> dict:
         """从柜子中删除指定的板件或组件。component_id: 要删除的组件ID。"""

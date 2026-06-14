@@ -80,6 +80,7 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                     async for event in agent.astream_events(
                         {"messages": [{"role": "user", "content": text}]},
                         version="v2",
+                        config={"recursion_limit": 50},
                     ):
                         kind = event.get("event")
                         if kind == "on_chat_model_stream":

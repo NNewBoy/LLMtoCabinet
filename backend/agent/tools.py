@@ -34,6 +34,7 @@ def add_component(
     material: str = "plywood",
     color: str = "#D2B48C",
     thickness: float = 18.0,
+    parent_id: str = None,
 ) -> dict:
     """
     向柜子添加新的板件或组件（隔板、门板、抽屉等）。
@@ -42,17 +43,18 @@ def add_component(
         project_id: 项目ID
         type: 组件类型 (side_panel/back_panel/top_panel/bottom_panel/shelf/door/drawer/divider/custom)
         name: 组件名称，如 "中层隔板"
-        position: 组件位置 {"x": float, "y": float, "z": float}，相对柜体坐标
+        position: 组件位置 {"x": float, "y": float, "z": float}，相对柜体坐标（如有parent_id则相对父组件）
         dimensions: 组件尺寸 {"length": float, "width": float, "height": float}，单位 mm
         material: 材料类型，默认 "plywood"
         color: 颜色 hex 值，默认 "#D2B48C"
         thickness: 板厚 mm，默认 18
+        parent_id: 父组件ID（可选），用于添加子组件如拉手、铰链等，此时position为相对父组件的坐标
     """
     manager = get_manager(project_id)
     return manager.add_component(
         type=type, name=name, position=position,
         dimensions=dimensions, material=material,
-        color=color, thickness=thickness,
+        color=color, thickness=thickness, parent_id=parent_id,
     )
 
 

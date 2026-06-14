@@ -55,6 +55,7 @@ class CabinetManager:
         material: str = "plywood",
         color: str = "#D2B48C",
         thickness: float = 18.0,
+        parent_id: str = None,
     ) -> dict:
         """添加组件"""
         if not self.cabinet:
@@ -78,6 +79,18 @@ class CabinetManager:
             color=color,
             thickness=thickness,
         )
+
+        if parent_id:
+            parent = self.cabinet.find_component(parent_id)
+            if not parent:
+                return {"error": f"父组件 {parent_id} 不存在"}
+            parent.children.append(component)
+            return {
+                "success": True,
+                "message": f"已添加 {name} 到 {parent.name} 的子组件",
+                "component_id": component.id,
+                "cabinet": cabinet_to_dict(self.cabinet),
+            }
 
         self.cabinet.components.append(component)
         return {

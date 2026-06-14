@@ -14,6 +14,15 @@ description: >
 - 板件位置 position 是相对柜体原点的坐标
 - 柜体原点位于柜子左下前角
 
+## 柜体内部空间（重要！添加内部组件必须参照此范围）
+- 查询柜子后可获得柜体 length、width、height 和侧板厚度（默认18mm）
+- 内部可用 X 范围：从侧板内壁到侧板内壁，即 x=thickness 到 x=(length - thickness)
+- 内部可用 Y 范围：从底板顶面到顶板底面，即 y=thickness 到 y=(height - thickness)
+- 内部可用 Z 范围：从 z=0 到 z=width
+- **添加隔板/层板时，必须将 position.x 设为侧板厚度（如18），position.z 设为0**
+- **隔板的 length 应等于柜子内部宽度（如 length - 2*thickness = 764）**
+- **隔板的 width 应等于柜子深度（如 600）**
+
 ## 板件尺寸说明
 - 侧板 (side_panel)：length=板厚, width=柜深, height=柜高
 - 顶/底板 (top/bottom_panel)：length=柜长, width=柜深, height=板厚
@@ -34,8 +43,14 @@ description: >
 - 删除侧板/顶板/底板等结构件时需提醒用户
 - 板件之间不能重叠（位置冲突检查）
 
-## 常见场景
-- "加一块隔板" → 计算中间高度，添加 shelf 类型组件
-- "把侧板加高" → 修改侧板的 height 属性
-- "删除中间的隔板" → 先查询隔板列表，再删除指定隔板
-- "换成橡木材料" → 修改 material 属性为 "oak"
+## 子组件规则
+- 拉手、铰链、滑轨等五金配件必须作为其所属板件的子组件（children），不能与板件同级
+- 添加子组件时需要传入 parent_id（父组件的 ID），position 是相对于父组件的坐标
+- 例如：给门板加拉手 → add_component(parent_id="门板ID", type="custom", name="拉手", ...)
+
+## 常见场景（附完整参数示例，假设柜子 800x600x2000，侧板厚18mm）
+- "在中间加一块隔板" → add_component(type="shelf", name="中层隔板", position={"x":18,"y":1000,"z":0}, dimensions={"length":764,"width":600,"height":18})
+- "在离底部三分之一处加隔板" → y = 18 + (2000-2*18)/3 ≈ 675，position={"x":18,"y":675,"z":0}
+- "把侧板加高" → modify_component(target_id="left_panel", properties={"height": 新高度})
+- "删除中间的隔板" → 先 query_cabinet 获取隔板ID，再 remove_component
+- "换成橡木材料" → modify_component(target_id=组件ID, properties={"material": "oak"})
