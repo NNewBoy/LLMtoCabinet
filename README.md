@@ -8,6 +8,8 @@
 - **实时3D预览** — 基于 Three.js 的 WebGL 渲染，支持旋转/缩放/平移
 - **智能Agent** — DeepAgents 框架驱动，自动理解意图并执行编辑操作
 - **Undo/Redo** — 完整的撤销/重做支持
+- **Glassmorphism UI** — 现代深色主题，半透明毛玻璃效果
+- **响应式设计** — 支持 PC、平板、移动端自适应布局
 
 ## 技术栈
 
@@ -16,6 +18,7 @@
 | 前端 | Vue 3 + TypeScript + Vite + Three.js + Pinia |
 | 后端 | Python + FastAPI + SQLite + DeepAgents |
 | 通信 | WebSocket (实时双向) + REST API |
+| UI 风格 | Glassmorphism + Dark Mode |
 
 ## 快速开始
 
@@ -57,11 +60,126 @@ npm run dev
 
 打开浏览器访问 `http://localhost:5174`。
 
+## 界面布局
+
+### PC 端（≥768px）
+```
+┌─────────────────────────────────────────────────────────────┐
+│  HeaderBar (撤销/重做/保存)                                   │
+├─────────────────────────────────────┬───────────────────────┤
+│                                     │  工具面板 (360px)      │
+│                                     │  ┌─┬─┬─┬─┐           │
+│          3D 视图                     │  │💬│🧩│📋│📁│          │
+│      (Three.js 渲染)                │  └─┴─┴─┴─┘           │
+│                                     │                       │
+│                                     │  对话/组件/历史/方案   │
+│                                     │                       │
+└─────────────────────────────────────┴───────────────────────┘
+```
+
+### 移动端（<768px）
+```
+┌─────────────────────┐
+│     HeaderBar       │
+├─────────────────────┤
+│                     │
+│     3D 视图         │
+│                     │
+├─────────────────────┤
+│  💬 │ 🧩 │ 📋 │ 📁  │
+├─────────────────────┤
+│                     │
+│   工具面板          │
+│                     │
+└─────────────────────┘
+```
+
+## 功能说明
+
+### 自然语言编辑
+
+在右侧聊天面板输入自然语言指令：
+
+| 指令 | 效果 |
+|------|------|
+| 在中间加一块隔板 | 在柜体中心高度添加 shelf 组件 |
+| 把左侧板加高10cm | 修改左侧面板 height +100mm |
+| 删掉右边的门板 | 移除右侧门板组件 |
+| 换成橡木材料 | 修改 material 为 oak |
+| 柜子加宽到900mm | 修改柜体整体 length 为 900 |
+| 撤销 | 回退上一步操作 |
+
+### 组件管理
+
+- **组件树**：查看所有组件的层级关系，支持展开/折叠子组件
+- **属性面板**：查看/修改选中组件的属性（尺寸、位置、材料、颜色）
+- **颜色选择**：9 种预设颜色，点击即可应用
+- **材料选择**：5 种预设材料（多层板、中密度板、刨花板、橡木、胡桃木）
+
+### 3D 视图操作
+
+- **旋转**：鼠标左键拖拽
+- **缩放**：鼠标滚轮
+- **平移**：鼠标右键拖拽
+- **选中**：点击组件高亮显示
+- **工具栏**：爆炸图、透视图、开门、复原
+
+### 方案管理
+
+- **新建方案**：创建新的柜子项目
+- **切换方案**：在多个方案间切换
+- **重命名**：修改方案名称
+- **删除**：删除不需要的方案
+- **保存**：保存当前修改
+
+## 设计风格
+
+### Glassmorphism + Dark Mode
+
+- **主色调**：靛蓝紫 `#818cf8`
+- **成功色**：翡翠绿 `#34d399`
+- **背景**：深蓝渐变 `#0f172a → #1e1b4b`
+- **毛玻璃效果**：`backdrop-filter: blur(12px)`
+- **边框**：`rgba(148, 163, 184, 0.15)`
+
+### 动画效果
+
+- 按钮悬停上浮 + 发光
+- 列表项悬停滑动
+- Toast 通知滑入滑出
+- 连接状态脉冲动画
+- 选中项渐变背景
+
+## API 接口
+
+### REST
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/projects` | 创建项目 |
+| GET | `/api/projects/{id}` | 获取项目 |
+| PUT | `/api/projects/{id}` | 更新项目 |
+| DELETE | `/api/projects/{id}` | 删除项目 |
+| PUT | `/api/projects/{id}/components/{cid}` | 修改组件属性 |
+| POST | `/api/projects/{id}/undo` | 撤销 |
+| POST | `/api/projects/{id}/redo` | 重做 |
+| GET | `/api/projects/{id}/history` | 获取历史状态 |
+
+### WebSocket
+
+端点: `ws://host/ws/{project_id}`
+
+```
+客户端发送 → {"type": "chat_message", "text": "在中间加一块隔板"}
+服务端推送 ← {"type": "cabinet_update", "cabinet": {...}}
+```
+
 ## 项目结构
 
 ```
 .
 ├── SPEC.md                           # 软件规格说明书
+├── PROGRESS.md                       # 开发进度报告
 ├── backend/                          # Python 后端
 │   ├── main.py                       # FastAPI 入口
 │   ├── config.py                     # 配置（数据库/LLM/Skills路径）
@@ -87,52 +205,20 @@ npm run dev
 │       └── serialization.py          # JSON 序列化
 └── frontend/                         # Vue3 前端
     ├── src/
-    │   ├── App.vue                   # 主布局
+    │   ├── App.vue                   # 主布局（响应式）
     │   ├── components/
+    │   │   ├── HeaderBar.vue         # 顶部工具栏
     │   │   ├── Viewport3D.vue        # Three.js 3D 渲染
     │   │   ├── ChatPanel.vue         # AI 对话面板
-    │   │   ├── HeaderBar.vue         # 顶部工具栏
-    │   │   └── FooterBar.vue         # 组件列表/属性面板
+    │   │   ├── ComponentPanel.vue    # 组件树 + 属性
+    │   │   ├── HistoryPanel.vue      # 历史版本
+    │   │   ├── SchemePanel.vue       # 方案管理
+    │   │   └── ToastNotification.vue # 通知组件
     │   └── stores/
     │       ├── cabinetStore.ts       # 柜子状态
     │       ├── chatStore.ts          # 对话状态
     │       └── websocketStore.ts     # WebSocket 连接
     └── vite.config.ts                # 含 API/WebSocket 代理
-```
-
-## 使用示例
-
-在右侧聊天面板输入自然语言指令：
-
-| 指令 | 效果 |
-|------|------|
-| 在中间加一块隔板 | 在柜体中心高度添加 shelf 组件 |
-| 把左侧板加高10cm | 修改左侧面板 height +100mm |
-| 删掉右边的门板 | 移除右侧门板组件 |
-| 换成橡木材料 | 修改 material 为 oak |
-| 柜子加宽到900mm | 修改柜体整体 length 为 900 |
-| 撤销 | 回退上一步操作 |
-
-## API 接口
-
-### REST
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/projects` | 创建项目 |
-| GET | `/api/projects/{id}` | 获取项目 |
-| PUT | `/api/projects/{id}` | 更新项目 |
-| DELETE | `/api/projects/{id}` | 删除项目 |
-| POST | `/api/projects/{id}/undo` | 撤销 |
-| POST | `/api/projects/{id}/redo` | 重做 |
-
-### WebSocket
-
-端点: `ws://host/ws/{project_id}`
-
-```
-客户端发送 → {"type": "chat_message", "text": "在中间加一块隔板"}
-服务端推送 ← {"type": "cabinet_update", "cabinet": {...}}
 ```
 
 ## 架构说明
@@ -154,3 +240,16 @@ npm run dev
 **Skills vs Tools**：
 - **Skills** = `SKILL.md` 文件，提供柜子编辑的领域知识（坐标系、尺寸规范、校验规则）
 - **Tools** = Python 函数，Agent 实际调用来执行增删改查操作
+
+## 响应式断点
+
+| 断点 | 设备 | 工具栏宽度 |
+|------|------|-----------|
+| < 768px | 移动端 | 100% |
+| 768-1023px | 平板 | 300px |
+| 1024-1439px | PC | 360px |
+| ≥ 1440px | 大屏 | 400px |
+
+## 许可证
+
+MIT

@@ -70,19 +70,32 @@
 | 颜色/材料直接修改 | ✅ | 直接调用 API，不经过 Agent，响应更快 |
 | 组件状态同步 | ✅ | 使用 v-show 保持组件状态，expandedIds 移到 store |
 
+### Phase 6: UI/UX 重构 ✅ 已完成
+
+| 功能项 | 状态 | 说明 |
+|--------|------|------|
+| Glassmorphism 风格 | ✅ | 半透明背景、模糊效果、柔和阴影 |
+| Dark Mode 深色主题 | ✅ | 深蓝渐变背景、靛蓝紫色调 |
+| 响应式布局 | ✅ | PC端/平板/移动端自适应 |
+| PC端布局 | ✅ | 顶部菜单 + 右侧工具栏(360px) + 左侧3D视图 |
+| 移动端布局 | ✅ | 顶部3D视图 + 中间菜单 + 底部工具栏 |
+| CSS 变量系统 | ✅ | 统一的颜色、间距、圆角、动画变量 |
+| 动画效果 | ✅ | 悬停上浮、滑入滑出、脉冲动画 |
+| 3D 场景优化 | ✅ | 多光源照明、木纹纹理、边缘线轮廓、阴影 |
+
 ---
 
 ## 前端组件完成情况
 
 | 组件 | 文件 | 状态 | 功能说明 |
 |------|------|------|----------|
-| HeaderBar | `HeaderBar.vue` | ✅ | 顶部导航栏（撤销/重做/保存） |
-| Viewport3D | `Viewport3D.vue` | ✅ | 3D 渲染视图 + 工具栏 + 点击选中 |
-| ChatPanel | `ChatPanel.vue` | ✅ | AI 对话面板 |
+| HeaderBar | `HeaderBar.vue` | ✅ | 顶部导航栏（撤销/重做/保存）Glassmorphism 风格 |
+| Viewport3D | `Viewport3D.vue` | ✅ | 3D 渲染视图 + 工具栏 + 点击选中 + 阴影 |
+| ChatPanel | `ChatPanel.vue` | ✅ | AI 对话面板 Glassmorphism 风格 |
 | ComponentPanel | `ComponentPanel.vue` | ✅ | 组件树 + 属性 + 颜色/材料选择 |
 | HistoryPanel | `HistoryPanel.vue` | ✅ | 历史版本列表 |
 | SchemePanel | `SchemePanel.vue` | ✅ | 方案管理（新建/切换/重命名/删除） |
-| ToastNotification | `ToastNotification.vue` | ✅ | Toast 通知组件 |
+| ToastNotification | `ToastNotification.vue` | ✅ | Toast 通知组件 Glassmorphism 风格 |
 
 ---
 
@@ -121,6 +134,41 @@
 
 ---
 
+## 设计系统
+
+### Glassmorphism + Dark Mode 风格
+
+**主色调：**
+- 主色：`#818cf8` (靛蓝紫)
+- 成功色：`#34d399` (翡翠绿)
+- 警告色：`#fbbf24` (琥珀黄)
+- 错误色：`#f87171` (珊瑚红)
+
+**Glassmorphism 效果：**
+- 半透明背景：`rgba(15, 23, 42, 0.6)`
+- 模糊效果：`backdrop-filter: blur(12px)`
+- 细边框：`rgba(148, 163, 184, 0.15)`
+- 柔和阴影：`0 8px 32px rgba(0, 0, 0, 0.3)`
+
+**3D 场景：**
+- 多光源照明（侧上方主光 + 补光）
+- 木纹法线贴图纹理
+- 黑色边缘线轮廓
+- ShadowMaterial 地面阴影
+
+---
+
+## 响应式断点
+
+| 断点 | 设备 | 工具栏宽度 |
+|------|------|-----------|
+| < 768px | 移动端 | 100% |
+| 768-1023px | 平板 | 300px |
+| 1024-1439px | PC | 360px |
+| ≥ 1440px | 大屏 | 400px |
+
+---
+
 ## 待开发功能
 
 ### 中优先级
@@ -143,6 +191,14 @@
 ---
 
 ## 最近更新
+
+### 2026-06-16
+- **UI 重构**：Glassmorphism + Dark Mode 风格
+- **响应式布局**：PC端/平板/移动端自适应
+- **3D 场景优化**：多光源照明、木纹纹理、边缘线轮廓、阴影
+- **动画效果**：悬停上浮、滑入滑出、脉冲动画、打字指示器
+- **CSS 变量系统**：统一的颜色、间距、圆角、动画变量
+- **保存按钮**：成功后 Toast 提示并刷新方案列表
 
 ### 2026-06-15
 - 修复 3D 视图点击子物体自动展开组件树的 bug
@@ -199,4 +255,4 @@ LLMtoCabinet_deeepseek/
 
 ---
 
-*最后更新：2026-06-15*
+*最后更新：2026-06-16*
