@@ -22,12 +22,28 @@ async def _ensure_user(session: AsyncSession, user_id: str = "default_user") -> 
     return user
 
 
+@router.get("")
+async def list_projects(session: AsyncSession = Depends(get_session)):
+    """获取所有方案列表"""
+    result = await session.execute(select(Project).order_by(Project.updated_at.desc()))
+    projects = result.scalars().all()
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "created_at": p.created_at.isoformat(),
+            "updated_at": p.updated_at.isoformat(),
+        }
+        for p in projects
+    ]
+
+
 @router.post("")
 async def create_project(name: str = "新柜子项目", session: AsyncSession = Depends(get_session)):
     """创建新项目（初始化默认柜子）"""
     user = await _ensure_user(session)
 
-    cabinet = create_default_cabinet()
+    cabinet = create_default_cabinet().model_copy(deep=True)
     cabinet_json = cabinet_to_json(cabinet)
 
     project = Project(
@@ -53,7 +69,7 @@ async def create_project(name: str = "新柜子项目", session: AsyncSession = 
 
 @router.get("/{project_id}")
 async def get_project(project_id: str, session: AsyncSession = Depends(get_session)):
-    """获取项目信息及柜子模型"""
+    """获取项目信息及柜子模型（切换方案时使用，从数据库加载并重置 manager）"""
     result = await session.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
     if not project:
@@ -61,10 +77,9 @@ async def get_project(project_id: str, session: AsyncSession = Depends(get_sessi
 
     cabinet = json_to_cabinet(project.cabinet_json)
 
-    # 确保 manager 已加载
+    # 切换方案时，重置 manager 为数据库中的数据
     manager = get_manager(project_id)
-    if manager.cabinet is None:
-        manager.load(cabinet)
+    manager.load(cabinet)
 
     return {
         "id": project.id,
@@ -77,20 +92,31 @@ async def get_project(project_id: str, session: AsyncSession = Depends(get_sessi
 
 @router.put("/{project_id}")
 async def update_project(project_id: str, name: str = None, session: AsyncSession = Depends(get_session)):
-    """更新项目信息"""
+    """更新项目信息，不存在则新建"""
     result = await session.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
-    if not project:
-        raise HTTPException(status_code=404, detail="项目不存在")
 
     manager = get_manager(project_id)
-    if name:
-        project.name = name
-    if manager.cabinet:
-        project.cabinet_json = cabinet_to_json(manager.cabinet)
+
+    if not project:
+        # 项目不存在，新建
+        user = await _ensure_user(session)
+        cabinet = manager.cabinet if manager.cabinet else create_default_cabinet().model_copy(deep=True)
+        project = Project(
+            id=project_id,
+            user_id=user.id,
+            name=name or "未命名方案",
+            cabinet_json=cabinet_to_json(cabinet),
+        )
+        session.add(project)
+    else:
+        if name:
+            project.name = name
+        if manager.cabinet:
+            project.cabinet_json = cabinet_to_json(manager.cabinet)
 
     await session.commit()
-    return {"id": project.id, "name": project.name, "message": "更新成功"}
+    return {"id": project.id, "name": project.name, "message": "保存成功"}
 
 
 @router.delete("/{project_id}")
@@ -151,4 +177,31 @@ async def get_history(project_id: str):
         "can_redo": manager.history.can_redo(),
         "undo_count": len(manager.history._undo_stack),
         "redo_count": len(manager.history._redo_stack),
+    }
+
+
+@router.get("/{project_id}/snapshots")
+async def get_snapshots(project_id: str):
+    """获取历史版本快照列表"""
+    manager = get_manager(project_id)
+    return {
+        "current_index": manager.history.get_current_index(),
+        "snapshots": manager.history.get_snapshot_list(),
+    }
+
+
+@router.post("/{project_id}/snapshots/{index}/restore")
+async def restore_snapshot(project_id: str, index: int):
+    """恢复到指定历史版本"""
+    manager = get_manager(project_id)
+    snapshot = manager.history.get_snapshot(index)
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="快照不存在")
+    from utils.serialization import json_to_cabinet
+    manager.cabinet = json_to_cabinet(snapshot)
+    manager.history._current_index = index
+    return {
+        "success": True,
+        "message": f"已恢复到版本 {index}",
+        "cabinet": manager.to_dict(),
     }

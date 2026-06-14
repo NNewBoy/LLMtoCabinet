@@ -42,10 +42,6 @@ watch(() => chatStore.currentStreamContent, () => {
 
 <template>
   <div class="chat-panel">
-    <div class="chat-header">
-      <span>AI 对话</span>
-    </div>
-
     <div class="messages" ref="messagesContainer">
       <div v-if="chatStore.messages.length === 0 && !chatStore.isStreaming" class="empty-hint">
         <p>输入自然语言指令来编辑柜子</p>
@@ -91,20 +87,9 @@ watch(() => chatStore.currentStreamContent, () => {
 
 <style scoped>
 .chat-panel {
-  width: 360px;
   display: flex;
   flex-direction: column;
-  background: #16213e;
-  border-left: 1px solid #0f3460;
-  flex-shrink: 0;
-}
-
-.chat-header {
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  border-bottom: 1px solid #0f3460;
-  background: #1a1a2e;
+  height: 100%;
 }
 
 .messages {

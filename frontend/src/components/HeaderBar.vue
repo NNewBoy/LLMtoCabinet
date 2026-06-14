@@ -1,9 +1,44 @@
 <script setup lang="ts">
 import { useWebSocketStore } from '../stores/websocketStore'
-import { ref } from 'vue'
+import { useCabinetStore } from '../stores/cabinetStore'
+import { ref, watch, onMounted } from 'vue'
 
 const wsStore = useWebSocketStore()
+const cabinetStore = useCabinetStore()
 const projectName = ref('标准橱柜')
+const canUndo = ref(false)
+const canRedo = ref(false)
+
+async function fetchHistoryStatus() {
+  if (!wsStore.currentProjectId) {
+    canUndo.value = false
+    canRedo.value = false
+    return
+  }
+  try {
+    const res = await fetch(`/api/projects/${wsStore.currentProjectId}/history`)
+    if (res.ok) {
+      const data = await res.json()
+      canUndo.value = data.can_undo
+      canRedo.value = data.can_redo
+    }
+  } catch {
+    canUndo.value = false
+    canRedo.value = false
+  }
+}
+
+onMounted(() => {
+  fetchHistoryStatus()
+})
+
+watch(() => wsStore.currentProjectId, () => {
+  fetchHistoryStatus()
+})
+
+watch(() => cabinetStore.cabinet, () => {
+  fetchHistoryStatus()
+}, { deep: true })
 
 function handleUndo() {
   wsStore.sendChatMessage('撤销上一步操作')
@@ -12,6 +47,16 @@ function handleUndo() {
 function handleRedo() {
   wsStore.sendChatMessage('重做上一步操作')
 }
+
+async function handleSave() {
+  try {
+    await fetch(`/api/projects/${wsStore.currentProjectId}`, { method: 'PUT' })
+  } catch (e) {
+    console.error('保存方案失败:', e)
+  }
+}
+
+defineExpose({ fetchHistoryStatus })
 </script>
 
 <template>
@@ -21,8 +66,9 @@ function handleRedo() {
       <span class="project-name">{{ projectName }}</span>
     </div>
     <div class="header-center">
-      <button class="btn" @click="handleUndo" :disabled="!wsStore.isConnected">↩ 撤销</button>
-      <button class="btn" @click="handleRedo" :disabled="!wsStore.isConnected">↪ 重做</button>
+      <button class="btn" @click="handleUndo" :disabled="!wsStore.isConnected || !canUndo">↩ 撤销</button>
+      <button class="btn" @click="handleRedo" :disabled="!wsStore.isConnected || !canRedo">↪ 重做</button>
+      <button class="btn btn-save" @click="handleSave">💾 保存</button>
     </div>
     <div class="header-right">
       <span class="status" :class="{ connected: wsStore.isConnected }">
@@ -85,6 +131,16 @@ function handleRedo() {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-save {
+  border-color: #4ecca3;
+  color: #4ecca3;
+}
+
+.btn-save:hover {
+  background: #4ecca3;
+  color: #1a1a2e;
 }
 
 .header-right {

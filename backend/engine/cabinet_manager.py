@@ -12,12 +12,14 @@ class CabinetManager:
         self.history: OperationHistory = OperationHistory()
 
     def load(self, cabinet: Cabinet):
-        """加载柜子对象"""
+        """加载柜子对象（切换方案时清空操作历史）"""
         self.cabinet = cabinet
+        self.history = OperationHistory()
+        self.history.save_snapshot(cabinet, "初始状态")
 
     def load_default(self):
         """加载默认柜子模板"""
-        self.cabinet = create_default_cabinet()
+        self.cabinet = create_default_cabinet().model_copy(deep=True)
 
     def query(self, detail_level: str = "summary", component_id: str = None) -> dict:
         """查询柜子信息"""
@@ -85,6 +87,7 @@ class CabinetManager:
             if not parent:
                 return {"error": f"父组件 {parent_id} 不存在"}
             parent.children.append(component)
+            self.history.save_snapshot(self.cabinet, f"添加 {name} 到 {parent.name}")
             return {
                 "success": True,
                 "message": f"已添加 {name} 到 {parent.name} 的子组件",
@@ -93,6 +96,7 @@ class CabinetManager:
             }
 
         self.cabinet.components.append(component)
+        self.history.save_snapshot(self.cabinet, f"添加 {name}")
         return {
             "success": True,
             "message": f"已添加 {name}",
@@ -112,6 +116,7 @@ class CabinetManager:
         self.history.push(self.cabinet, f"删除 {comp.name}")
 
         removed = self.cabinet.remove_component(component_id)
+        self.history.save_snapshot(self.cabinet, f"删除 {removed.name}")
         return {
             "success": True,
             "message": f"已删除 {removed.name}",
@@ -141,6 +146,8 @@ class CabinetManager:
             elif hasattr(target, key):
                 setattr(target, key, value)
 
+        desc = f"修改柜子" if target_id == "cabinet" else f"修改 {target.name}"
+        self.history.save_snapshot(self.cabinet, desc)
         return {
             "success": True,
             "message": f"修改完成",
@@ -157,6 +164,7 @@ class CabinetManager:
             return {"success": False, "message": "没有可以撤销的操作"}
 
         self.cabinet = json_to_cabinet(entry["snapshot"])
+        self.history.save_snapshot(self.cabinet, f"撤销: {entry['description']}")
         return {
             "success": True,
             "message": f"已撤销: {entry['description']}",
@@ -173,6 +181,7 @@ class CabinetManager:
             return {"success": False, "message": "没有可以重做的操作"}
 
         self.cabinet = json_to_cabinet(entry["snapshot"])
+        self.history.save_snapshot(self.cabinet, f"重做: {entry['description']}")
         return {
             "success": True,
             "message": f"已重做: {entry['description']}",

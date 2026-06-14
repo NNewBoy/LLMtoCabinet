@@ -7,34 +7,52 @@ import { useChatStore } from './chatStore'
 export const useWebSocketStore = defineStore('websocket', () => {
   const isConnected = ref(false)
   const reconnectAttempts = ref(0)
+  const currentProjectId = ref(localStorage.getItem('lastProjectId') || 'default')
   let ws: WebSocket | null = null
-  let projectId: string | null = null
+  let connectionGeneration = 0
 
   function connect(pid: string) {
-    projectId = pid
+    currentProjectId.value = pid
+    localStorage.setItem('lastProjectId', pid)
+    connectionGeneration++
+    const myGeneration = connectionGeneration
+
+    // 关闭旧连接
+    if (ws) {
+      ws.onclose = null
+      ws.close()
+      ws = null
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const url = `${protocol}//${window.location.host}/ws/${pid}`
 
     ws = new WebSocket(url)
 
     ws.onopen = () => {
+      if (myGeneration !== connectionGeneration) return
       isConnected.value = true
       reconnectAttempts.value = 0
-      console.log('WebSocket 已连接')
+      console.log(`WebSocket 已连接: ${pid}`)
     }
 
     ws.onmessage = (event) => {
+      if (myGeneration !== connectionGeneration) return
       const data: WsMessage = JSON.parse(event.data)
       handleMessage(data)
     }
 
     ws.onclose = () => {
+      if (myGeneration !== connectionGeneration) return
       isConnected.value = false
-      console.log('WebSocket 已断开')
+      console.log(`WebSocket 已断开: ${pid}`)
       // 自动重连
       if (reconnectAttempts.value < 5) {
         reconnectAttempts.value++
-        setTimeout(() => connect(pid), 2000 * reconnectAttempts.value)
+        setTimeout(() => {
+          if (myGeneration !== connectionGeneration) return
+          connect(pid)
+        }, 2000 * reconnectAttempts.value)
       }
     }
 
@@ -93,16 +111,20 @@ export const useWebSocketStore = defineStore('websocket', () => {
   }
 
   function disconnect() {
+    connectionGeneration++
     if (ws) {
+      ws.onclose = null
       ws.close()
       ws = null
     }
     isConnected.value = false
+    reconnectAttempts.value = 0
   }
 
   return {
     isConnected,
     reconnectAttempts,
+    currentProjectId,
     connect,
     sendChatMessage,
     requestSync,

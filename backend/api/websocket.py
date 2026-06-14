@@ -4,7 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from agent.cabinet_agent import create_cabinet_agent
 from agent.tools import get_manager
 from engine.cabinet_manager import CabinetManager
-from utils.serialization import cabinet_to_dict
+from utils.serialization import cabinet_to_dict, json_to_cabinet
 
 router = APIRouter()
 
@@ -49,10 +49,20 @@ ws_manager = ConnectionManager()
 async def websocket_endpoint(ws: WebSocket, project_id: str):
     await ws_manager.connect(project_id, ws)
 
-    # 发送当前柜子状态（如果没有则加载默认柜子）
+    # 页面初始化时：manager 有数据则直接用，否则从数据库加载
     manager = get_manager(project_id)
     if manager.cabinet is None:
-        manager.load_default()
+        # 尝试从数据库加载
+        from database.connection import async_session
+        from models.database import Project
+        from sqlalchemy import select
+        async with async_session() as session:
+            result = await session.execute(select(Project).where(Project.id == project_id))
+            project = result.scalar_one_or_none()
+            if project:
+                manager.load(json_to_cabinet(project.cabinet_json))
+            else:
+                manager.load_default()
     await ws.send_json({
         "type": "cabinet_update",
         "cabinet": cabinet_to_dict(manager.cabinet),
