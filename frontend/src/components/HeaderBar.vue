@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useWebSocketStore } from '../stores/websocketStore'
+import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { ref, watch, onMounted } from 'vue'
 
@@ -50,9 +50,16 @@ function handleRedo() {
 
 async function handleSave() {
   try {
-    await fetch(`/api/projects/${wsStore.currentProjectId}`, { method: 'PUT' })
+    const res = await fetch(`/api/projects/${wsStore.currentProjectId}`, { method: 'PUT' })
+    if (res.ok) {
+      showToast('保存成功', 'success')
+      wsStore.refreshSchemeList()
+    } else {
+      showToast('保存失败', 'error')
+    }
   } catch (e) {
     console.error('保存方案失败:', e)
+    showToast('保存失败', 'error')
   }
 }
 

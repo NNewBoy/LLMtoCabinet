@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import { useChatStore } from '../stores/chatStore'
@@ -27,6 +27,11 @@ async function loadSchemes() {
     console.error('加载方案列表失败:', e)
   }
 }
+
+// 监听 schemeListVersion 变化刷新列表
+watch(() => wsStore.schemeListVersion, () => {
+  loadSchemes()
+})
 
 async function switchScheme(id: string) {
   try {

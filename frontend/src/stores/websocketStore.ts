@@ -11,7 +11,7 @@ export function setToastCallback(callback: (message: string, type: string) => vo
   toastCallback = callback
 }
 
-function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
+export function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
   if (toastCallback) {
     toastCallback(message, type)
   }
@@ -21,6 +21,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
   const isConnected = ref(false)
   const reconnectAttempts = ref(0)
   const currentProjectId = ref(localStorage.getItem('lastProjectId') || 'default')
+  const schemeListVersion = ref(0) // 用于触发方案列表刷新
   let ws: WebSocket | null = null
   let connectionGeneration = 0
 
@@ -133,6 +134,10 @@ export const useWebSocketStore = defineStore('websocket', () => {
     ws.send(JSON.stringify({ type: 'select_component', component_id: componentId }))
   }
 
+  function refreshSchemeList() {
+    schemeListVersion.value++
+  }
+
   function disconnect() {
     connectionGeneration++
     if (ws) {
@@ -148,10 +153,12 @@ export const useWebSocketStore = defineStore('websocket', () => {
     isConnected,
     reconnectAttempts,
     currentProjectId,
+    schemeListVersion,
     connect,
     sendChatMessage,
     requestSync,
     selectComponent,
+    refreshSchemeList,
     disconnect,
   }
 })

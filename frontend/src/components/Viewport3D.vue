@@ -60,21 +60,51 @@ function initScene() {
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.shadowMap.enabled = true
 
-  // 光照
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
+  // 光照 - 侧上方光源设置以显示板件轮廓
+  // 环境光 - 提供基础照明
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
   scene.add(ambientLight)
 
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
-  dirLight.position.set(1000, 2000, 500)
+  // 主光源 - 从侧上方照射，阴影投到侧后方（缩短阴影）
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.9)
+  dirLight.position.set(-1500, 4000, -1500)
+  dirLight.target.position.set(0, 0, 0)
+  scene.add(dirLight.target)
   dirLight.castShadow = true
+  dirLight.shadow.mapSize.width = 2048
+  dirLight.shadow.mapSize.height = 2048
+  dirLight.shadow.camera.near = 100
+  dirLight.shadow.camera.far = 8000
+  dirLight.shadow.camera.left = -1500
+  dirLight.shadow.camera.right = 1500
+  dirLight.shadow.camera.top = 1500
+  dirLight.shadow.camera.bottom = -1500
+  dirLight.shadow.bias = -0.001
+  dirLight.shadow.normalBias = 0.02
   scene.add(dirLight)
 
-  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3)
-  dirLight2.position.set(-500, 500, -500)
+  // 补光1 - 从另一侧上方照射
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4)
+  dirLight2.position.set(-2000, 2500, -1000)
   scene.add(dirLight2)
+
+  // 补光2 - 从正面侧上方照射
+  const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.3)
+  dirLight3.position.set(0, 2000, -2500)
+  scene.add(dirLight3)
+
+  // 地面 - 接收阴影
+  const groundGeometry = new THREE.PlaneGeometry(4000, 4000)
+  const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.3 })
+  const ground = new THREE.Mesh(groundGeometry, groundMaterial)
+  ground.rotation.x = -Math.PI / 2
+  ground.position.y = -1
+  ground.receiveShadow = true
+  scene.add(ground)
 
   // 地面网格
   const gridHelper = new THREE.GridHelper(2000, 20, 0x444466, 0x333355)
+  gridHelper.position.y = 0
   scene.add(gridHelper)
 
   // 轨道控制器
@@ -192,14 +222,55 @@ function renderCabinet(cabinet: Cabinet) {
   doorsOpen.value = false
 }
 
+// 创建木纹法线贴图
+function createWoodNormalMap(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')!
+
+  // 填充基础色
+  ctx.fillStyle = '#8080ff'
+  ctx.fillRect(0, 0, 256, 256)
+
+  // 绘制木纹线条
+  for (let i = 0; i < 60; i++) {
+    const y = Math.random() * 256
+    const width = 1 + Math.random() * 3
+    const offset = (Math.random() - 0.5) * 20
+
+    ctx.strokeStyle = `rgba(${128 + offset}, ${128 + offset}, 255, 0.3)`
+    ctx.lineWidth = width
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+
+    for (let x = 0; x < 256; x += 10) {
+      ctx.lineTo(x, y + Math.sin(x * 0.05) * 5 + Math.random() * 2)
+    }
+    ctx.stroke()
+  }
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(2, 2)
+  return texture
+}
+
+const woodNormalMap = createWoodNormalMap()
+
 function renderComponent(comp: CabinetComponent, ox: number, oy: number, oz: number) {
   const geometry = new THREE.BoxGeometry(comp.length, comp.height, comp.width)
 
   const color = hexToNumber(comp.color)
-  const material = new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshPhysicalMaterial({
     color,
     roughness: 0.6,
-    metalness: 0.1,
+    metalness: 0.02,
+    clearcoat: 0.1,
+    clearcoatRoughness: 0.4,
+    normalMap: woodNormalMap,
+    normalScale: new THREE.Vector2(0.3, 0.3),
     transparent: false,
     opacity: 1.0,
     side: THREE.DoubleSide,
@@ -208,6 +279,12 @@ function renderComponent(comp: CabinetComponent, ox: number, oy: number, oz: num
   const mesh = new THREE.Mesh(geometry, material)
   mesh.castShadow = true
   mesh.receiveShadow = true
+
+  // 添加边缘线以显示轮廓
+  const edges = new THREE.EdgesGeometry(geometry)
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.12, transparent: true })
+  const wireframe = new THREE.LineSegments(edges, lineMaterial)
+  mesh.add(wireframe)
 
   mesh.position.set(
     ox + comp.position.x + comp.length / 2,
@@ -512,19 +589,60 @@ function toggleDoors() {
 // ==================== 复原 ====================
 
 function resetAll() {
+  // 先关闭门板/抽屉（如果已打开）
+  if (doorsOpen.value) {
+    meshes.forEach((mesh, id) => {
+      const type = mesh.userData.componentType as string
+      if (type === 'door' || type === 'drawer') {
+        const orig = doorOriginals.get(id)
+        if (!orig) return
+
+        if (type === 'door' && orig.pivotGroup) {
+          const group = orig.pivotGroup
+          // 将子物体移回 scene
+          if (orig.childMeshIds) {
+            for (const cid of orig.childMeshIds) {
+              const childMesh = meshes.get(cid)
+              const childOrig = doorOriginals.get(cid)
+              if (childMesh && childOrig) {
+                scene.attach(childMesh)
+                childMesh.position.set(childOrig.posX, childOrig.posY, childOrig.posZ)
+                childMesh.rotation.set(0, childOrig.rotY, 0)
+              }
+            }
+          }
+          // 将门板移回 scene
+          scene.attach(mesh)
+          scene.remove(group)
+          mesh.position.set(orig.posX, orig.posY, orig.posZ)
+          mesh.rotation.y = orig.rotY
+        } else if (type === 'drawer') {
+          mesh.position.z = orig.posZ
+          // 子物体也还原
+          if (orig.childMeshIds) {
+            for (const cid of orig.childMeshIds) {
+              const childMesh = meshes.get(cid)
+              const childOrig = doorOriginals.get(cid)
+              if (childMesh && childOrig) {
+                childMesh.position.z = childOrig.posZ
+              }
+            }
+          }
+        }
+      }
+    })
+    doorOriginals.clear()
+  }
+
   // 还原位置
   meshes.forEach((mesh, id) => {
     const origPos = originalPositions.get(id)
     const origRot = originalRotations.get(id)
     if (origPos) {
-      addTween(mesh, 'position', 'x', origPos.x)
-      addTween(mesh, 'position', 'y', origPos.y)
-      addTween(mesh, 'position', 'z', origPos.z)
+      mesh.position.copy(origPos)
     }
     if (origRot) {
-      addTween(mesh, 'rotation', 'x', origRot.x)
-      addTween(mesh, 'rotation', 'y', origRot.y)
-      addTween(mesh, 'rotation', 'z', origRot.z)
+      mesh.rotation.copy(origRot)
     }
   })
 
