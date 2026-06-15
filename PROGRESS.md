@@ -126,9 +126,9 @@
 | DELETE | `/api/projects/{id}` | 删除项目 |
 | GET | `/api/projects/{id}/cabinet` | 获取柜子模型 |
 | PUT | `/api/projects/{id}/components/{cid}` | 修改组件属性（颜色/材料等） |
-| POST | `/api/projects/{id}/undo` | 撤销操作 |
-| POST | `/api/projects/{id}/redo` | 重做操作 |
-| GET | `/api/projects/{id}/history` | 获取历史状态 |
+| POST | `/api/projects/{id}/undo` | 撤销操作（直接调用 CabinetManager） |
+| POST | `/api/projects/{id}/redo` | 重做操作（直接调用 CabinetManager） |
+| GET | `/api/projects/{id}/history` | 获取历史状态（can_undo/can_redo） |
 | GET | `/api/projects/{id}/snapshots` | 获取快照列表 |
 | POST | `/api/projects/{id}/snapshots/{idx}/restore` | 恢复快照 |
 
@@ -181,6 +181,17 @@
 - [ ] 协作编辑
 - [ ] 版本历史对比
 
+### 已完成 (2026-06-16)
+- [x] 撤销/重做功能（HTTP 接口，无需 Agent）
+- [x] 默认模型干涉修复
+- [x] 选中高亮优化（蓝色边框描边）
+- [x] 移动端长按优化
+- [x] 对话完成前禁止新对话
+- [x] 新增组件类型：single_door、double_door、handle
+- [x] 双开门自动创建左右门子组件
+- [x] 双开门开合动画（左门向左开，右门向右开）
+- [x] 旧数据兼容迁移（door → single_door）
+
 ---
 
 ## 技术债务
@@ -192,7 +203,27 @@
 
 ## 最近更新
 
-### 2026-06-16
+### 2026-06-16 (晚上)
+- **组件类型扩展**：新增 single_door（单开门）、double_door（双开门）、handle（拉手）
+- **双开门支持**：添加双开门时自动创建左右两扇门子组件
+- **双开门动画**：左门向左开（绕左侧边），右门向右开（绕右侧边）
+- **数据迁移**：旧数据中的 door 类型自动迁移为 single_door
+- **子组件渲染**：正确处理双开门子组件的相对坐标
+- **递归查找**：修复 findChildMeshIds 支持嵌套组件查找
+
+### 2026-06-16 (下午)
+- **撤销/重做优化**：改为 HTTP 接口直接调用 CabinetManager，无需经过 Agent
+- **撤销/重做按钮**：统一放在 HeaderBar 中，Viewport3D 移除重复按钮
+- **键盘快捷键**：支持 Ctrl+Z 撤销、Ctrl+Y 重做
+- **默认模型修复**：修复顶板、底板、背板与侧板的干涉问题
+- **选中高亮优化**：改为蓝色边框描边，模型颜色不变
+- **描边穿透**：设置 depthTest/depthWrite/renderOrder 确保描边不被遮挡
+- **描边加粗**：使用 Line2 + LineMaterial 实现真正的线宽控制
+- **移动端优化**：修复长按可交互项时的蓝色框框问题
+- **对话限制**：AI 回复完成前禁止发送新消息
+- **can_undo/can_redo**：后端添加历史状态查询方法
+
+### 2026-06-16 (上午)
 - **UI 重构**：Glassmorphism + Dark Mode 风格
 - **响应式布局**：PC端/平板/移动端自适应
 - **3D 场景优化**：多光源照明、木纹纹理、边缘线轮廓、阴影
@@ -255,4 +286,4 @@ LLMtoCabinet_deeepseek/
 
 ---
 
-*最后更新：2026-06-16*
+*最后更新：2026-06-16 晚上*

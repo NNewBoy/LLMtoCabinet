@@ -215,6 +215,15 @@ function onResize() {
 }
 
 function renderCabinet(cabinet: Cabinet) {
+  // 清除门板动画的 pivotGroup（开门状态下 mesh 在 pivotGroup 中，不在 scene 直接子节点）
+  doorOriginals.forEach(orig => {
+    if (orig.pivotGroup) {
+      scene.remove(orig.pivotGroup)
+    }
+  })
+  doorOriginals.clear()
+  tweens = []
+
   // 清除旧模型
   meshes.forEach(mesh => scene.remove(mesh))
   meshes.clear()
@@ -275,7 +284,46 @@ function createWoodNormalMap(): THREE.CanvasTexture {
 
 const woodNormalMap = createWoodNormalMap()
 
-function renderComponent(comp: CabinetComponent, ox: number, oy: number, oz: number) {
+function renderComponent(
+  comp: CabinetComponent,
+  ox: number,
+  oy: number,
+  oz: number,
+  parentX: number = 0,
+  parentY: number = 0,
+  parentZ: number = 0,
+  doorSide?: 'left' | 'right'
+) {
+  // double_door 是容器类型，只渲染子组件，不渲染自身实体
+  if (comp.type === 'double_door') {
+    const absX = parentX + comp.position.x
+    const absY = parentY + comp.position.y
+    const absZ = parentZ + comp.position.z
+    
+    // 创建不可见的占位符用于点击选择
+    const placeholderGeom = new THREE.BoxGeometry(comp.length, comp.height, comp.width || 1)
+    const placeholderMat = new THREE.MeshBasicMaterial({ visible: false })
+    const placeholder = new THREE.Mesh(placeholderGeom, placeholderMat)
+    placeholder.position.set(
+      ox + absX + comp.length / 2,
+      oy + absY + comp.height / 2,
+      oz + absZ + (comp.width || 1) / 2
+    )
+    placeholder.userData = {
+      componentId: comp.id,
+      componentName: comp.name,
+      componentType: comp.type,
+    }
+    scene.add(placeholder)
+    meshes.set(comp.id, placeholder)
+    
+    // 递归渲染子组件，为双开门的子门添加标记
+    comp.children.forEach((child, index) => {
+      renderComponent(child, ox, oy, oz, absX, absY, absZ, index === 0 ? 'left' : 'right')
+    })
+    return
+  }
+
   const geometry = new THREE.BoxGeometry(comp.length, comp.height, comp.width)
 
   const color = hexToNumber(comp.color)
@@ -302,10 +350,15 @@ function renderComponent(comp: CabinetComponent, ox: number, oy: number, oz: num
   const wireframe = new THREE.LineSegments(edges, lineMaterial)
   mesh.add(wireframe)
 
+  // 子组件的 position 是相对于父组件的，需要加上父组件位置
+  const absX = parentX + comp.position.x
+  const absY = parentY + comp.position.y
+  const absZ = parentZ + comp.position.z
+
   mesh.position.set(
-    ox + comp.position.x + comp.length / 2,
-    oy + comp.position.y + comp.height / 2,
-    oz + comp.position.z + comp.width / 2
+    ox + absX + comp.length / 2,
+    oy + absY + comp.height / 2,
+    oz + absZ + comp.width / 2
   )
 
   mesh.rotation.set(
@@ -318,6 +371,7 @@ function renderComponent(comp: CabinetComponent, ox: number, oy: number, oz: num
     componentId: comp.id,
     componentName: comp.name,
     componentType: comp.type,
+    doorSide: doorSide, // 'left' 或 'right'，用于双开门子门
   }
   mesh.visible = comp.is_visible
 
@@ -329,8 +383,9 @@ function renderComponent(comp: CabinetComponent, ox: number, oy: number, oz: num
   originalMaterials.set(comp.id, material.clone())
   originalRotations.set(comp.id, mesh.rotation.clone())
 
+  // 递归渲染子组件，传入当前组件的绝对位置作为父位置
   for (const child of comp.children) {
-    renderComponent(child, ox, oy, oz)
+    renderComponent(child, ox, oy, oz, absX, absY, absZ)
   }
 }
 
@@ -429,16 +484,34 @@ let doorOriginals: Map<string, {
   parent: THREE.Object3D
   posX: number; posY: number; posZ: number
   rotY: number
+  worldPosX?: number; worldPosY?: number; worldPosZ?: number
   pivotGroup?: THREE.Group
   childMeshIds?: string[]
 }> = new Map()
+
+// 判断是否是门板类型（double_door 是容器，其子组件 single_door 各自独立动画）
+function isDoorType(type: string): boolean {
+  return type === 'single_door'
+}
+
+// 递归查找组件
+function findComponent(components: any[], id: string): any {
+  for (const comp of components) {
+    if (comp.id === id) return comp
+    if (comp.children) {
+      const found = findComponent(comp.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
 
 // 查找某个组件的所有子组件 mesh ID
 function findChildMeshIds(parentId: string): string[] {
   const ids: string[] = []
   const cabinet = cabinetStore.cabinet
   if (!cabinet) return ids
-  const parent = cabinet.components.find(c => c.id === parentId)
+  const parent = findComponent(cabinet.components, parentId)
   if (parent && parent.children) {
     for (const child of parent.children) {
       if (meshes.has(child.id)) ids.push(child.id)
@@ -452,33 +525,43 @@ function toggleDoors() {
     // 关闭：动画还原
     meshes.forEach((mesh, id) => {
       const type = mesh.userData.componentType as string
-      if (type === 'door' || type === 'drawer') {
+      if (isDoorType(type) || type === 'drawer') {
         const orig = doorOriginals.get(id)
         if (!orig) return
 
-        if (type === 'door' && orig.pivotGroup) {
+        if (isDoorType(type) && orig.pivotGroup) {
           // 先动画关闭 pivot group 旋转
           addTween(orig.pivotGroup, 'rotation', 'y', 0, 0.6)
           // 动画完成后移除 group 并还原 mesh（延迟执行）
           setTimeout(() => {
             const group = orig.pivotGroup!
-            // 先将子物体移回 scene 并还原位置
+            
+            // 先将子物体移回父组件并还原位置
             if (orig.childMeshIds) {
               for (const cid of orig.childMeshIds) {
                 const childMesh = meshes.get(cid)
                 const childOrig = doorOriginals.get(cid)
                 if (childMesh && childOrig) {
-                  scene.attach(childMesh)
+                  // 移出 pivotGroup
+                  group.remove(childMesh)
+                  // 找到原始父组件并添加回去
+                  const originalParent = childOrig.parent
+                  originalParent.add(childMesh)
+                  // 还原局部坐标
                   childMesh.position.set(childOrig.posX, childOrig.posY, childOrig.posZ)
                   childMesh.rotation.set(0, childOrig.rotY, 0)
                 }
               }
             }
-            // 再将门板移回 scene
-            scene.attach(mesh)
-            scene.remove(group)
+            
+            // 将门板移回原始父组件
+            group.remove(mesh)
+            orig.parent.add(mesh)
             mesh.position.set(orig.posX, orig.posY, orig.posZ)
             mesh.rotation.y = orig.rotY
+            
+            // 移除 pivotGroup
+            scene.remove(group)
           }, 650)
         } else if (type === 'drawer') {
           addTween(mesh, 'position', 'z', orig.posZ)
@@ -504,8 +587,14 @@ function toggleDoors() {
       const type = mesh.userData.componentType as string
       const id = mesh.userData.componentId as string
 
-      if (type === 'door') {
+      if (isDoorType(type)) {
         const childIds = findChildMeshIds(id)
+        const doorSide = mesh.userData.doorSide as string | undefined
+
+        // 保存世界坐标用于还原
+        const worldPos = new THREE.Vector3()
+        mesh.getWorldPosition(worldPos)
+        const worldRot = mesh.rotation.y
 
         // 备份
         doorOriginals.set(id, {
@@ -514,30 +603,55 @@ function toggleDoors() {
           posY: mesh.position.y,
           posZ: mesh.position.z,
           rotY: mesh.rotation.y,
+          worldPosX: worldPos.x,
+          worldPosY: worldPos.y,
+          worldPosZ: worldPos.z,
           childMeshIds: childIds,
         })
 
-        // 计算门板左侧边在世界坐标中的 X 位置
         const geom = mesh.geometry as THREE.BoxGeometry
         geom.computeBoundingBox()
         const bbox = geom.boundingBox!
         const halfLength = (bbox.max.x - bbox.min.x) / 2
-        const pivotX = mesh.position.x - halfLength
+        
+        // 根据是左门还是右门决定 pivot 位置和旋转方向
+        let pivotX: number
+        let rotateAngle: number
+        
+        if (doorSide === 'right') {
+          // 右门：pivot 在右侧边，向右旋转（负角度）
+          pivotX = mesh.position.x + halfLength
+          rotateAngle = -THREE.MathUtils.degToRad(120)
+        } else {
+          // 左门或普通单开门：pivot 在左侧边，向左旋转（正角度）
+          pivotX = mesh.position.x - halfLength
+          rotateAngle = THREE.MathUtils.degToRad(120)
+        }
 
-        // 创建 pivot group 放在左侧边位置
+        // 计算 pivot 的世界坐标
+        const pivotWorldX = worldPos.x + (pivotX - mesh.position.x)
+        
+        // 创建 pivot group 放在世界坐标系
         const pivotGroup = new THREE.Group()
-        pivotGroup.position.set(pivotX, mesh.position.y, mesh.position.z)
+        pivotGroup.position.set(pivotWorldX, worldPos.y, worldPos.z)
         scene.add(pivotGroup)
 
-        // 将门板移入 group
+        // 将门板移入 group（使用世界坐标）
         scene.remove(mesh)
         pivotGroup.add(mesh)
-        mesh.position.set(halfLength, 0, 0)
+        // 门板相对于 pivot 的位置
+        mesh.position.x = doorSide === 'right' ? -halfLength : halfLength
+        mesh.position.y = 0
+        mesh.position.z = 0
+        mesh.rotation.y = 0
 
         // 将子物体（拉手等）也移入 group
         for (const cid of childIds) {
           const childMesh = meshes.get(cid)
           if (childMesh) {
+            const childWorldPos = new THREE.Vector3()
+            childMesh.getWorldPosition(childWorldPos)
+            
             // 备份子物体原始位置
             doorOriginals.set(cid, {
               parent: childMesh.parent!,
@@ -545,20 +659,23 @@ function toggleDoors() {
               posY: childMesh.position.y,
               posZ: childMesh.position.z,
               rotY: childMesh.rotation.y,
+              worldPosX: childWorldPos.x,
+              worldPosY: childWorldPos.y,
+              worldPosZ: childWorldPos.z,
             })
             scene.remove(childMesh)
             pivotGroup.add(childMesh)
-            // 转换为相对于 pivot 的局部坐标（保持 Y 不变）
-            childMesh.position.x -= pivotX
-            childMesh.position.y -= pivotGroup.position.y
-            childMesh.position.z -= pivotGroup.position.z
+            // 转换为相对于 pivot 的局部坐标
+            childMesh.position.x = childWorldPos.x - pivotWorldX
+            childMesh.position.y = 0
+            childMesh.position.z = childWorldPos.z - worldPos.z
           }
         }
 
         doorOriginals.get(id)!.pivotGroup = pivotGroup
 
-        // 旋转 pivot group 实现门板绕左侧边向外旋转 120°
-        addTween(pivotGroup, 'rotation', 'y', THREE.MathUtils.degToRad(120))
+        // 旋转 pivot group
+        addTween(pivotGroup, 'rotation', 'y', rotateAngle)
       } else if (type === 'drawer') {
         // 计算抽屉拉出距离 = 深度的 2/3
         const geom = mesh.geometry as THREE.BoxGeometry
@@ -609,29 +726,33 @@ function resetAll() {
   if (doorsOpen.value) {
     meshes.forEach((mesh, id) => {
       const type = mesh.userData.componentType as string
-      if (type === 'door' || type === 'drawer') {
+      if (isDoorType(type) || type === 'drawer') {
         const orig = doorOriginals.get(id)
         if (!orig) return
 
-        if (type === 'door' && orig.pivotGroup) {
+        if (isDoorType(type) && orig.pivotGroup) {
           const group = orig.pivotGroup
-          // 将子物体移回 scene
+          // 将子物体移回父组件
           if (orig.childMeshIds) {
             for (const cid of orig.childMeshIds) {
               const childMesh = meshes.get(cid)
               const childOrig = doorOriginals.get(cid)
               if (childMesh && childOrig) {
-                scene.attach(childMesh)
+                group.remove(childMesh)
+                const originalParent = childOrig.parent
+                originalParent.add(childMesh)
                 childMesh.position.set(childOrig.posX, childOrig.posY, childOrig.posZ)
                 childMesh.rotation.set(0, childOrig.rotY, 0)
               }
             }
           }
-          // 将门板移回 scene
-          scene.attach(mesh)
-          scene.remove(group)
+          // 将门板移回父组件
+          group.remove(mesh)
+          orig.parent.add(mesh)
           mesh.position.set(orig.posX, orig.posY, orig.posZ)
           mesh.rotation.y = orig.rotY
+          // 移除 pivotGroup
+          scene.remove(group)
         } else if (type === 'drawer') {
           mesh.position.z = orig.posZ
           // 子物体也还原

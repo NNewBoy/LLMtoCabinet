@@ -12,9 +12,11 @@ export type ComponentType =
   | 'top_panel'
   | 'bottom_panel'
   | 'shelf'
-  | 'door'
+  | 'single_door'
+  | 'double_door'
   | 'drawer'
   | 'divider'
+  | 'handle'
   | 'custom'
 
 export interface CabinetComponent {

@@ -11,9 +11,11 @@ class ComponentType(str, Enum):
     TOP_PANEL = "top_panel"
     BOTTOM_PANEL = "bottom_panel"
     SHELF = "shelf"
-    DOOR = "door"
+    SINGLE_DOOR = "single_door"
+    DOUBLE_DOOR = "double_door"
     DRAWER = "drawer"
     DIVIDER = "divider"
+    HANDLE = "handle"
     CUSTOM = "custom"
 
 

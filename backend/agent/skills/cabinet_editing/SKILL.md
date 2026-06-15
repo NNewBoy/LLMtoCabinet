@@ -28,7 +28,24 @@ description: >
 - 顶/底板 (top/bottom_panel)：length=柜长, width=柜深, height=板厚
 - 背板 (back_panel)：length=柜长, width=板厚, height=柜高
 - 隔板 (shelf)：length=柜内宽, width=柜深, height=板厚
-- 门板 (door)：length=门宽, width=板厚, height=门高
+- 门板/单开门（single_door）：length=门宽, width=板厚, height=门高，绕左侧边旋转打开
+- 双开门（double_door）：length=门宽, width=板厚, height=门高，两块 single_door（左门和右门）
+  - 添加 double_door 时，系统会自动创建两块 single_door 子组件
+  - 左门：position.x=0, length=柜内宽/2
+  - 右门：position.x=柜内宽/2, length=柜内宽/2
+- 拉手 (handle)：通常作为门板的子组件，使用 parent_id 添加
+
+## 双开门结构说明
+添加 double_door 时，数据结构如下：
+```
+double_door (父组件)
+├── left_door (single_door, children[0])
+│   └── handle (可选拉手)
+└── right_door (single_door, children[1])
+    └── handle (可选拉手)
+```
+- 父组件 double_door 的 dimensions 表示整个门板区域
+- 子组件 single_door 的 position 是相对于父组件的坐标
 
 ## 编辑操作流程
 1. 先调用 query_cabinet 查看当前柜子结构
@@ -46,7 +63,7 @@ description: >
 ## 子组件规则
 - 拉手、铰链、滑轨等五金配件必须作为其所属板件的子组件（children），不能与板件同级
 - 添加子组件时需要传入 parent_id（父组件的 ID），position 是相对于父组件的坐标
-- 例如：给门板加拉手 → add_component(parent_id="门板ID", type="custom", name="拉手", ...)
+- 拉手使用 type="handle"，例如：给门板加拉手 → add_component(parent_id="门板ID", type="handle", name="拉手", ...)
 
 ## 常见场景（附完整参数示例，假设柜子 800x600x2000，侧板厚18mm）
 - "在中间加一块隔板" → add_component(type="shelf", name="中层隔板", position={"x":18,"y":1000,"z":0}, dimensions={"length":764,"width":600,"height":18})
@@ -54,3 +71,7 @@ description: >
 - "把侧板加高" → modify_component(target_id="left_panel", properties={"height": 新高度})
 - "删除中间的隔板" → 先 query_cabinet 获取隔板ID，再 remove_component
 - "换成橡木材料" → modify_component(target_id=组件ID, properties={"material": "oak"})
+- "加一扇单开门" → add_component(type="single_door", name="左门板", position={"x":18,"y":18,"z":0}, dimensions={"length":764,"width":18,"height":1964})
+- "加双开门" → add_component(type="double_door", name="双开门", position={"x":18,"y":18,"z":0}, dimensions={"length":764,"width":18,"height":1964})
+  - 系统会自动创建两块 single_door 子组件（左门和右门）
+- "给门板加拉手" → add_component(parent_id="门板ID", type="handle", name="拉手", position={"x":600,"y":982,"z":18}, dimensions={"length":100,"width":30,"height":20})

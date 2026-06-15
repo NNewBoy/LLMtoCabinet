@@ -107,12 +107,46 @@ class CabinetManager:
                 "cabinet": cabinet_to_dict(self.cabinet),
             }
 
+        # 如果是双开门，自动创建两块单开门子组件
+        if comp_type == ComponentType.DOUBLE_DOOR:
+            door_length = component.length / 2
+            door_width = component.width if component.width > 0 else thickness
+            door_height = component.height
+            
+            left_door = CabinetComponent(
+                name=f"{name} - 左门",
+                type=ComponentType.SINGLE_DOOR,
+                length=door_length,
+                width=door_width,
+                height=door_height,
+                position=Vector3(x=0, y=0, z=0),
+                material=material,
+                color=color,
+                thickness=thickness,
+            )
+            
+            right_door = CabinetComponent(
+                name=f"{name} - 右门",
+                type=ComponentType.SINGLE_DOOR,
+                length=door_length,
+                width=door_width,
+                height=door_height,
+                position=Vector3(x=door_length, y=0, z=0),
+                material=material,
+                color=color,
+                thickness=thickness,
+            )
+            
+            component.children.append(left_door)
+            component.children.append(right_door)
+            logger.info(f"自动创建双开门子组件: {left_door.name}, {right_door.name}")
+
         self.cabinet.components.append(component)
         self.history.save_snapshot(self.cabinet, f"添加 {name}")
         logger.info(f"添加组件: {name} (type={type}, position={position})")
         return {
             "success": True,
-            "message": f"已添加 {name}",
+            "message": f"已添加 {name}" + ("（含左右两扇门）" if comp_type == ComponentType.DOUBLE_DOOR else ""),
             "component_id": component.id,
             "cabinet": cabinet_to_dict(self.cabinet),
         }

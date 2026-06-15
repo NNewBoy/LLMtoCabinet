@@ -9,6 +9,7 @@ def cabinet_to_dict(cabinet: Cabinet) -> dict:
 
 def dict_to_cabinet(data: dict) -> Cabinet:
     """将字典反序列化为 Cabinet 对象"""
+    data = _migrate_component_types(data)
     return Cabinet.model_validate(data)
 
 
@@ -17,9 +18,30 @@ def cabinet_to_json(cabinet: Cabinet) -> str:
     return cabinet.model_dump_json(indent=2)
 
 
+def _migrate_component_types(data: dict) -> dict:
+    """迁移旧版本组件类型到新版本"""
+    type_mapping = {
+        "door": "single_door",
+    }
+    
+    def migrate_component(comp: dict) -> dict:
+        if comp.get("type") in type_mapping:
+            comp["type"] = type_mapping[comp["type"]]
+        # 递归处理子组件
+        if "children" in comp:
+            comp["children"] = [migrate_component(child) for child in comp["children"]]
+        return comp
+    
+    if "components" in data:
+        data["components"] = [migrate_component(comp) for comp in data["components"]]
+    return data
+
+
 def json_to_cabinet(json_str: str) -> Cabinet:
     """将 JSON 字符串反序列化为 Cabinet 对象"""
-    return Cabinet.model_validate_json(json_str)
+    data = json.loads(json_str)
+    data = _migrate_component_types(data)
+    return Cabinet.model_validate(data)
 
 
 def component_summary(cabinet: Cabinet) -> list[dict]:
