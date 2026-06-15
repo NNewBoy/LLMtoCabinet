@@ -33,14 +33,22 @@
 ```bash
 cd backend
 
+# 创建并激活虚拟环境
+python -m venv venv
+
+# Linux/macOS
+source venv/bin/activate
+
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
 # 安装依赖
 pip install -r requirements.txt
 
-# 配置环境变量（创建 .env 文件）
-cat > .env << EOF
-LLM_MODEL=deepseek:deepseek-chat
-LLM_API_KEY=your-api-key-here
-EOF
+# 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，填入你的 LLM API Key
+# 必须配置: LLM_MODEL 和 LLM_API_KEY
 
 # 启动服务（默认端口 8001）
 uvicorn main:app --port 8001 --reload
