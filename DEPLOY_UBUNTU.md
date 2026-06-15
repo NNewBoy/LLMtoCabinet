@@ -212,9 +212,9 @@ npm run build
 ### 复制静态文件到 Nginx 目录
 
 ```bash
-sudo mkdir -p /var/www/LLMtoCabinet
-sudo cp -r /var/LLMtoCabinet/frontend/dist/* /var/www/LLMtoCabinet/
-sudo chown -R www-data:www-data /var/www/LLMtoCabinet
+sudo mkdir -p /var/www/llmtocabinet
+sudo cp -r /var/LLMtoCabinet/frontend/dist/* /var/www/llmtocabinet/
+sudo chown -R www-data:www-data /var/www/llmtocabinet
 ```
 
 ---
@@ -239,17 +239,25 @@ sudo nano /etc/nginx/sites-available/LLMtoCabinet
 # 在已有的 server {} 块中添加以下 location 配置
 # 或创建新的 server 块
 
+# 静态文件目录结构:
+# /var/www/llmtocabinet/
+# ├── index.html
+# └── assets/
+#     ├── index-xxx.js
+#     └── index-xxx.css
+
 # Cabinet3D Editor - 路径: /llmtocabinet
-location /llmtocabinet/ {
-    alias /var/www/LLMtoCabinet/;
+# root 会将 location 路径拼接到 root 路径后面
+# 请求 /llmtocabinet/assets/index.js -> /var/www/llmtocabinet/assets/index.js
+location /llmtocabinet {
+    root /var/www;
     index index.html;
     try_files $uri $uri/ /llmtocabinet/index.html;
 }
 
 # API 代理
 location /llmtocabinet/api/ {
-    rewrite ^/llmtocabinet/(.*) /$1 break;
-    proxy_pass http://127.0.0.1:8001;
+    proxy_pass http://127.0.0.1:8001/api/;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -258,8 +266,7 @@ location /llmtocabinet/api/ {
 
 # WebSocket 代理
 location /llmtocabinet/ws/ {
-    rewrite ^/llmtocabinet/(.*) /$1 break;
-    proxy_pass http://127.0.0.1:8001;
+    proxy_pass http://127.0.0.1:8001/ws/;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -270,10 +277,28 @@ location /llmtocabinet/ws/ {
 }
 
 # 静态资源缓存
-location ~* ^/llmtocabinet/.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+location ~* /llmtocabinet/.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    root /var/www;
     expires 1y;
     add_header Cache-Control "public, immutable";
 }
+```
+
+### 部署静态文件
+
+```bash
+# 创建目录
+sudo mkdir -p /var/www/llmtocabinet
+
+# 复制构建产物
+sudo cp -r /var/LLMtoCabinet/frontend/dist/* /var/www/llmtocabinet/
+
+# 设置权限
+sudo chown -R www-data:www-data /var/www/llmtocabinet
+
+# 验证文件结构
+ls -la /var/www/llmtocabinet/
+# 应该看到: index.html  assets/
 ```
 
 ### 启用站点
@@ -311,8 +336,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
+User=root
+Group=root
 WorkingDirectory=/var/LLMtoCabinet/backend
 Environment="PATH=/var/LLMtoCabinet/backend/venv/bin"
 EnvironmentFile=/var/LLMtoCabinet/backend/.env
@@ -320,22 +345,17 @@ ExecStart=/var/LLMtoCabinet/backend/venv/bin/uvicorn main:app --host 127.0.0.1 -
 Restart=always
 RestartSec=5
 
-# 安全加固
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/LLMtoCabinet/backend/data
-PrivateTmp=true
-
 [Install]
 WantedBy=multi-user.target
 ```
 
+> **注意**: 使用 root 用户运行可以避免权限问题。如果需要更安全的配置，请参考下方的"非 root 用户运行"章节。
+
 ### 设置目录权限
 
 ```bash
-sudo chown -R www-data:www-data /var/LLMtoCabinet/backend
-sudo chmod -R 755 /var/LLMtoCabinet/backend
+# 确保项目目录可访问
+sudo chmod -R 755 /var/LLMtoCabinet
 sudo chmod -R 777 /var/LLMtoCabinet/backend/data
 ```
 
@@ -505,7 +525,7 @@ curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Ke
 
 ```bash
 # 检查静态文件是否存在
-ls -la /var/www/LLMtoCabinet/
+ls -la /var/www/llmtocabinet/
 
 # 检查 Nginx 配置
 sudo nginx -t
@@ -528,7 +548,7 @@ sudo nginx -t
 ```bash
 # 修复文件权限
 sudo chown -R www-data:www-data /var/LLMtoCabinet
-sudo chown -R www-data:www-data /var/www/LLMtoCabinet
+sudo chown -R www-data:www-data /var/www/llmtocabinet
 sudo chmod -R 755 /var/LLMtoCabinet
 sudo chmod -R 777 /var/LLMtoCabinet/backend/data
 ```
@@ -580,7 +600,7 @@ proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=api_cache:10m max_size=10
 - [ ] `.env` 文件已配置（包含正确的 API Key）
 - [ ] 后端服务可以手动启动
 - [ ] 前端已构建（`npm run build`）
-- [ ] 静态文件已复制到 `/var/www/LLMtoCabinet/`
+- [ ] 静态文件已复制到 `/var/www/llmtocabinet/`
 - [ ] Nginx 已配置并启用
 - [ ] Systemd 服务已创建并启动
 - [ ] 防火墙已配置
