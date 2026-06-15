@@ -174,12 +174,32 @@ watch(() => cabinetStore.cabinet, () => {
 
 /* 移动端适配 */
 @media (max-width: 767px) {
-  .snap-desc {
-    max-width: 180px;
+  .snapshot-list {
+    padding: var(--spacing-xs);
   }
 
   .snapshot-item {
-    min-height: 52px;
+    min-height: 40px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .snap-info {
+    gap: var(--spacing-xs);
+  }
+
+  .snap-index {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .snap-desc {
+    font-size: 11px;
+    max-width: 140px;
+  }
+
+  .snap-time {
+    font-size: 10px;
   }
 }
 </style>

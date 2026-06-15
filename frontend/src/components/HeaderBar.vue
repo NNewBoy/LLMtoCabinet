@@ -287,6 +287,28 @@ defineExpose({ fetchHistoryStatus })
   display: none;
 }
 
+/* 移动端优化 */
+@media (max-width: 767px) {
+  .header-bar {
+    height: 44px;
+    padding: 0 var(--spacing-sm);
+  }
+
+  .logo {
+    font-size: 16px;
+  }
+
+  .header-center {
+    gap: var(--spacing-xs);
+  }
+
+  .btn {
+    padding: 6px 8px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+}
+
 /* 平板及以上显示更多内容 */
 @media (min-width: 768px) {
   .project-name {

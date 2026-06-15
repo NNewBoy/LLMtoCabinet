@@ -361,20 +361,55 @@ onMounted(() => {
 
 /* 移动端适配 */
 @media (max-width: 767px) {
+  .action-bar {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .name-input {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .action-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    min-height: 36px;
+    font-size: 12px;
+  }
+
+  .scheme-list {
+    padding: var(--spacing-xs);
+  }
+
   .scheme-item {
-    min-height: 56px;
-    padding: var(--spacing-md) var(--spacing-lg);
+    min-height: 40px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .scheme-name {
+    font-size: 12px;
+  }
+
+  .scheme-time {
+    font-size: 10px;
+  }
+
+  .scheme-actions {
+    gap: var(--spacing-xs);
   }
 
   .action-icon-btn,
   .delete-btn {
     display: flex;
-    min-width: 40px;
-    min-height: 40px;
+    min-width: 28px;
+    min-height: 28px;
+    font-size: 12px;
   }
 
-  .name-input {
-    font-size: 16px; /* 防止 iOS 自动缩放 */
+  .rename-input {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 12px;
   }
 }
 </style>

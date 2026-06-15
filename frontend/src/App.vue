@@ -135,6 +135,11 @@ const tabs = [
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 html, body, #app {
@@ -314,8 +319,8 @@ html, body, #app {
 }
 
 .mobile-viewport {
-  height: 40vh;
-  min-height: 200px;
+  height: 35vh;
+  min-height: 180px;
   position: relative;
   overflow: hidden;
 }
@@ -337,15 +342,15 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 10px 4px;
+  gap: 1px;
+  padding: 6px 2px;
   background: none;
   border: none;
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 9px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-height: 56px;
+  min-height: 44px;
 }
 
 .mobile-tab-btn:hover,

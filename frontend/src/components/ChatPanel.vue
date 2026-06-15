@@ -239,6 +239,7 @@ watch(() => chatStore.currentStreamContent, () => {
   padding: var(--spacing-md);
   border-top: 1px solid var(--glass-border);
   display: flex;
+  align-items: center;
   gap: var(--spacing-sm);
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(8px);
@@ -308,17 +309,48 @@ watch(() => chatStore.currentStreamContent, () => {
 
 /* 移动端适配 */
 @media (max-width: 767px) {
+  .messages {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
   .message {
     max-width: 90%;
-    font-size: 14px;
+    font-size: 13px;
+    padding: var(--spacing-sm);
+  }
+
+  .chat-input {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
   }
 
   .chat-input textarea {
     font-size: 16px; /* 防止 iOS 自动缩放 */
+    padding: var(--spacing-sm);
+  }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .empty-hint {
+    padding: var(--spacing-lg);
   }
 
   .empty-icon {
-    font-size: 40px;
+    font-size: 32px;
+  }
+
+  .empty-title {
+    font-size: 13px;
+  }
+
+  .example {
+    font-size: 11px;
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
 }
 </style>

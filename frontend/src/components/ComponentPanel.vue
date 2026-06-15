@@ -283,7 +283,7 @@ async function updateMaterial(material: string) {
 }
 
 .detail-section {
-  height: 280px;
+  height: 300px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -525,18 +525,81 @@ async function updateMaterial(material: string) {
 
 /* 移动端适配 */
 @media (max-width: 767px) {
+  .section-title {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 9px;
+  }
+
+  .tree-section {
+    flex: 1;
+  }
+
+  .tree-content {
+    padding: var(--spacing-xs);
+  }
+
   .detail-section {
-    height: 200px;
+    height: 232px;
+  }
+
+  .detail-content {
+    padding: var(--spacing-xs);
   }
 
   .item-content {
-    min-height: 48px;
-    padding: var(--spacing-md);
+    min-height: 36px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .expand-btn {
+    width: 14px;
+    height: 14px;
+  }
+
+  .expand-placeholder {
+    width: 14px;
+  }
+
+  .component-name {
+    font-size: 11px;
+  }
+
+  .component-type {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .children-count {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .children {
+    padding-left: var(--spacing-sm);
+  }
+
+  .grandchild {
+    padding-left: var(--spacing-xs);
+  }
+
+  .prop-row {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 11px;
+  }
+
+  .prop-select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 11px;
   }
 
   .color-option {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .color-picker {
+    gap: 4px;
   }
 }
 </style>
