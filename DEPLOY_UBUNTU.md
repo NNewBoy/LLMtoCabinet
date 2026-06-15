@@ -341,7 +341,7 @@ Group=root
 WorkingDirectory=/var/LLMtoCabinet/backend
 Environment="PATH=/var/LLMtoCabinet/backend/venv/bin"
 EnvironmentFile=/var/LLMtoCabinet/backend/.env
-ExecStart=/var/LLMtoCabinet/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --workers 4
+ExecStart=/var/LLMtoCabinet/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --workers 1
 Restart=always
 RestartSec=5
 

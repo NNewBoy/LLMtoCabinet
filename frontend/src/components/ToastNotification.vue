@@ -64,7 +64,7 @@ defineExpose({ addToast })
 .toast-container {
   position: fixed;
   top: 72px;
-  right: var(--spacing-xl);
+  left: var(--spacing-xl);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -101,7 +101,7 @@ defineExpose({ addToast })
 }
 
 .toast:hover {
-  transform: translateX(-4px);
+  transform: translateX(4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
@@ -164,18 +164,18 @@ defineExpose({ addToast })
   z-index: 1;
 }
 
-/* 动画 */
+/* PC端动画 - 从左边弹出 */
 .toast-enter-active {
-  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast-leave-active {
-  animation: slideOut 0.3s cubic-bezier(0.4, 0, 1, 1);
+  animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 1, 1);
 }
 
-@keyframes slideIn {
+@keyframes slideInLeft {
   from {
-    transform: translateX(120%);
+    transform: translateX(-120%);
     opacity: 0;
   }
   to {
@@ -184,30 +184,65 @@ defineExpose({ addToast })
   }
 }
 
-@keyframes slideOut {
+@keyframes slideOutLeft {
   from {
     transform: translateX(0);
     opacity: 1;
   }
   to {
-    transform: translateX(120%);
+    transform: translateX(-120%);
     opacity: 0;
   }
 }
 
-/* 移动端适配 */
+/* 移动端适配 - 从上面弹出 */
 @media (max-width: 767px) {
   .toast-container {
-    top: auto;
-    bottom: 100px;
-    right: var(--spacing-lg);
+    top: var(--spacing-lg);
     left: var(--spacing-lg);
+    right: var(--spacing-lg);
+    bottom: auto;
     max-width: none;
     width: auto;
   }
 
   .toast {
     padding: var(--spacing-md);
+  }
+
+  .toast:hover {
+    transform: translateY(-4px);
+  }
+
+  /* 移动端动画 - 从上面弹出 */
+  .toast-enter-active {
+    animation: slideInTop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .toast-leave-active {
+    animation: slideOutTop 0.3s cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  @keyframes slideInTop {
+    from {
+      transform: translateY(-120%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOutTop {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(-120%);
+      opacity: 0;
+    }
   }
 }
 </style>
