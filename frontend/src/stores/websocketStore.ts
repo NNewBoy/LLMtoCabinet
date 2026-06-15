@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { WsMessage, Cabinet } from '../utils/types'
 import { useCabinetStore } from './cabinetStore'
 import { useChatStore } from './chatStore'
+import { wsUrl } from '../config'
 
 // Toast 通知回调（由 App.vue 注入）
 let toastCallback: ((message: string, type: string) => void) | null = null
@@ -38,8 +39,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
       ws = null
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const url = `${protocol}//${window.location.host}/ws/${pid}`
+    const url = wsUrl(pid)
 
     ws = new WebSocket(url)
 

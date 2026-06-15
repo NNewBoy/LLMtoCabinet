@@ -2,6 +2,7 @@
 import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { ref, watch, onMounted } from 'vue'
+import { apiUrl } from '../config'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
@@ -16,7 +17,7 @@ async function fetchHistoryStatus() {
     return
   }
   try {
-    const res = await fetch(`/api/projects/${wsStore.currentProjectId}/history`)
+    const res = await fetch(apiUrl(`/api/projects/${wsStore.currentProjectId}/history`))
     if (res.ok) {
       const data = await res.json()
       canUndo.value = data.can_undo
@@ -50,7 +51,7 @@ function handleRedo() {
 
 async function handleSave() {
   try {
-    const res = await fetch(`/api/projects/${wsStore.currentProjectId}`, { method: 'PUT' })
+    const res = await fetch(apiUrl(`/api/projects/${wsStore.currentProjectId}`), { method: 'PUT' })
     if (res.ok) {
       showToast('保存成功', 'success')
       wsStore.refreshSchemeList()

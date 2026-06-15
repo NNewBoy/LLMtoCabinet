@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
+import { apiUrl } from '../config'
 
 interface Snapshot {
   index: number
@@ -18,7 +19,7 @@ async function loadSnapshots() {
   const pid = wsStore.currentProjectId
   if (!pid) return
   try {
-    const res = await fetch(`/api/projects/${pid}/snapshots`)
+    const res = await fetch(apiUrl(`/api/projects/${pid}/snapshots`))
     const data = await res.json()
     snapshots.value = data.snapshots || []
     currentIndex.value = data.current_index ?? -1
@@ -31,7 +32,7 @@ async function restoreSnapshot(index: number) {
   const pid = wsStore.currentProjectId
   if (!pid) return
   try {
-    const res = await fetch(`/api/projects/${pid}/snapshots/${index}/restore`, { method: 'POST' })
+    const res = await fetch(apiUrl(`/api/projects/${pid}/snapshots/${index}/restore`), { method: 'POST' })
     const data = await res.json()
     if (data.success && data.cabinet) {
       cabinetStore.setCabinet(data.cabinet)

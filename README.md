@@ -188,10 +188,13 @@ npm run dev
 .
 ├── SPEC.md                           # 软件规格说明书
 ├── PROGRESS.md                       # 开发进度报告
+├── README.md                         # 项目说明
+├── DEPLOY_UBUNTU.md                  # Ubuntu 部署指南
 ├── backend/                          # Python 后端
 │   ├── main.py                       # FastAPI 入口
 │   ├── config.py                     # 配置（数据库/LLM/Skills路径）
 │   ├── requirements.txt
+│   ├── .env.example                  # 环境变量模板
 │   ├── models/
 │   │   ├── cabinet.py                # Cabinet/Component 数据模型
 │   │   └── database.py               # SQLAlchemy ORM
@@ -214,6 +217,7 @@ npm run dev
 └── frontend/                         # Vue3 前端
     ├── src/
     │   ├── App.vue                   # 主布局（响应式）
+    │   ├── config.ts                 # API/WS 路径配置
     │   ├── components/
     │   │   ├── HeaderBar.vue         # 顶部工具栏
     │   │   ├── Viewport3D.vue        # Three.js 3D 渲染
@@ -226,8 +230,14 @@ npm run dev
     │       ├── cabinetStore.ts       # 柜子状态
     │       ├── chatStore.ts          # 对话状态
     │       └── websocketStore.ts     # WebSocket 连接
-    └── vite.config.ts                # 含 API/WebSocket 代理
+    └── vite.config.ts                # 含 base 路径和 API/WebSocket 代理
 ```
+
+## 部署
+
+生产环境部署请参考 [Ubuntu 部署指南](./DEPLOY_UBUNTU.md)。
+
+前端生产环境部署到 `/llmtocabinet/` 子路径，`vite.config.ts` 和 `config.ts` 已自动处理路径前缀。
 
 ## 架构说明
 

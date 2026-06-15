@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import { useChatStore } from '../stores/chatStore'
+import { apiUrl } from '../config'
 
 interface Scheme {
   id: string
@@ -21,7 +22,7 @@ const editingName = ref('')
 
 async function loadSchemes() {
   try {
-    const res = await fetch('/api/projects')
+    const res = await fetch(apiUrl('/api/projects'))
     schemes.value = await res.json()
   } catch (e) {
     console.error('加载方案列表失败:', e)
@@ -35,7 +36,7 @@ watch(() => wsStore.schemeListVersion, () => {
 
 async function switchScheme(id: string) {
   try {
-    const res = await fetch(`/api/projects/${id}`)
+    const res = await fetch(apiUrl(`/api/projects/${id}`))
     const data = await res.json()
     if (data.cabinet) {
       cabinetStore.setCabinet(data.cabinet)
@@ -52,7 +53,7 @@ async function createScheme() {
   const name = newName.value.trim() || '新方案'
   newName.value = ''
   try {
-    const res = await fetch(`/api/projects?name=${encodeURIComponent(name)}`, { method: 'POST' })
+    const res = await fetch(apiUrl(`/api/projects?name=${encodeURIComponent(name)}`), { method: 'POST' })
     const data = await res.json()
     if (data.id) {
       await loadSchemes()
@@ -66,7 +67,7 @@ async function createScheme() {
 async function deleteScheme(id: string, event: Event) {
   event.stopPropagation()
   try {
-    await fetch(`/api/projects/${id}`, { method: 'DELETE' })
+    await fetch(apiUrl(`/api/projects/${id}`), { method: 'DELETE' })
     await loadSchemes()
   } catch (e) {
     console.error('删除方案失败:', e)
@@ -86,7 +87,7 @@ async function confirmRename(id: string) {
     return
   }
   try {
-    await fetch(`/api/projects/${id}?name=${encodeURIComponent(name)}`, { method: 'PUT' })
+    await fetch(apiUrl(`/api/projects/${id}?name=${encodeURIComponent(name)}`), { method: 'PUT' })
     await loadSchemes()
   } catch (e) {
     console.error('重命名失败:', e)

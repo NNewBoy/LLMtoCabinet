@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import type { CabinetComponent } from '../utils/types'
+import { apiUrl } from '../config'
 
 const cabinetStore = useCabinetStore()
 const wsStore = useWebSocketStore()
@@ -83,7 +84,7 @@ async function updateComponentProperty(componentId: string, properties: Record<s
   if (!projectId) return
 
   try {
-    const res = await fetch(`/api/projects/${projectId}/components/${componentId}`, {
+    const res = await fetch(apiUrl(`/api/projects/${projectId}/components/${componentId}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

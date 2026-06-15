@@ -48,17 +48,17 @@ sudo apt install -y curl wget git build-essential
 ### 创建项目目录
 
 ```bash
-sudo mkdir -p /opt/cabinet3d
-sudo chown $USER:$USER /opt/cabinet3d
+sudo mkdir -p /var/LLMtoCabinet
+sudo chown $USER:$USER /var/LLMtoCabinet
 ```
 
 ### 克隆项目
 
 ```bash
-cd /opt/cabinet3d
+cd /var/LLMtoCabinet
 git clone <你的仓库地址> .
 # 或者使用 scp/rsync 从本地上传
-# scp -r ./LLMtoCabinet user@server:/opt/cabinet3d/
+# scp -r ./LLMtoCabinet user@server:/var/LLMtoCabinet/
 ```
 
 ---
@@ -86,7 +86,7 @@ python3.11 --version
 ### 创建虚拟环境
 
 ```bash
-cd /opt/cabinet3d/backend
+cd /var/LLMtoCabinet/backend
 
 # 创建虚拟环境
 python3.11 -m venv venv
@@ -125,7 +125,7 @@ npm --version   # 应输出: 9.x.x 或更高
 ### 安装前端依赖并构建
 
 ```bash
-cd /opt/cabinet3d/frontend
+cd /var/LLMtoCabinet/frontend
 
 # 安装依赖
 npm install
@@ -143,7 +143,7 @@ npm run build
 ### 配置环境变量
 
 ```bash
-cd /opt/cabinet3d/backend
+cd /var/LLMtoCabinet/backend
 
 # 从模板创建 .env 文件
 cp .env.example .env
@@ -169,13 +169,13 @@ nano .env
 ### 创建数据目录
 
 ```bash
-mkdir -p /opt/cabinet3d/backend/data
+mkdir -p /var/LLMtoCabinet/backend/data
 ```
 
 ### 测试后端启动
 
 ```bash
-cd /opt/cabinet3d/backend
+cd /var/LLMtoCabinet/backend
 source venv/bin/activate
 
 # 测试运行
@@ -194,31 +194,27 @@ uvicorn main:app --host 127.0.0.1 --port 8001
 
 ## 5. 构建前端
 
-### 配置生产环境变量（可选）
+### 前端路径配置说明
 
-如果需要修改 API 地址，编辑 `frontend/.env.production`:
+前端已配置为部署到 `/llmtocabinet/` 子路径：
 
-```bash
-cd /opt/cabinet3d/frontend
-
-cat > .env.production << 'EOF'
-VITE_API_BASE_URL=/api
-VITE_WS_URL=ws://your-domain.com/ws
-EOF
-```
+- `vite.config.ts` 中 `base: '/llmtocabinet/'`
+- `src/config.ts` 自动处理 API 和 WebSocket 路径前缀
+- 开发环境使用根路径，生产环境自动添加 `/llmtocabinet` 前缀
 
 ### 构建生产版本
 
 ```bash
+cd /var/LLMtoCabinet/frontend
 npm run build
 ```
 
 ### 复制静态文件到 Nginx 目录
 
 ```bash
-sudo mkdir -p /var/www/cabinet3d
-sudo cp -r /opt/cabinet3d/frontend/dist/* /var/www/cabinet3d/
-sudo chown -R www-data:www-data /var/www/cabinet3d
+sudo mkdir -p /var/www/LLMtoCabinet
+sudo cp -r /var/LLMtoCabinet/frontend/dist/* /var/www/LLMtoCabinet/
+sudo chown -R www-data:www-data /var/www/LLMtoCabinet
 ```
 
 ---
@@ -234,61 +230,49 @@ sudo apt install -y nginx
 ### 创建站点配置
 
 ```bash
-sudo nano /etc/nginx/sites-available/cabinet3d
+sudo nano /etc/nginx/sites-available/LLMtoCabinet
 ```
 
 ### Nginx 配置内容
 
 ```nginx
-server {
-    listen 80;
-    server_name your-domain.com;  # 替换为你的域名或服务器 IP
+# 在已有的 server {} 块中添加以下 location 配置
+# 或创建新的 server 块
 
-    # 前端静态文件
-    root /var/www/cabinet3d;
+# Cabinet3D Editor - 路径: /llmtocabinet
+location /llmtocabinet/ {
+    alias /var/www/LLMtoCabinet/;
     index index.html;
+    try_files $uri $uri/ /llmtocabinet/index.html;
+}
 
-    # Gzip 压缩
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    gzip_min_length 1000;
+# API 代理
+location /llmtocabinet/api/ {
+    rewrite ^/llmtocabinet/(.*) /$1 break;
+    proxy_pass http://127.0.0.1:8001;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 
-    # 前端路由 - SPA 支持
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+# WebSocket 代理
+location /llmtocabinet/ws/ {
+    rewrite ^/llmtocabinet/(.*) /$1 break;
+    proxy_pass http://127.0.0.1:8001;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_read_timeout 86400;
+}
 
-    # API 代理 - REST
-    location /api/ {
-        proxy_pass http://127.0.0.1:8001/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # WebSocket 代理
-    location /ws/ {
-        proxy_pass http://127.0.0.1:8001/ws/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_read_timeout 86400;
-    }
-
-    # 静态资源缓存
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # 安全头
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
+# 静态资源缓存
+location ~* ^/llmtocabinet/.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
 }
 ```
 
@@ -296,7 +280,7 @@ server {
 
 ```bash
 # 创建符号链接
-sudo ln -s /etc/nginx/sites-available/cabinet3d /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/LLMtoCabinet /etc/nginx/sites-enabled/
 
 # 删除默认站点（可选）
 sudo rm /etc/nginx/sites-enabled/default
@@ -315,24 +299,24 @@ sudo systemctl reload nginx
 ### 创建后端服务文件
 
 ```bash
-sudo nano /etc/systemd/system/cabinet3d-backend.service
+sudo nano /etc/systemd/system/LLMtoCabinet.service
 ```
 
 ### 服务配置内容
 
 ```ini
 [Unit]
-Description=Cabinet3D Editor Backend
+Description=LLMtoCabinet Editor Backend
 After=network.target
 
 [Service]
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/opt/cabinet3d/backend
-Environment="PATH=/opt/cabinet3d/backend/venv/bin"
-EnvironmentFile=/opt/cabinet3d/backend/.env
-ExecStart=/opt/cabinet3d/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --workers 4
+WorkingDirectory=/var/LLMtoCabinet/backend
+Environment="PATH=/var/LLMtoCabinet/backend/venv/bin"
+EnvironmentFile=/var/LLMtoCabinet/backend/.env
+ExecStart=/var/LLMtoCabinet/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --workers 4
 Restart=always
 RestartSec=5
 
@@ -340,7 +324,7 @@ RestartSec=5
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/cabinet3d/backend/data
+ReadWritePaths=/var/LLMtoCabinet/backend/data
 PrivateTmp=true
 
 [Install]
@@ -350,9 +334,9 @@ WantedBy=multi-user.target
 ### 设置目录权限
 
 ```bash
-sudo chown -R www-data:www-data /opt/cabinet3d/backend
-sudo chmod -R 755 /opt/cabinet3d/backend
-sudo chmod -R 777 /opt/cabinet3d/backend/data
+sudo chown -R www-data:www-data /var/LLMtoCabinet/backend
+sudo chmod -R 755 /var/LLMtoCabinet/backend
+sudo chmod -R 777 /var/LLMtoCabinet/backend/data
 ```
 
 ### 启动服务
@@ -362,13 +346,13 @@ sudo chmod -R 777 /opt/cabinet3d/backend/data
 sudo systemctl daemon-reload
 
 # 启动服务
-sudo systemctl start cabinet3d-backend
+sudo systemctl start LLMtoCabinet
 
 # 设置开机自启
-sudo systemctl enable cabinet3d-backend
+sudo systemctl enable LLMtoCabinet
 
 # 查看服务状态
-sudo systemctl status cabinet3d-backend
+sudo systemctl status LLMtoCabinet
 ```
 
 ---
@@ -421,22 +405,22 @@ sudo certbot renew --dry-run
 
 ```bash
 # 启动后端服务
-sudo systemctl start cabinet3d-backend
+sudo systemctl start LLMtoCabinet
 
 # 停止后端服务
-sudo systemctl stop cabinet3d-backend
+sudo systemctl stop LLMtoCabinet
 
 # 重启后端服务
-sudo systemctl restart cabinet3d-backend
+sudo systemctl restart LLMtoCabinet
 
 # 查看服务状态
-sudo systemctl status cabinet3d-backend
+sudo systemctl status LLMtoCabinet
 
 # 查看服务日志
-sudo journalctl -u cabinet3d-backend -f
+sudo journalctl -u LLMtoCabinet -f
 
 # 查看最近 100 行日志
-sudo journalctl -u cabinet3d-backend -n 100
+sudo journalctl -u LLMtoCabinet -n 100
 ```
 
 ### Nginx 管理
@@ -459,7 +443,7 @@ sudo tail -f /var/log/nginx/error.log
 ### 更新项目
 
 ```bash
-cd /opt/cabinet3d
+cd /var/LLMtoCabinet
 
 # 拉取最新代码
 git pull origin main
@@ -475,21 +459,21 @@ npm install
 npm run build
 
 # 复制新的静态文件
-sudo cp -r dist/* /var/www/cabinet3d/
+sudo cp -r dist/* /var/www/LLMtoCabinet/
 
 # 重启后端服务
-sudo systemctl restart cabinet3d-backend
+sudo systemctl restart LLMtoCabinet
 ```
 
 ### 数据库备份
 
 ```bash
 # 备份 SQLite 数据库
-cp /opt/cabinet3d/backend/data/cabinet3d.db /opt/cabinet3d/backend/data/cabinet3d.db.backup.$(date +%Y%m%d)
+cp /var/LLMtoCabinet/backend/cabinet.db /var/LLMtoCabinet/backend/cabinet.db.backup.$(date +%Y%m%d)
 
 # 定时备份（添加到 crontab）
 # 每天凌晨 3 点备份
-0 3 * * * cp /opt/cabinet3d/backend/data/cabinet3d.db /opt/cabinet3d/backups/cabinet3d_$(date +\%Y\%m\%d).db
+0 3 * * * cp /var/LLMtoCabinet/backend/cabinet.db /var/LLMtoCabinet/backend/cabinet.db.backup.$(date +\%Y\%m\%d).db
 ```
 
 ---
@@ -500,10 +484,10 @@ cp /opt/cabinet3d/backend/data/cabinet3d.db /opt/cabinet3d/backend/data/cabinet3
 
 ```bash
 # 查看详细日志
-sudo journalctl -u cabinet3d-backend -n 50 --no-pager
+sudo journalctl -u LLMtoCabinet -n 50 --no-pager
 
 # 手动测试启动
-cd /opt/cabinet3d/backend
+cd /var/LLMtoCabinet/backend
 source venv/bin/activate
 uvicorn main:app --host 127.0.0.1 --port 8001
 ```
@@ -521,7 +505,7 @@ curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Ke
 
 ```bash
 # 检查静态文件是否存在
-ls -la /var/www/cabinet3d/
+ls -la /var/www/LLMtoCabinet/
 
 # 检查 Nginx 配置
 sudo nginx -t
@@ -543,10 +527,10 @@ sudo nginx -t
 
 ```bash
 # 修复文件权限
-sudo chown -R www-data:www-data /opt/cabinet3d
-sudo chown -R www-data:www-data /var/www/cabinet3d
-sudo chmod -R 755 /opt/cabinet3d
-sudo chmod -R 777 /opt/cabinet3d/backend/data
+sudo chown -R www-data:www-data /var/LLMtoCabinet
+sudo chown -R www-data:www-data /var/www/LLMtoCabinet
+sudo chmod -R 755 /var/LLMtoCabinet
+sudo chmod -R 777 /var/LLMtoCabinet/backend/data
 ```
 
 ---
@@ -555,10 +539,10 @@ sudo chmod -R 777 /opt/cabinet3d/backend/data
 
 ### 1. 增加 Worker 数量
 
-编辑 `/etc/systemd/system/cabinet3d-backend.service`：
+编辑 `/etc/systemd/system/LLMtoCabinet.service`：
 
 ```ini
-ExecStart=/opt/cabinet3d/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --workers 8
+ExecStart=/var/LLMtoCabinet/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8001 --workers 8
 ```
 
 ### 2. 配置 Redis 缓存（可选）
@@ -596,7 +580,7 @@ proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=api_cache:10m max_size=10
 - [ ] `.env` 文件已配置（包含正确的 API Key）
 - [ ] 后端服务可以手动启动
 - [ ] 前端已构建（`npm run build`）
-- [ ] 静态文件已复制到 `/var/www/cabinet3d/`
+- [ ] 静态文件已复制到 `/var/www/LLMtoCabinet/`
 - [ ] Nginx 已配置并启用
 - [ ] Systemd 服务已创建并启动
 - [ ] 防火墙已配置
@@ -608,6 +592,6 @@ proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=api_cache:10m max_size=10
 如有问题，请查看项目日志或提交 Issue。
 
 **日志位置**:
-- 后端日志: `sudo journalctl -u cabinet3d-backend`
+- 后端日志: `sudo journalctl -u LLMtoCabinet`
 - Nginx 访问日志: `/var/log/nginx/access.log`
 - Nginx 错误日志: `/var/log/nginx/error.log`
