@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { apiUrl } from '../config'
 
 const wsStore = useWebSocketStore()
@@ -29,8 +29,26 @@ async function fetchHistoryStatus() {
   }
 }
 
+// 键盘快捷键
+function handleKeyboard(event: KeyboardEvent) {
+  if (event.ctrlKey || event.metaKey) {
+    if (event.key === 'z' && !event.shiftKey) {
+      event.preventDefault()
+      handleUndo()
+    } else if (event.key === 'y' || (event.key === 'z' && event.shiftKey)) {
+      event.preventDefault()
+      handleRedo()
+    }
+  }
+}
+
 onMounted(() => {
   fetchHistoryStatus()
+  window.addEventListener('keydown', handleKeyboard)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyboard)
 })
 
 watch(() => wsStore.currentProjectId, () => {
@@ -42,11 +60,11 @@ watch(() => cabinetStore.cabinet, () => {
 }, { deep: true })
 
 function handleUndo() {
-  wsStore.sendChatMessage('撤销上一步操作')
+  cabinetStore.undo()
 }
 
 function handleRedo() {
-  wsStore.sendChatMessage('重做上一步操作')
+  cabinetStore.redo()
 }
 
 async function handleSave() {

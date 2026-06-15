@@ -10,7 +10,7 @@ const messagesContainer = ref<HTMLDivElement | null>(null)
 
 async function sendMessage() {
   const text = inputText.value.trim()
-  if (!text || !wsStore.isConnected) return
+  if (!text || !wsStore.isConnected || chatStore.isStreaming) return
 
   inputText.value = ''
   wsStore.sendChatMessage(text)
@@ -76,13 +76,13 @@ watch(() => chatStore.currentStreamContent, () => {
       <textarea
         v-model="inputText"
         @keydown="handleKeydown"
-        placeholder="输入编辑指令..."
+        :placeholder="chatStore.isStreaming ? '等待回复完成...' : '输入编辑指令...'"
         rows="2"
-        :disabled="!wsStore.isConnected"
+        :disabled="!wsStore.isConnected || chatStore.isStreaming"
       ></textarea>
       <button
         @click="sendMessage"
-        :disabled="!inputText.trim() || !wsStore.isConnected"
+        :disabled="!inputText.trim() || !wsStore.isConnected || chatStore.isStreaming"
         class="send-btn"
       >
         <span class="send-icon">↑</span>

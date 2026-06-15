@@ -73,6 +73,14 @@ class OperationHistory:
     def get_current_index(self) -> int:
         return self._current_index
 
+    def can_undo(self) -> bool:
+        """是否可以撤销"""
+        return len(self._undo_stack) > 0
+
+    def can_redo(self) -> bool:
+        """是否可以重做"""
+        return len(self._redo_stack) > 0
+
     def undo(self, cabinet: Cabinet) -> Optional[dict]:
         """撤销：返回上一个状态快照"""
         if not self._undo_stack:

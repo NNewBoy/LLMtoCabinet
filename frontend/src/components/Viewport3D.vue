@@ -2,6 +2,9 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { useCabinetStore } from '../stores/cabinetStore'
 import type { Cabinet, CabinetComponent } from '../utils/types'
 
@@ -33,7 +36,7 @@ const doorsOpen = ref(false)
 let raycaster: THREE.Raycaster
 let mouse: THREE.Vector2
 let selectedMesh: THREE.Mesh | null = null
-let highlightMaterial: THREE.MeshStandardMaterial | null = null
+let highlightMaterial: LineMaterial | null = null
 
 function hexToNumber(hex: string): number {
   const cleaned = hex.replace('#', '')
@@ -118,13 +121,13 @@ function initScene() {
   raycaster = new THREE.Raycaster()
   mouse = new THREE.Vector2()
 
-  // 高亮材质
-  highlightMaterial = new THREE.MeshStandardMaterial({
-    color: 0xe94560,
-    roughness: 0.4,
-    metalness: 0.2,
-    emissive: 0xe94560,
-    emissiveIntensity: 0.3,
+  // 蓝色描边材质 - 使用 LineMaterial 支持真正的线宽
+  highlightMaterial = new LineMaterial({
+    color: 0x4a90d9,
+    linewidth: 2,
+    depthTest: false,
+    depthWrite: false,
+    resolution: new THREE.Vector2(canvasRef.value.clientWidth, canvasRef.value.clientHeight),
   })
 
   // 添加鼠标点击事件
@@ -168,22 +171,35 @@ function selectMesh(mesh: THREE.Mesh) {
   // 取消之前选中的网格
   deselectMesh()
 
-  // 保存原始材质
-  const originalMat = mesh.material as THREE.Material
-  originalMaterials.set('selected_' + mesh.userData.componentId, originalMat.clone())
+  // 使用 Line2 创建更粗的描边
+  const edges = new THREE.EdgesGeometry(mesh.geometry)
+  const positions: number[] = []
+  const posAttr = edges.attributes.position
 
-  // 应用高亮材质
-  mesh.material = highlightMaterial!
+  // 将边几何体的顶点转换为 LineGeometry 需要的格式
+  for (let i = 0; i < posAttr.count; i++) {
+    positions.push(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i))
+  }
+
+  const lineGeometry = new LineGeometry()
+  lineGeometry.setPositions(positions)
+
+  const outline = new Line2(lineGeometry, highlightMaterial!)
+  outline.name = 'selectionOutline'
+  outline.computeLineDistances()
+  outline.renderOrder = 999 // 确保描边最后渲染，不被遮挡
+  mesh.add(outline)
+
   selectedMesh = mesh
 }
 
 function deselectMesh() {
   if (selectedMesh) {
-    const componentId = selectedMesh.userData.componentId as string
-    const originalMat = originalMaterials.get('selected_' + componentId)
-    if (originalMat) {
-      selectedMesh.material = originalMat.clone()
-      originalMaterials.delete('selected_' + componentId)
+    // 移除描边边框
+    const outline = selectedMesh.getObjectByName('selectionOutline') as THREE.LineSegments | undefined
+    if (outline) {
+      selectedMesh.remove(outline)
+      outline.geometry.dispose()
     }
     selectedMesh = null
   }

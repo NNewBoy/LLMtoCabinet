@@ -7,7 +7,7 @@ import HistoryPanel from './components/HistoryPanel.vue'
 import SchemePanel from './components/SchemePanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useWebSocketStore, setToastCallback } from './stores/websocketStore'
-import { useCabinetStore } from './stores/cabinetStore'
+import { useCabinetStore, setToastCallback as setCabinetToastCallback } from './stores/cabinetStore'
 import { onMounted, ref, watch, computed } from 'vue'
 
 const wsStore = useWebSocketStore()
@@ -23,9 +23,11 @@ function checkMobile() {
 
 onMounted(() => {
   // 注入 Toast 回调
-  setToastCallback((message: string, type: string) => {
+  const toastFn = (message: string, type: string) => {
     toastRef.value?.addToast(message, type as any)
-  })
+  }
+  setToastCallback(toastFn)
+  setCabinetToastCallback(toastFn)
 
   const savedId = localStorage.getItem('lastProjectId') || 'default'
   wsStore.connect(savedId)

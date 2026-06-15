@@ -248,3 +248,23 @@ async def restore_snapshot(project_id: str, index: int):
         "message": f"已恢复到版本 {index}",
         "cabinet": manager.to_dict(),
     }
+
+
+@router.post("/{project_id}/undo")
+async def undo(project_id: str):
+    """撤销操作"""
+    logger.info(f"撤销操作: {project_id}")
+    manager = get_manager(project_id)
+    result = manager.undo()
+    logger.info(f"撤销结果: {result.get('message', '')}")
+    return result
+
+
+@router.post("/{project_id}/redo")
+async def redo(project_id: str):
+    """重做操作"""
+    logger.info(f"重做操作: {project_id}")
+    manager = get_manager(project_id)
+    result = manager.redo()
+    logger.info(f"重做结果: {result.get('message', '')}")
+    return result
