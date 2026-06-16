@@ -147,8 +147,8 @@ function onMouseClick(event: MouseEvent) {
   // 更新射线
   raycaster.setFromCamera(mouse, camera)
 
-  // 计算与所有网格的交点
-  const meshArray = Array.from(meshes.values())
+  // 计算与所有网格的交点（过滤不可见的 mesh，如双开门占位符）
+  const meshArray = Array.from(meshes.values()).filter(m => m.visible)
   const intersects = raycaster.intersectObjects(meshArray)
 
   if (intersects.length > 0) {
@@ -304,6 +304,7 @@ function renderComponent(
     const placeholderGeom = new THREE.BoxGeometry(comp.length, comp.height, comp.width || 1)
     const placeholderMat = new THREE.MeshBasicMaterial({ visible: false })
     const placeholder = new THREE.Mesh(placeholderGeom, placeholderMat)
+    placeholder.visible = false // 设置 mesh 不可见，防止 raycaster 检测
     placeholder.position.set(
       ox + absX + comp.length / 2,
       oy + absY + comp.height / 2,

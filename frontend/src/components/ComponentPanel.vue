@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import type { CabinetComponent } from '../utils/types'
@@ -115,13 +115,26 @@ async function updateMaterial(material: string) {
   if (!selectedComponent.value) return
   await updateComponentProperty(selectedComponent.value.id, { material })
 }
+
+// 选中组件时自动滚动到对应位置
+const treeContentRef = ref<HTMLElement | null>(null)
+
+watch(() => cabinetStore.selectedComponentId, async (newId) => {
+  if (!newId) return
+  await nextTick()
+  // 找到选中的 tree-item 并滚动到可视区域
+  const selectedEl = treeContentRef.value?.querySelector('.tree-item.selected')
+  if (selectedEl) {
+    selectedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+})
 </script>
 
 <template>
   <div class="component-panel">
     <div class="tree-section">
       <div class="section-title">组件树</div>
-      <div class="tree-content">
+      <div class="tree-content" ref="treeContentRef">
         <div v-if="components.length === 0" class="empty">暂无组件</div>
         <div v-else class="tree">
           <template v-for="comp in components" :key="comp.id">
@@ -343,9 +356,10 @@ async function updateMaterial(material: string) {
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 0;
-  width: 18px;
-  height: 18px;
+  padding: 8px;
+  margin: -8px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
