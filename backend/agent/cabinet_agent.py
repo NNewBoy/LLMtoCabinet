@@ -8,27 +8,47 @@ from agent.tools import (
     remove_component as _remove_component,
     modify_component as _modify_component,
     undo_redo as _undo_redo,
+    check_interference as _check_interference,
+    commit_changes as _commit_changes,
 )
-from config import LLM_MODEL, LLM_API_KEY, LLM_BASE_URL, SKILLS_DIR
+from config import LLM_MODEL, LLM_API_KEY, LLM_BASE_URL, SKILLS_DIR, ENABLE_INTERFERENCE_CHECK
 
 logger = logging.getLogger("cabinet3d.agent")
 
-CABINET_SYSTEM_PROMPT = """
+# 根据配置生成系统提示词
+_base_prompt = """
 你是一个专业的柜子家具设计助手。你可以帮助用户通过自然语言来编辑柜子的3D模型。
 
 ## 你的能力
 - 查看柜子当前的结构和属性
-- 添加新的板件或组件（隔板、门板、抽屉等）
+- 添加新的板件或组件（隔板、单开门、双开门、抽屉等）
 - 删除已有的板件或组件
 - 修改板件的尺寸、位置、材料、颜色等属性
 - 撤销和重做编辑操作
+"""
+
+_interference_check_prompt = """
+- 检查组件间是否存在干涉（重叠）
 
 ## 操作流程
 - 编辑前，先调用 query_cabinet 了解当前柜子结构
 - 编辑后，简要说明做了什么修改
 - 如果用户的指令不明确，主动询问确认
 - 对于无法执行的操作，说明原因
+- **编辑完成后，必须调用 check_interference 检查干涉，如有干涉则修复直至无干涉**
+- **干涉检查通过后，调用 commit_changes 保存本次编辑结果**
 """
+
+_no_interference_check_prompt = """
+## 操作流程
+- 编辑前，先调用 query_cabinet 了解当前柜子结构
+- 编辑后，简要说明做了什么修改
+- 如果用户的指令不明确，主动询问确认
+- 对于无法执行的操作，说明原因
+- **编辑完成后，调用 commit_changes 保存本次编辑结果**
+"""
+
+CABINET_SYSTEM_PROMPT = _base_prompt + (_interference_check_prompt if ENABLE_INTERFERENCE_CHECK else _no_interference_check_prompt)
 
 # Agent 缓存：project_id -> agent 实例
 _agents: dict[str, object] = {}
@@ -64,10 +84,10 @@ def _create_agent(project_id: str):
         logger.info(f"删除结果: {result.get('message', result.get('error', '未知'))}")
         return result
 
-    def modify_component(target_id: str, properties: dict) -> dict:
-        """修改柜子或组件的属性。target_id: 修改目标ID, "cabinet"表示修改柜子整体。properties: 要修改的属性键值对{name,length,width,height,position,rotation,material,color,thickness}。"""
-        logger.info(f"Agent 调用: modify_component(target_id={target_id}, properties={properties})")
-        result = _modify_component(project_id=project_id, target_id=target_id, properties=properties)
+    def modify_component(target_id: str, properties: dict, save_history: bool = True) -> dict:
+        """修改柜子或组件的属性。target_id: 修改目标ID, "cabinet"表示修改柜子整体。properties: 要修改的属性键值对{name,length,width,height,position,rotation,material,color,thickness}。save_history: 是否保存历史记录（干涉修复时设为False）。"""
+        logger.info(f"Agent 调用: modify_component(target_id={target_id}, properties={properties}, save_history={save_history})")
+        result = _modify_component(project_id=project_id, target_id=target_id, properties=properties, save_history=save_history)
         logger.info(f"修改结果: {result.get('message', result.get('error', '未知'))}")
         return result
 
@@ -78,7 +98,25 @@ def _create_agent(project_id: str):
         logger.info(f"操作结果: {result.get('message', result.get('error', '未知'))}")
         return result
 
-    tools = [query_cabinet, add_component, remove_component, modify_component, undo_redo]
+    def check_interference() -> dict:
+        """检查柜子各组件间是否存在干涉（重叠）。编辑操作后必须调用此函数检查干涉。"""
+        logger.info(f"Agent 调用: check_interference()")
+        result = _check_interference(project_id=project_id)
+        logger.info(f"干涉检查结果: {result.get('message', '未知')}")
+        return result
+
+    def commit_changes(description: str = "编辑完成") -> dict:
+        """提交保存快照。在编辑操作完成后调用，保存本次对话的编辑结果。description: 本次编辑的描述说明。"""
+        logger.info(f"Agent 调用: commit_changes(description={description})")
+        result = _commit_changes(project_id=project_id, description=description)
+        logger.info(f"提交结果: {result.get('message', result.get('error', '未知'))}")
+        return result
+
+    # 根据配置决定是否添加干涉检查工具
+    if ENABLE_INTERFERENCE_CHECK:
+        tools = [query_cabinet, add_component, remove_component, modify_component, undo_redo, check_interference, commit_changes]
+    else:
+        tools = [query_cabinet, add_component, remove_component, modify_component, undo_redo, commit_changes]
 
     # 使用 init_chat_model 初始化模型实例，传入自定义 API Key 和 Base URL
     logger.info(f"初始化 LLM 模型: {LLM_MODEL}")

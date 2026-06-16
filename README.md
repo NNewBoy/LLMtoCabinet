@@ -9,6 +9,7 @@
 - **智能Agent** — DeepAgents 框架驱动，自动理解意图并执行编辑操作
 - **连续对话** — 同一方案内复用 Agent 实例，支持上下文连续对话
 - **Undo/Redo** — 完整的撤销/重做支持（Ctrl+Z / Ctrl+Y）
+- **干涉检查** — 编辑后自动检查组件重叠，确保模型无干涉（可通过配置禁用）
 - **Glassmorphism UI** — 现代深色主题，半透明毛玻璃效果
 - **响应式设计** — 支持 PC、平板、移动端自适应布局
 - **丰富组件** — 支持侧板、隔板、单开门、双开门、抽屉、拉手等多种组件，门板/抽屉自动配拉手
@@ -52,6 +53,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # 编辑 .env 文件，填入你的 LLM API Key
 # 必须配置: LLM_MODEL 和 LLM_API_KEY
+# 可选配置: ENABLE_INTERFERENCE_CHECK=true/false（是否启用干涉检查，默认true）
 
 # 启动服务（默认端口 8001）
 uvicorn main:app --port 8001 --reload

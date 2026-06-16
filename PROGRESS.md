@@ -107,7 +107,7 @@
 | WebSocket | `api/websocket.py` | ✅ | WebSocket 通信处理 |
 | CabinetManager | `engine/cabinet_manager.py` | ✅ | 柜子编辑引擎 |
 | OperationHistory | `engine/history.py` | ✅ | 操作历史管理 |
-| Agent Tools | `agent/tools.py` | ✅ | 5 个工具函数 |
+| Agent Tools | `agent/tools.py` | ✅ | 7 个工具函数（含干涉检查、提交保存） |
 | Agent Skills | `agent/skills/` | ✅ | 2 个 Skill 文件 |
 | Agent | `agent/cabinet_agent.py` | ✅ | DeepAgents 创建 + Agent 缓存 + 对话历史管理 |
 | 数据模型 | `models/cabinet.py` | ✅ | Cabinet/CabinetComponent 定义 |
@@ -175,7 +175,7 @@
 ### 高优先级
 - [x] Agent对话要连续，不需要每次都重新启动，减少对话等待时间
 - [x] Agent每次对话前，要查询模型数据，确保模型是最新的
-- [ ] Agent修改模型后要对模型进行干涉检查
+- [x] Agent修改模型后要对模型进行干涉检查
 - [ ] 增加模型AI级渲染功能，提供渲染图下载功能
 
 ### 中优先级
@@ -286,6 +286,27 @@
 - 保存按钮迁移到 HeaderBar
 - 添加 ComponentPanel 组件列表面板
 
+### 2026-06-17
+- **干涉检查功能**：添加组件干涉检查，使用 AABB 包围盒检测重叠
+  - `check_interference()` 工具函数：检查组件间是否存在干涉
+  - `commit_changes()` 工具函数：在干涉检查通过后保存快照
+  - 排除父子关系组件对（如门板和拉手）
+  - 容器类型（如 double_door）不参与检查
+- **快照保存优化**：编辑操作不再自动保存快照，改为在干涉检查通过后统一保存
+  - 避免一次对话产生多次快照
+  - API 接口修改属性仍会自动保存快照
+- **干涉检查配置**：通过环境变量 `ENABLE_INTERFERENCE_CHECK` 控制是否启用
+  - 设为 `true` 启用干涉检查（默认）
+  - 设为 `false` 禁用干涉检查
+- **双开门动画修复**：修复双开门关闭动画后模型消失的问题
+  - `isDoorType` 只匹配 `single_door`，不处理 `double_door` 容器
+- **双开门占位符修复**：修复双开门占位符可被选中的问题
+  - 设置 `placeholder.visible = false` 防止 raycaster 检测
+- **方案切换修复**：修复切换方案时打开的门板残留问题
+  - `renderCabinet` 时清理 `doorOriginals` 中的 pivotGroup
+- **组件树滚动**：选中 3D 视图组件时，组件树自动滚动到对应位置
+- **展开按钮优化**：增大 expand-btn 的可点击范围
+
 ---
 
 ## 项目结构
@@ -319,4 +340,4 @@ LLMtoCabinet_deeepseek/
 
 ---
 
-*最后更新：2026-06-16 深夜*
+*最后更新：2026-06-17*

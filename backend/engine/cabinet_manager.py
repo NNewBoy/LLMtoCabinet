@@ -119,7 +119,6 @@ class CabinetManager:
                 logger.warning(f"父组件不存在: {parent_id}")
                 return {"error": f"父组件 {parent_id} 不存在"}
             parent.children.append(component)
-            self.history.save_snapshot(self.cabinet, f"添加 {name} 到 {parent.name}")
             logger.info(f"添加子组件: {name} -> {parent.name} (type={type})")
             return {
                 "success": True,
@@ -222,16 +221,15 @@ class CabinetManager:
             logger.info(f"自动创建抽屉拉手: {handle.name}")
 
         self.cabinet.components.append(component)
-        self.history.save_snapshot(self.cabinet, f"添加 {name}")
         logger.info(f"添加组件: {name} (type={type}, position={position})")
-        
+
         # 构建成功消息
         success_msg = f"已添加 {name}"
         if comp_type == ComponentType.DOUBLE_DOOR:
             success_msg += "（含左右两扇门及拉手）"
         elif comp_type in [ComponentType.SINGLE_DOOR, ComponentType.DRAWER]:
             success_msg += "（含拉手）"
-        
+
         return {
             "success": True,
             "message": success_msg,
@@ -252,7 +250,6 @@ class CabinetManager:
         self.history.push(self.cabinet, f"删除 {comp.name}")
 
         removed = self.cabinet.remove_component(component_id)
-        self.history.save_snapshot(self.cabinet, f"删除 {removed.name}")
         logger.info(f"删除组件: {removed.name} ({component_id})")
         return {
             "success": True,
@@ -260,20 +257,22 @@ class CabinetManager:
             "cabinet": cabinet_to_dict(self.cabinet),
         }
 
-    def modify(self, target_id: str, properties: dict) -> dict:
+    def modify(self, target_id: str, properties: dict, save_history: bool = True) -> dict:
         """修改柜子或组件属性"""
         if not self.cabinet:
             return {"error": "柜子未加载"}
 
         if target_id == "cabinet":
             target = self.cabinet
-            self.history.push(self.cabinet, f"修改柜子属性")
+            if save_history:
+                self.history.push(self.cabinet, f"修改柜子属性")
         else:
             target = self.cabinet.find_component(target_id)
             if not target:
                 logger.warning(f"修改失败: 组件 {target_id} 不存在")
                 return {"error": f"组件 {target_id} 不存在"}
-            self.history.push(self.cabinet, f"修改 {target.name}")
+            if save_history:
+                self.history.push(self.cabinet, f"修改 {target.name}")
 
         # 逐属性修改
         for key, value in properties.items():
@@ -285,11 +284,23 @@ class CabinetManager:
                 setattr(target, key, value)
 
         desc = f"修改柜子" if target_id == "cabinet" else f"修改 {target.name}"
-        self.history.save_snapshot(self.cabinet, desc)
         logger.info(f"{desc}: {properties}")
         return {
             "success": True,
             "message": f"修改完成",
+            "cabinet": cabinet_to_dict(self.cabinet),
+        }
+
+    def commit_changes(self, description: str = "编辑完成") -> dict:
+        """提交保存快照（在干涉检查通过后调用）"""
+        if not self.cabinet:
+            return {"error": "柜子未加载"}
+
+        self.history.save_snapshot(self.cabinet, description)
+        logger.info(f"提交保存快照: {description}")
+        return {
+            "success": True,
+            "message": f"已保存: {description}",
             "cabinet": cabinet_to_dict(self.cabinet),
         }
 
@@ -330,6 +341,130 @@ class CabinetManager:
             "message": f"已重做: {entry['description']}",
             "cabinet": cabinet_to_dict(self.cabinet),
         }
+
+    def check_interference(self) -> dict:
+        """检查组件间是否存在干涉（重叠）
+
+        规则：
+        - 只检查叶子组件（不含容器类型如 double_door）
+        - 排除父子关系的组件对（如门板和其拉手）
+        - 使用 AABB 包围盒检测
+        """
+        if not self.cabinet:
+            return {"error": "柜子未加载"}
+
+        # 收集所有叶子组件的绝对位置和尺寸
+        leaves = []
+        self._collect_leaves(self.cabinet.components, 0, 0, 0, None, leaves)
+
+        interferences = []
+
+        # 两两检查
+        for i in range(len(leaves)):
+            for j in range(i + 1, len(leaves)):
+                a = leaves[i]
+                b = leaves[j]
+
+                # 跳过父子关系
+                if a["parent_id"] == b["id"] or b["parent_id"] == a["id"]:
+                    continue
+
+                # AABB 检测
+                if self._aabb_overlap(a, b):
+                    interferences.append({
+                        "component_a": {"id": a["id"], "name": a["name"]},
+                        "component_b": {"id": b["id"], "name": b["name"]},
+                        "overlap_volume": self._calc_overlap_volume(a, b),
+                    })
+
+        if interferences:
+            # 按重叠体积降序排序
+            interferences.sort(key=lambda x: x["overlap_volume"], reverse=True)
+            logger.warning(f"检测到 {len(interferences)} 处干涉")
+            return {
+                "has_interference": True,
+                "count": len(interferences),
+                "interferences": interferences,
+                "message": f"检测到 {len(interferences)} 处组件干涉",
+            }
+        else:
+            logger.info("干涉检查通过，无干涉")
+            return {
+                "has_interference": False,
+                "count": 0,
+                "interferences": [],
+                "message": "干涉检查通过，无干涉",
+            }
+
+    def _collect_leaves(self, components, parent_x, parent_y, parent_z, parent_id, result):
+        """递归收集叶子组件及其绝对坐标"""
+        # 容器类型，不参与干涉检查
+        container_types = {ComponentType.DOUBLE_DOOR}
+
+        for comp in components:
+            abs_x = parent_x + comp.position.x
+            abs_y = parent_y + comp.position.y
+            abs_z = parent_z + comp.position.z
+
+            if comp.type in container_types:
+                # 容器类型：递归收集子组件
+                self._collect_leaves(comp.children, abs_x, abs_y, abs_z, comp.id, result)
+            elif comp.children:
+                # 有子组件的叶子（如门板）：自身参与检查，子组件也参与
+                result.append({
+                    "id": comp.id,
+                    "name": comp.name,
+                    "type": comp.type.value,
+                    "x": abs_x,
+                    "y": abs_y,
+                    "z": abs_z,
+                    "length": comp.length,
+                    "width": comp.width,
+                    "height": comp.height,
+                    "parent_id": parent_id,
+                })
+                # 递归收集子组件
+                self._collect_leaves(comp.children, abs_x, abs_y, abs_z, comp.id, result)
+            else:
+                # 纯叶子组件
+                result.append({
+                    "id": comp.id,
+                    "name": comp.name,
+                    "type": comp.type.value,
+                    "x": abs_x,
+                    "y": abs_y,
+                    "z": abs_z,
+                    "length": comp.length,
+                    "width": comp.width,
+                    "height": comp.height,
+                    "parent_id": parent_id,
+                })
+
+    def _aabb_overlap(self, a, b) -> bool:
+        """AABB 包围盒重叠检测"""
+        # A 盒体范围
+        a_min_x, a_max_x = a["x"], a["x"] + a["length"]
+        a_min_y, a_max_y = a["y"], a["y"] + a["height"]
+        a_min_z, a_max_z = a["z"], a["z"] + a["width"]
+
+        # B 盒体范围
+        b_min_x, b_max_x = b["x"], b["x"] + b["length"]
+        b_min_y, b_max_y = b["y"], b["y"] + b["height"]
+        b_min_z, b_max_z = b["z"], b["z"] + b["width"]
+
+        # 三个轴都有重叠才是干涉
+        return (
+            a_min_x < b_max_x and a_max_x > b_min_x and
+            a_min_y < b_max_y and a_max_y > b_min_y and
+            a_min_z < b_max_z and a_max_z > b_min_z
+        )
+
+    def _calc_overlap_volume(self, a, b) -> float:
+        """计算两个 AABB 盒体的重叠体积"""
+        dx = min(a["x"] + a["length"], b["x"] + b["length"]) - max(a["x"], b["x"])
+        dy = min(a["y"] + a["height"], b["y"] + b["height"]) - max(a["y"], b["y"])
+        dz = min(a["z"] + a["width"], b["z"] + b["width"]) - max(a["z"], b["z"])
+        return max(0, dx) * max(0, dy) * max(0, dz)
 
     def to_dict(self) -> dict:
         """序列化当前柜子对象"""

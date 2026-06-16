@@ -73,7 +73,7 @@ def remove_component(project_id: str, component_id: str) -> dict:
     return manager.remove_component(component_id=component_id)
 
 
-def modify_component(project_id: str, target_id: str, properties: dict) -> dict:
+def modify_component(project_id: str, target_id: str, properties: dict, save_history: bool = True) -> dict:
     """
     修改柜子或组件的属性（尺寸、位置、材料、颜色等）。
 
@@ -82,9 +82,10 @@ def modify_component(project_id: str, target_id: str, properties: dict) -> dict:
         target_id: 修改目标ID，"cabinet" 表示修改柜子整体属性
         properties: 要修改的属性键值对，可包含:
             name, length, width, height, position, rotation, material, color, thickness
+        save_history: 是否保存历史记录（干涉修复时设为 False，避免多次快照）
     """
     manager = get_manager(project_id)
-    return manager.modify(target_id=target_id, properties=properties)
+    return manager.modify(target_id=target_id, properties=properties, save_history=save_history)
 
 
 def undo_redo(project_id: str, action: str) -> dict:
@@ -101,3 +102,29 @@ def undo_redo(project_id: str, action: str) -> dict:
     elif action == "redo":
         return manager.redo()
     return {"error": f"无效操作: {action}，请使用 undo 或 redo"}
+
+
+def check_interference(project_id: str) -> dict:
+    """
+    检查柜子各组件间是否存在干涉（重叠）。
+
+    使用 AABB 包围盒检测组件是否重叠，排除父子关系的组件对。
+    建议在每次编辑操作后调用，确保模型无干涉。
+
+    Args:
+        project_id: 项目ID
+    """
+    manager = get_manager(project_id)
+    return manager.check_interference()
+
+
+def commit_changes(project_id: str, description: str = "编辑完成") -> dict:
+    """
+    提交保存快照。在编辑操作完成且干涉检查通过后调用，保存本次对话的编辑结果。
+
+    Args:
+        project_id: 项目ID
+        description: 本次编辑的描述说明
+    """
+    manager = get_manager(project_id)
+    return manager.commit_changes(description=description)

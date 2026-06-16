@@ -28,7 +28,7 @@ description: >
 - 顶/底板 (top/bottom_panel)：length=柜长, width=柜深, height=板厚
 - 背板 (back_panel)：length=柜长, width=板厚, height=柜高
 - 隔板 (shelf)：length=柜内宽, width=柜深, height=板厚
-- 门板/单开门（single_door）：length=门宽, width=板厚, height=门高，绕左侧边旋转打开
+- 单开门/门板（single_door）：length=门宽, width=板厚, height=门高，绕左侧边旋转打开
 - 双开门（double_door）：length=门宽, width=板厚, height=门高，两块 single_door（左门和右门）
   - 添加 double_door 时，系统会自动创建两块 single_door 子组件
   - 左门：position.x=0, length=柜内宽/2
@@ -53,13 +53,29 @@ double_door (父组件)
 2. 根据用户意图确定操作类型（添加/删除/修改）
 3. 计算出正确的参数值（位置、尺寸等）
 4. 调用对应工具执行操作
-5. 操作完成后告知用户结果
+5. **调用 check_interference 检查干涉**
+6. 如果存在干涉，调整干涉组件的位置或尺寸，重复检查直到无干涉
+7. **干涉检查通过后，调用 commit_changes 保存本次编辑结果**
+8. 操作完成后告知用户结果
+
+## 干涉检查
+- 使用 AABB 包围盒检测组件是否重叠
+- 排除父子关系的组件对（如门板和其拉手）
+- 容器类型（如 double_door）不参与检查，只检查其子组件
+- 返回结果包含干涉组件对和重叠体积
+- 修复干涉时优先调整新添加/修改的组件
+- **修复干涉时使用 save_history=False，避免多次保存**：modify_component(target_id=..., properties={...}, save_history=False)
+
+## 保存快照
+- **只在干涉检查通过后调用一次 commit_changes 保存快照**
+- 编辑操作（add/remove/modify）本身不保存快照
+- commit_changes(description="描述") 保存本次编辑的最终结果
 
 ## 校验规则
 - 修改后的板件必须在柜体边界范围内
 - 添加隔板时 Y 坐标应介于底板高度和顶板高度之间
 - 删除侧板/顶板/底板等结构件时需提醒用户
-- 板件之间不能重叠（位置冲突检查）
+- **每次编辑后必须检查干涉，确保无组件重叠**
 
 ## 子组件规则
 - 拉手、铰链、滑轨等五金配件必须作为其所属板件的子组件（children），不能与板件同级

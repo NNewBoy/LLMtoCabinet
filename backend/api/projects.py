@@ -188,6 +188,9 @@ async def update_component(project_id: str, component_id: str, request: UpdateCo
         logger.warning(f"修改失败: {result['error']}")
         raise HTTPException(status_code=400, detail=result["error"])
 
+    # 保存快照
+    manager.commit_changes(f"修改组件 {component_id}")
+
     logger.info(f"修改成功: {component_id}")
     return result
 
