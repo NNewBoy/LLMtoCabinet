@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database.connection import get_session
 from models.database import Project, User
-from models.cabinet import create_default_cabinet
+from models.cabinet import create_cabinet_by_template
 from engine.cabinet_manager import CabinetManager
 from agent.tools import get_manager
 from utils.serialization import cabinet_to_json, json_to_cabinet
@@ -50,11 +50,11 @@ async def list_projects(session: AsyncSession = Depends(get_session)):
 
 
 @router.post("")
-async def create_project(name: str = "新柜子项目", session: AsyncSession = Depends(get_session)):
-    """创建新项目（初始化默认柜子）"""
+async def create_project(name: str = "新柜子项目", template: str = "cabinet", session: AsyncSession = Depends(get_session)):
+    """创建新项目（根据模板初始化柜子）"""
     user = await _ensure_user(session)
 
-    cabinet = create_default_cabinet().model_copy(deep=True)
+    cabinet = create_cabinet_by_template(template)
     cabinet_json = cabinet_to_json(cabinet)
 
     project = Project(
@@ -115,7 +115,7 @@ async def update_project(project_id: str, name: str = None, session: AsyncSessio
     if not project:
         # 项目不存在，新建
         user = await _ensure_user(session)
-        cabinet = manager.cabinet if manager.cabinet else create_default_cabinet().model_copy(deep=True)
+        cabinet = manager.cabinet if manager.cabinet else create_cabinet_by_template()
         project = Project(
             id=project_id,
             user_id=user.id,

@@ -137,6 +137,7 @@ npm run dev
 | back_panel | 背板 |
 | top_panel | 顶板 |
 | bottom_panel | 底板 |
+| divider | 中竖板 |
 | shelf | 隔板 |
 | single_door | 单开门（绕左侧边旋转，自动配竖拉手） |
 | double_door | 双开门（自动创建左右门子组件及拉手） |
@@ -157,7 +158,7 @@ npm run dev
 
 ### 方案管理
 
-- **新建方案**：创建新的柜子项目
+- **新建方案**：选择模板类型（标准柜/厨柜/衣柜/书架）创建新项目
 - **切换方案**：在多个方案间切换
 - **重命名**：修改方案名称
 - **删除**：删除不需要的方案
@@ -187,7 +188,7 @@ npm run dev
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/projects` | 创建项目 |
+| POST | `/api/projects?name=xxx&template=xxx` | 创建项目（可选模板：cabinet/kitchen/wardrobe/bookshelf） |
 | GET | `/api/projects/{id}` | 获取项目 |
 | PUT | `/api/projects/{id}` | 更新项目 |
 | DELETE | `/api/projects/{id}` | 删除项目 |

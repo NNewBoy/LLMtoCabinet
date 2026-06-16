@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { apiUrl } from '../config'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
-const projectName = ref('标准橱柜')
+const projectName = computed(() => cabinetStore.cabinet?.name || '标准柜')
 const canUndo = ref(false)
 const canRedo = ref(false)
 
