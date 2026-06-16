@@ -94,6 +94,10 @@ async def get_project(project_id: str, session: AsyncSession = Depends(get_sessi
     manager = get_manager(project_id)
     manager.load(cabinet)
 
+    # 切换方案时，清空 Agent 对话历史
+    from agent.cabinet_agent import clear_agent_history
+    clear_agent_history(project_id)
+
     logger.info(f"加载项目: {project_id} - {project.name}")
     return {
         "id": project.id,
@@ -148,9 +152,11 @@ async def delete_project(project_id: str, session: AsyncSession = Depends(get_se
     await session.delete(project)
     await session.commit()
 
-    # 清理 manager
+    # 清理 manager 和 agent
     from agent.tools import _managers
     _managers.pop(project_id, None)
+    from agent.cabinet_agent import clear_agent_history
+    clear_agent_history(project_id)
 
     logger.info(f"删除项目: {project_id} - {project.name}")
     return {"message": "项目已删除"}

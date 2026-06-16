@@ -109,6 +109,7 @@
 | OperationHistory | `engine/history.py` | ✅ | 操作历史管理 |
 | Agent Tools | `agent/tools.py` | ✅ | 5 个工具函数 |
 | Agent Skills | `agent/skills/` | ✅ | 2 个 Skill 文件 |
+| Agent | `agent/cabinet_agent.py` | ✅ | DeepAgents 创建 + Agent 缓存 + 对话历史管理 |
 | 数据模型 | `models/cabinet.py` | ✅ | Cabinet/CabinetComponent 定义 |
 | 数据库模型 | `models/database.py` | ✅ | SQLAlchemy ORM 模型 |
 | 序列化工具 | `utils/serialization.py` | ✅ | JSON 序列化/反序列化 |
@@ -172,8 +173,8 @@
 ## 待开发功能
 
 ### 高优先级
-- [ ] Agent对话要连续，不需要每次都重新启动，减少对话等待时间
-- [ ] Agent每次对话前，要查询模型数据，确保模型是最新的
+- [x] Agent对话要连续，不需要每次都重新启动，减少对话等待时间
+- [x] Agent每次对话前，要查询模型数据，确保模型是最新的
 - [ ] Agent修改模型后要对模型进行干涉检查
 - [ ] 增加模型AI级渲染功能，提供渲染图下载功能
 
@@ -188,7 +189,8 @@
 - [ ] 版本历史对比
 
 ### 已完成 (2026-06-16)
-- [x] 撤销/重做功能（HTTP 接口，无需 Agent）
+- [x] Agent 连续对话（复用 Agent + MemorySaver checkpointer + thread_id）
+- [x] Agent 每次对话前注入最新柜子状态上下文
 - [x] 默认模型干涉修复
 - [x] 选中高亮优化（蓝色边框描边）
 - [x] 移动端长按优化
@@ -217,7 +219,10 @@
 ## 最近更新
 
 ### 2026-06-16 (深夜)
-- **多模板支持**：新增厨柜、衣柜、书架默认模板，新建方案时可选择模板类型
+- **Agent 连续对话**：复用 Agent 实例 + MemorySaver checkpointer + thread_id，同一项目内对话不再每次重建 Agent
+- **柜子状态注入**：每次对话前查询柜子最新概览，以 `[当前柜子状态]` 前缀注入用户消息
+- **方案切换清空对话**：切换方案时调用 `clear_agent_history` 清空 Agent 对话历史和 checkpointer
+- **依赖更新**：新增 `langgraph-checkpoint>=2.0.0`
 - **创建方案 API**：`POST /api/projects` 新增 `template` 查询参数（cabinet/kitchen/wardrobe/bookshelf）
 - **厨柜模板**：900×600×800，单开门配竖拉手，层板z=18避让门板(z=0~18)
 - **衣柜模板**：1800×600×2200，双开门含左右门子组件及竖拉手，下层层板(y=400)分隔上下区域，底部左右各一个抽屉配横拉手，双开门覆盖上层板到顶板
@@ -314,4 +319,4 @@ LLMtoCabinet_deeepseek/
 
 ---
 
-*最后更新：2026-06-16 晚上*
+*最后更新：2026-06-16 深夜*

@@ -1,6 +1,7 @@
 import logging
 from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
+from langgraph.checkpoint.memory import MemorySaver
 from agent.tools import (
     query_cabinet as _query_cabinet,
     add_component as _add_component,
@@ -29,9 +30,12 @@ CABINET_SYSTEM_PROMPT = """
 - 对于无法执行的操作，说明原因
 """
 
+# Agent 缓存：project_id -> agent 实例
+_agents: dict[str, object] = {}
 
-def create_cabinet_agent(project_id: str):
-    """为指定项目创建柜子编辑 Agent"""
+
+def _create_agent(project_id: str):
+    """为指定项目创建柜子编辑 Agent（含 checkpointer）"""
     logger.info(f"创建 Agent: project={project_id}")
 
     def query_cabinet(detail_level: str = "summary", component_id: str = None) -> dict:
@@ -84,12 +88,32 @@ def create_cabinet_agent(project_id: str):
         base_url=LLM_BASE_URL,
     )
 
+    # 使用 MemorySaver 维护对话历史，支持连续对话
+    checkpointer = MemorySaver()
+
     agent = create_deep_agent(
         model=model,
         tools=tools,
         skills=[SKILLS_DIR],
         system_prompt=CABINET_SYSTEM_PROMPT,
+        checkpointer=checkpointer,
     )
 
     logger.info(f"Agent 创建完成: project={project_id}")
     return agent
+
+
+def get_or_create_agent(project_id: str):
+    """获取或创建项目对应的 Agent（复用已有实例以保持对话连续性）"""
+    if project_id not in _agents:
+        _agents[project_id] = _create_agent(project_id)
+    else:
+        logger.info(f"复用已有 Agent: project={project_id}")
+    return _agents[project_id]
+
+
+def clear_agent_history(project_id: str):
+    """清空 Agent 对话历史（切换方案时调用）"""
+    if project_id in _agents:
+        del _agents[project_id]
+        logger.info(f"已清空 Agent 对话历史: project={project_id}")

@@ -7,6 +7,7 @@
 - **自然语言编辑** — 输入中文指令即可编辑柜子（如"在中间加一块隔板"、"把左侧板加高10cm"）
 - **实时3D预览** — 基于 Three.js 的 WebGL 渲染，支持旋转/缩放/平移
 - **智能Agent** — DeepAgents 框架驱动，自动理解意图并执行编辑操作
+- **连续对话** — 同一方案内复用 Agent 实例，支持上下文连续对话
 - **Undo/Redo** — 完整的撤销/重做支持（Ctrl+Z / Ctrl+Y）
 - **Glassmorphism UI** — 现代深色主题，半透明毛玻璃效果
 - **响应式设计** — 支持 PC、平板、移动端自适应布局
@@ -159,7 +160,7 @@ npm run dev
 ### 方案管理
 
 - **新建方案**：选择模板类型（标准柜/厨柜/衣柜/书架）创建新项目
-- **切换方案**：在多个方案间切换
+- **切换方案**：在多个方案间切换（自动清空对话历史）
 - **重命名**：修改方案名称
 - **删除**：删除不需要的方案
 - **保存**：保存当前修改
@@ -227,7 +228,7 @@ npm run dev
 │   │   └── history.py                # Undo/Redo 栈
 │   ├── agent/
 │   │   ├── tools.py                  # Agent 工具函数
-│   │   ├── cabinet_agent.py          # DeepAgents 创建
+│   │   ├── cabinet_agent.py          # DeepAgents 创建 + Agent 缓存 + 对话历史
 │   │   └── skills/                   # SKILL.md 领域知识
 │   │       ├── cabinet_editing/SKILL.md
 │   │       └── cabinet_design/SKILL.md
@@ -268,9 +269,9 @@ npm run dev
 ```
 用户输入自然语言 → 前端通过 WebSocket 发送到后端
                         ↓
-           DeepAgents Agent (加载 SKILL.md 领域知识)
+           复用已有 Agent（MemorySaver 维护对话历史）
                         ↓
-           LLM 决策调用哪个 Tool (query/add/remove/modify)
+           注入最新柜子状态上下文 → LLM 决策调用哪个 Tool
                         ↓
            CabinetManager 执行编辑操作
                         ↓

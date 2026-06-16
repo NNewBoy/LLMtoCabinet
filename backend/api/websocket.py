@@ -2,7 +2,7 @@ import json
 import logging
 import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from agent.cabinet_agent import create_cabinet_agent
+from agent.cabinet_agent import get_or_create_agent
 from agent.tools import get_manager
 from engine.cabinet_manager import CabinetManager
 from utils.serialization import cabinet_to_dict, json_to_cabinet
@@ -96,16 +96,28 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                 await ws.send_json({"type": "agent_thinking", "content": "正在分析您的指令..."})
 
                 try:
-                    # 创建 Agent 并执行
-                    logger.info(f"创建 Agent 处理消息: project={project_id}")
-                    agent = create_cabinet_agent(project_id)
+                    # 复用已有 Agent（保持对话连续性）
+                    agent = get_or_create_agent(project_id)
+
+                    # 查询最新柜子信息，注入到用户消息中作为上下文
+                    # Agent会判断是否需要调用查询接口
+                    # cabinet_info = manager.query(detail_level="summary")
+                    # context_prefix = f"[当前柜子状态]\n{json.dumps(cabinet_info, ensure_ascii=False)}\n\n"
+                    # enhanced_text = context_prefix + text
+                    enhanced_text = text
+
+                    # 使用 thread_id 维护对话历史
+                    agent_config = {
+                        "recursion_limit": 50,
+                        "configurable": {"thread_id": project_id},
+                    }
 
                     # 使用流式调用，同时收集最终响应
                     response_content = ""
                     async for event in agent.astream_events(
-                        {"messages": [{"role": "user", "content": text}]},
+                        {"messages": [{"role": "user", "content": enhanced_text}]},
                         version="v2",
-                        config={"recursion_limit": 50},
+                        config=agent_config,
                     ):
                         kind = event.get("event")
                         if kind == "on_chat_model_stream":
