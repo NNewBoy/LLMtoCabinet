@@ -57,6 +57,27 @@ class CabinetManager:
         else:
             return {"cabinet": cabinet_to_dict(self.cabinet)}
 
+    def _create_handle(self, parent_name: str, handle_x: float, handle_y: float,
+                       handle_z: float, handle_length: float, handle_width: float,
+                       handle_height: float) -> CabinetComponent:
+        """创建拉手子组件
+
+        坐标系说明（相对于父组件）：
+          - z < 0 为父组件正面外侧（拉手应在此侧）
+          - 竖拉手：长边沿 Y 轴 → height 为大值
+          - 横拉手：长边沿 X 轴 → length 为大值
+        """
+        return CabinetComponent(
+            name=f"{parent_name} - 拉手",
+            type=ComponentType.HANDLE,
+            length=handle_length,
+            width=handle_width,
+            height=handle_height,
+            position=Vector3(x=handle_x, y=handle_y, z=handle_z),
+            material="metal",
+            color="#C0C0C0",
+        )
+
     def add_component(
         self,
         type: str,
@@ -107,7 +128,23 @@ class CabinetManager:
                 "cabinet": cabinet_to_dict(self.cabinet),
             }
 
-        # 如果是双开门，自动创建两块单开门子组件
+        # 单开门自动配竖拉手（左侧居中，长边沿 Y 轴）
+        if comp_type == ComponentType.SINGLE_DOOR:
+            handle_height = component.height * 0.6   # 竖拉手长边沿 Y
+            handle_y = (component.height - handle_height) / 2  # 垂直居中
+            handle = self._create_handle(
+                parent_name=name,
+                handle_x=component.length - 40,  # 右侧20位置
+                handle_y=handle_y,                    # 垂直居中
+                handle_z=-30,                         # 门板正面外侧（z<0）
+                handle_length=20,                     # X方向窄
+                handle_width=30,                      # Z方向突出厚度
+                handle_height=handle_height,          # Y方向长
+            )
+            component.children.append(handle)
+            logger.info(f"自动创建单开门拉手: {handle.name}")
+
+        # 双开门自动配拉手
         if comp_type == ComponentType.DOUBLE_DOOR:
             door_length = component.length / 2
             door_width = component.width if component.width > 0 else thickness
@@ -137,16 +174,67 @@ class CabinetManager:
                 thickness=thickness,
             )
             
+            # 左门竖拉手（右侧居中，长边沿 Y 轴）
+            handle_h = door_height * 0.6
+            handle_y = (door_height - handle_h) / 2
+            left_handle = self._create_handle(
+                parent_name=f"{name} - 左门",
+                handle_x=door_length - 40,     # 右侧，拉手左边缘在20处
+                handle_y=handle_y,                    # 垂直居中
+                handle_z=-30,                         # 门板正面外侧
+                handle_length=20,                     # X方向窄
+                handle_width=30,                      # Z方向突出厚度
+                handle_height=handle_h,               # Y方向长
+            )
+            left_door.children.append(left_handle)
+            
+            # 右门竖拉手（左侧居中，长边沿 Y 轴）
+            right_handle = self._create_handle(
+                parent_name=f"{name} - 右门",
+                handle_x=20,           # 左侧10%位置
+                handle_y=handle_y,                    # 垂直居中
+                handle_z=-30,                         # 门板正面外侧
+                handle_length=20,                     # X方向窄
+                handle_width=30,                      # Z方向突出厚度
+                handle_height=handle_h,               # Y方向长
+            )
+            right_door.children.append(right_handle)
+            
             component.children.append(left_door)
             component.children.append(right_door)
             logger.info(f"自动创建双开门子组件: {left_door.name}, {right_door.name}")
+            logger.info(f"自动创建双开门拉手: {left_handle.name}, {right_handle.name}")
+
+        # 抽屉自动配横拉手（顶部居中，长边沿 X 轴）
+        if comp_type == ComponentType.DRAWER:
+            handle_len = component.length * 0.3   # 横拉手长边沿 X
+            handle_x = (component.length - handle_len) / 2  # 水平居中
+            handle = self._create_handle(
+                parent_name=name,
+                handle_x=handle_x,                # 水平居中
+                handle_y=component.height - 40,  # 顶部位置
+                handle_z=-30,                      # 抽面正面外侧
+                handle_length=handle_len,          # X方向长
+                handle_width=30,                   # Z方向突出厚度
+                handle_height=20,                  # Y方向窄
+            )
+            component.children.append(handle)
+            logger.info(f"自动创建抽屉拉手: {handle.name}")
 
         self.cabinet.components.append(component)
         self.history.save_snapshot(self.cabinet, f"添加 {name}")
         logger.info(f"添加组件: {name} (type={type}, position={position})")
+        
+        # 构建成功消息
+        success_msg = f"已添加 {name}"
+        if comp_type == ComponentType.DOUBLE_DOOR:
+            success_msg += "（含左右两扇门及拉手）"
+        elif comp_type in [ComponentType.SINGLE_DOOR, ComponentType.DRAWER]:
+            success_msg += "（含拉手）"
+        
         return {
             "success": True,
-            "message": f"已添加 {name}" + ("（含左右两扇门）" if comp_type == ComponentType.DOUBLE_DOOR else ""),
+            "message": success_msg,
             "component_id": component.id,
             "cabinet": cabinet_to_dict(self.cabinet),
         }

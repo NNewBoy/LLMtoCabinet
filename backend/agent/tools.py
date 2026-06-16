@@ -37,7 +37,7 @@ def add_component(
     parent_id: str = None,
 ) -> dict:
     """
-    向柜子添加新的板件或组件（隔板、门板、抽屉等）。
+    向柜子添加新的板件或组件（隔板、单开门、双开门、抽屉等）。
 
     Args:
         project_id: 项目ID

@@ -33,7 +33,8 @@ description: >
   - 添加 double_door 时，系统会自动创建两块 single_door 子组件
   - 左门：position.x=0, length=柜内宽/2
   - 右门：position.x=柜内宽/2, length=柜内宽/2
-- 拉手 (handle)：通常作为门板的子组件，使用 parent_id 添加
+- 抽屉（drawer）：length=抽面宽, width=柜深, height=抽面高，包含抽面、侧板、底板等结构
+- 拉手 (handle)：通常作为门板或抽屉的子组件，使用 parent_id 添加
 
 ## 双开门结构说明
 添加 double_door 时，数据结构如下：
@@ -72,6 +73,10 @@ double_door (父组件)
 - "删除中间的隔板" → 先 query_cabinet 获取隔板ID，再 remove_component
 - "换成橡木材料" → modify_component(target_id=组件ID, properties={"material": "oak"})
 - "加一扇单开门" → add_component(type="single_door", name="左门板", position={"x":18,"y":18,"z":0}, dimensions={"length":764,"width":18,"height":1964})
+  - 系统会自动创建单开门及竖拉手
 - "加双开门" → add_component(type="double_door", name="双开门", position={"x":18,"y":18,"z":0}, dimensions={"length":764,"width":18,"height":1964})
-  - 系统会自动创建两块 single_door 子组件（左门和右门）
-- "给门板加拉手" → add_component(parent_id="门板ID", type="handle", name="拉手", position={"x":600,"y":982,"z":18}, dimensions={"length":100,"width":30,"height":20})
+  - 系统会自动创建双开门及左右门拉手
+- "加一个抽屉" → add_component(type="drawer", name="抽屉", position={"x":18,"y":500,"z":0}, dimensions={"length":764,"width":600,"height":200})
+  - 系统会自动创建抽屉及横拉手
+- "给门板加拉手" → add_component(parent_id="门板ID", type="handle", name="拉手", position={"x":600,"y":393,"z":-30}, dimensions={"length":20,"width":30,"height":1178})
+  - 注意：拉手 position.z 为负值表示在门板正面外侧
