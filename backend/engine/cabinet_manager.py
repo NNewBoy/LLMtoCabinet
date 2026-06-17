@@ -63,7 +63,7 @@ class CabinetManager:
         """创建拉手子组件
 
         坐标系说明（相对于父组件）：
-          - z < 0 为父组件正面外侧（拉手应在此侧）
+          - +Z 为父组件正面/开口方向，拉手应放在父组件正面外侧
           - 竖拉手：长边沿 Y 轴 → height 为大值
           - 横拉手：长边沿 X 轴 → length 为大值
         """
@@ -113,6 +113,10 @@ class CabinetManager:
             thickness=thickness,
         )
 
+        # 强制门板坐标在开口
+        # if not parent_id and comp_type in [ComponentType.SINGLE_DOOR, ComponentType.DOUBLE_DOOR]:
+        #     component.position.z = self.cabinet.width
+
         if parent_id:
             parent = self.cabinet.find_component(parent_id)
             if not parent:
@@ -135,7 +139,7 @@ class CabinetManager:
                 parent_name=name,
                 handle_x=component.length - 40,  # 右侧20位置
                 handle_y=handle_y,                    # 垂直居中
-                handle_z=-30,                         # 门板正面外侧（z<0）
+                handle_z=component.width,              # 门板正面外侧（+Z）
                 handle_length=20,                     # X方向窄
                 handle_width=30,                      # Z方向突出厚度
                 handle_height=handle_height,          # Y方向长
@@ -180,7 +184,7 @@ class CabinetManager:
                 parent_name=f"{name} - 左门",
                 handle_x=door_length - 40,     # 右侧，拉手左边缘在20处
                 handle_y=handle_y,                    # 垂直居中
-                handle_z=-30,                         # 门板正面外侧
+                handle_z=door_width,                   # 门板正面外侧（+Z）
                 handle_length=20,                     # X方向窄
                 handle_width=30,                      # Z方向突出厚度
                 handle_height=handle_h,               # Y方向长
@@ -192,7 +196,7 @@ class CabinetManager:
                 parent_name=f"{name} - 右门",
                 handle_x=20,           # 左侧10%位置
                 handle_y=handle_y,                    # 垂直居中
-                handle_z=-30,                         # 门板正面外侧
+                handle_z=door_width,                   # 门板正面外侧（+Z）
                 handle_length=20,                     # X方向窄
                 handle_width=30,                      # Z方向突出厚度
                 handle_height=handle_h,               # Y方向长
@@ -212,7 +216,7 @@ class CabinetManager:
                 parent_name=name,
                 handle_x=handle_x,                # 水平居中
                 handle_y=component.height - 40,  # 顶部位置
-                handle_z=-30,                      # 抽面正面外侧
+                handle_z=component.width,          # 抽面正面外侧（+Z）
                 handle_length=handle_len,          # X方向长
                 handle_width=30,                   # Z方向突出厚度
                 handle_height=20,                  # Y方向窄

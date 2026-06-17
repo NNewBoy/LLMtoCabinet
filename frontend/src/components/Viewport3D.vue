@@ -775,8 +775,8 @@ function toggleDoors() {
           childMeshIds: childIds,
         })
 
-        // 抽屉向前拉出（-Z 为前方）
-        addTween(mesh, 'position', 'z', mesh.position.z - pullOut)
+        // 抽屉向前拉出（+Z 为前方/开口方向）
+        addTween(mesh, 'position', 'z', mesh.position.z + pullOut)
 
         // 子物体也跟随拉出
         for (const cid of childIds) {
@@ -789,7 +789,7 @@ function toggleDoors() {
               posZ: childMesh.position.z,
               rotY: childMesh.rotation.y,
             })
-            addTween(childMesh, 'position', 'z', childMesh.position.z - pullOut)
+            addTween(childMesh, 'position', 'z', childMesh.position.z + pullOut)
           }
         }
       }
