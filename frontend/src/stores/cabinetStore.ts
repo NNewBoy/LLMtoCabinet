@@ -19,6 +19,7 @@ function showToast(message: string, type: 'success' | 'error' | 'warning' | 'inf
 export const useCabinetStore = defineStore('cabinet', () => {
   const cabinet = ref<Cabinet | null>(null)
   const selectedComponentId = ref<string | null>(null)
+  const componentClickSignal = ref(0) // 每次选中组件时递增，用于触发 watch（解决重复选中同一组件时 watch 不触发的问题）
   const expandedIds = ref<Set<string>>(new Set())
   const isLoading = ref(false)
   const currentProjectId = ref(localStorage.getItem('lastProjectId') || 'default')
@@ -85,6 +86,7 @@ export const useCabinetStore = defineStore('cabinet', () => {
     selectedComponentId.value = id
     // 选中组件时自动展开父组件
     if (id) {
+      componentClickSignal.value++
       const parentIds = findParentIds(id)
       parentIds.forEach(pid => expandedIds.value.add(pid))
     }
@@ -141,6 +143,7 @@ export const useCabinetStore = defineStore('cabinet', () => {
   return {
     cabinet,
     selectedComponentId,
+    componentClickSignal,
     selectedComponent,
     componentList,
     expandedIds,

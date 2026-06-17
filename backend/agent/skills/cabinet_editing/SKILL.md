@@ -28,8 +28,8 @@ description: >
 - 顶/底板 (top/bottom_panel)：length=柜长, width=柜深, height=板厚
 - 背板 (back_panel)：length=柜长, width=板厚, height=柜高
 - 隔板 (shelf)：length=柜内宽, width=柜深, height=板厚
-- 单开门/门板（single_door）：length=门宽, width=板厚, height=门高，绕左侧边旋转打开
-- 双开门（double_door）：length=门宽, width=板厚, height=门高，两块 single_door（左门和右门）
+- 单开门/门板（single_door）：length=门宽, width=板厚(=thickness, 默认18), height=门高，绕左侧边旋转打开
+- 双开门（double_door）：length=门宽, width=板厚(=thickness, 默认18), height=门高，两块 single_door（左门和右门）
   - 添加 double_door 时，系统会自动创建两块 single_door 子组件
   - 左门：position.x=0, length=柜内宽/2
   - 右门：position.x=柜内宽/2, length=柜内宽/2
@@ -83,6 +83,7 @@ double_door (父组件)
 - 拉手使用 type="handle"，例如：给门板加拉手 → add_component(parent_id="门板ID", type="handle", name="拉手", ...)
 
 ## 常见场景（附完整参数示例，假设柜子 800x600x2000，侧板厚18mm）
+- 注意：单开门(single_door)和双开门(double_door)的 width 是门板厚度（与 thickness 一致，如18mm），**不是柜子深度**。请勿将 width 设为柜子 width（如600）！
 - "在中间加一块隔板" → add_component(type="shelf", name="中层隔板", position={"x":18,"y":1000,"z":0}, dimensions={"length":764,"width":600,"height":18})
 - "在离底部三分之一处加隔板" → y = 18 + (2000-2*18)/3 ≈ 675，position={"x":18,"y":675,"z":0}
 - "把侧板加高" → modify_component(target_id="left_panel", properties={"height": 新高度})

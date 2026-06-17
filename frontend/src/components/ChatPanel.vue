@@ -8,6 +8,13 @@ const wsStore = useWebSocketStore()
 const inputText = ref('')
 const messagesContainer = ref<HTMLDivElement | null>(null)
 
+const examplePrompts = [
+  '中间加两块层板形成高度3:2:1的三层空间，上层加一个双开门，下层加一个抽屉',
+  '在中间加一块层板',
+  '底板延伸出10cm',
+  '背板换成棕色',
+]
+
 async function sendMessage() {
   const text = inputText.value.trim()
   if (!text || !wsStore.isConnected || chatStore.isStreaming) return
@@ -31,6 +38,10 @@ async function scrollToBottom() {
   }
 }
 
+function selectExample(text: string) {
+  inputText.value = text
+}
+
 watch(() => chatStore.messages.length, () => {
   scrollToBottom()
 })
@@ -47,9 +58,12 @@ watch(() => chatStore.currentStreamContent, () => {
         <div class="empty-icon">💬</div>
         <p class="empty-title">输入自然语言指令来编辑柜子</p>
         <div class="examples">
-          <p class="example">"在中间加一块隔板"</p>
-          <p class="example">"把左侧板加高10cm"</p>
-          <p class="example">"换成橡木材料"</p>
+          <p
+            v-for="prompt in examplePrompts"
+            :key="prompt"
+            class="example"
+            @click="selectExample(prompt)"
+          >{{ prompt }}</p>
         </div>
       </div>
 
@@ -143,7 +157,7 @@ watch(() => chatStore.currentStreamContent, () => {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
-  cursor: default;
+  cursor: pointer;
 }
 
 .example:hover {

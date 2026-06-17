@@ -6,6 +6,7 @@ from agent.cabinet_agent import get_or_create_agent
 from agent.tools import get_manager
 from engine.cabinet_manager import CabinetManager
 from utils.serialization import cabinet_to_dict, json_to_cabinet
+from config import ENABLE_INTERFERENCE_CHECK
 
 logger = logging.getLogger("cabinet3d.websocket")
 
@@ -107,8 +108,10 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                     enhanced_text = text
 
                     # 使用 thread_id 维护对话历史
+                    # 开启干涉检查时，Agent 调用次数增多，需要提高递归上限
+                    recursion_limit = 200 if ENABLE_INTERFERENCE_CHECK else 50
                     agent_config = {
-                        "recursion_limit": 50,
+                        "recursion_limit": recursion_limit,
                         "configurable": {"thread_id": project_id},
                     }
 

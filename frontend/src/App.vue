@@ -38,8 +38,8 @@ onMounted(() => {
 })
 
 // 监听选中组件变化，自动切换到组件标签
-watch(() => cabinetStore.selectedComponentId, (newId) => {
-  if (newId) {
+watch(() => cabinetStore.componentClickSignal, () => {
+  if (cabinetStore.selectedComponentId) {
     activeTab.value = 'component'
   }
 })
