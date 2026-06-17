@@ -135,9 +135,9 @@ function initScene() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
   scene.add(ambientLight)
 
-  // 主光源 - 从侧上方照射，阴影投到侧后方（缩短阴影）
+  // 主光源 - 对角线方向照射，阴影均匀
   const dirLight = new THREE.DirectionalLight(0xffffff, 0.9)
-  dirLight.position.set(-1500, 4000, -1500)
+  dirLight.position.set(2500, 4000, 2500)
   dirLight.target.position.set(0, 0, 0)
   scene.add(dirLight.target)
   dirLight.castShadow = true
@@ -153,14 +153,14 @@ function initScene() {
   dirLight.shadow.normalBias = 0.02
   scene.add(dirLight)
 
-  // 补光1 - 从另一侧上方照射
+  // 补光1 - 对角线另一侧
   const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4)
-  dirLight2.position.set(-2000, 2500, -1000)
+  dirLight2.position.set(-2500, 2500, -2500)
   scene.add(dirLight2)
 
-  // 补光2 - 从正面侧上方照射
+  // 补光2 - 另一对角线
   const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.3)
-  dirLight3.position.set(0, 2000, -2500)
+  dirLight3.position.set(-2000, 2000, 2000)
   scene.add(dirLight3)
 
   // 地面 - 接收阴影
