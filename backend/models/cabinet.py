@@ -11,7 +11,7 @@ class ComponentType(str, Enum):
     TOP_PANEL = "top_panel"
     BOTTOM_PANEL = "bottom_panel"
     SHELF = "shelf"
-    SINGLE_DOOR = "single_door"
+    DOOR = "door"
     DOUBLE_DOOR = "double_door"
     DRAWER = "drawer"
     DIVIDER = "divider"
@@ -191,7 +191,7 @@ def create_kitchen_cabinet() -> Cabinet:
                 material="plywood", color="#F5E6D3", thickness=18.0,
             ),
             CabinetComponent(
-                id="door", name="柜门", type=ComponentType.SINGLE_DOOR,
+                id="door", name="柜门", type=ComponentType.DOOR,
                 length=864.0, width=18.0, height=764.0,
                 position=Vector3(x=18, y=18, z=600),
                 material="plywood", color="#FFF8F0", thickness=18.0,
@@ -280,28 +280,28 @@ def create_wardrobe() -> Cabinet:
             ),
             CabinetComponent(
                 id="drawer_left", name="左抽屉", type=ComponentType.DRAWER,
-                length=873.0, width=595.0, height=382.0,
+                length=873.0, width=613.0, height=382.0,
                 position=Vector3(x=18, y=18, z=5),
                 material="plywood", color="#FFF5EB", thickness=18.0,
                 children=[
                     CabinetComponent(
                         name="左抽屉 - 拉手", type=ComponentType.HANDLE,
                         length=261.9, width=30.0, height=20.0,
-                        position=Vector3(x=305.55, y=342, z=595),
+                        position=Vector3(x=305.55, y=342, z=613),
                         material="metal", color="#C0C0C0",
                     ),
                 ],
             ),
             CabinetComponent(
                 id="drawer_right", name="右抽屉", type=ComponentType.DRAWER,
-                length=873.0, width=595.0, height=382.0,
+                length=873.0, width=613.0, height=382.0,
                 position=Vector3(x=909, y=18, z=5),
                 material="plywood", color="#FFF5EB", thickness=18.0,
                 children=[
                     CabinetComponent(
                         name="右抽屉 - 拉手", type=ComponentType.HANDLE,
                         length=261.9, width=30.0, height=20.0,
-                        position=Vector3(x=305.55, y=342, z=595),
+                        position=Vector3(x=305.55, y=342, z=613),
                         material="metal", color="#C0C0C0",
                     ),
                 ],
@@ -313,7 +313,7 @@ def create_wardrobe() -> Cabinet:
                 material="plywood", color="#FFF5EB", thickness=18.0,
                 children=[
                     CabinetComponent(
-                        id="left_door", name="双开门 - 左门", type=ComponentType.SINGLE_DOOR,
+                        id="left_door", name="双开门 - 左门", type=ComponentType.DOOR,
                         length=882.0, width=18.0, height=1764.0,
                         position=Vector3(x=0, y=0, z=0),
                         material="plywood", color="#FFF5EB", thickness=18.0,
@@ -327,7 +327,7 @@ def create_wardrobe() -> Cabinet:
                         ],
                     ),
                     CabinetComponent(
-                        id="right_door", name="双开门 - 右门", type=ComponentType.SINGLE_DOOR,
+                        id="right_door", name="双开门 - 右门", type=ComponentType.DOOR,
                         length=882.0, width=18.0, height=1764.0,
                         position=Vector3(x=882, y=0, z=0),
                         material="plywood", color="#FFF5EB", thickness=18.0,

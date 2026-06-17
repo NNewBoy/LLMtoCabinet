@@ -118,9 +118,9 @@ function initScene() {
   scene.background = new THREE.Color(0x0f172a)
 
   const aspect = canvasRef.value.clientWidth / canvasRef.value.clientHeight
-  camera = new THREE.PerspectiveCamera(45, aspect, 1, 10000)
-  camera.position.set(-1200, 2400, -2800)
-  camera.lookAt(0, 1000, 0)
+  camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000)
+  camera.position.set(2500, 2500, 2500)
+  camera.lookAt(0, 0, 0)
 
   renderer = new THREE.WebGLRenderer({
     canvas: canvasRef.value,
@@ -316,6 +316,20 @@ function renderCabinet(cabinet: Cabinet) {
   isExploded.value = false
   isTransparent.value = false
   doorsOpen.value = false
+
+  // 根据柜子尺寸调整相机位置和目标点
+  const centerX = 0
+  const centerY = cabinet.height / 2
+  const centerZ = 0
+  
+  // 相机位置：1.5 倍柜子尺寸的偏移
+  const cameraX = cabinet.length * 1
+  const cameraY = cabinet.height * 1.2
+  const cameraZ = cabinet.width * 5
+  
+  camera.position.set(cameraX, cameraY, cameraZ)
+  controls.target.set(centerX, centerY, centerZ)
+  controls.update()
 }
 
 // 创建木纹法线贴图
@@ -568,9 +582,9 @@ let doorOriginals: Map<string, {
   childMeshIds?: string[]
 }> = new Map()
 
-// 判断是否是门板类型（double_door 是容器，其子组件 single_door 各自独立动画）
+// 判断是否是门板类型（double_door 是容器，其子组件 door 各自独立动画）
 function isDoorType(type: string): boolean {
-  return type === 'single_door'
+  return type === 'door'
 }
 
 // 递归查找组件
@@ -698,13 +712,13 @@ function toggleDoors() {
         let rotateAngle: number
         
         if (doorSide === 'right') {
-          // 右门：pivot 在右侧边，向右旋转（负角度）
+          // 右门：pivot 在右侧边，往外开（正角度）
           pivotX = mesh.position.x + halfLength
-          rotateAngle = -THREE.MathUtils.degToRad(120)
-        } else {
-          // 左门或普通单开门：pivot 在左侧边，向左旋转（正角度）
-          pivotX = mesh.position.x - halfLength
           rotateAngle = THREE.MathUtils.degToRad(120)
+        } else {
+          // 左门或普通单开门：pivot 在左侧边，往外开（负角度）
+          pivotX = mesh.position.x - halfLength
+          rotateAngle = -THREE.MathUtils.degToRad(120)
         }
 
         // 计算 pivot 的世界坐标

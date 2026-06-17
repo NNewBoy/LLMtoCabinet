@@ -113,9 +113,13 @@ class CabinetManager:
             thickness=thickness,
         )
 
-        # 强制门板坐标在开口
-        # if not parent_id and comp_type in [ComponentType.SINGLE_DOOR, ComponentType.DOUBLE_DOOR]:
-        #     component.position.z = self.cabinet.width
+        # 强制门板坐标在开口，width=thickness
+        if not parent_id and comp_type in [ComponentType.DOOR, ComponentType.DOUBLE_DOOR]:
+            if component.position.z == 0:
+                component.position.z = self.cabinet.width
+            if component.width > 18:
+                component.width = thickness
+
 
         if parent_id:
             parent = self.cabinet.find_component(parent_id)
@@ -132,7 +136,7 @@ class CabinetManager:
             }
 
         # 单开门自动配竖拉手（左侧居中，长边沿 Y 轴）
-        if comp_type == ComponentType.SINGLE_DOOR:
+        if comp_type == ComponentType.DOOR:
             handle_height = component.height * 0.6   # 竖拉手长边沿 Y
             handle_y = (component.height - handle_height) / 2  # 垂直居中
             handle = self._create_handle(
@@ -155,7 +159,7 @@ class CabinetManager:
             
             left_door = CabinetComponent(
                 name=f"{name} - 左门",
-                type=ComponentType.SINGLE_DOOR,
+                type=ComponentType.DOOR,
                 length=door_length,
                 width=door_width,
                 height=door_height,
@@ -167,7 +171,7 @@ class CabinetManager:
             
             right_door = CabinetComponent(
                 name=f"{name} - 右门",
-                type=ComponentType.SINGLE_DOOR,
+                type=ComponentType.DOOR,
                 length=door_length,
                 width=door_width,
                 height=door_height,
@@ -231,7 +235,7 @@ class CabinetManager:
         success_msg = f"已添加 {name}"
         if comp_type == ComponentType.DOUBLE_DOOR:
             success_msg += "（含左右两扇门及拉手）"
-        elif comp_type in [ComponentType.SINGLE_DOOR, ComponentType.DRAWER]:
+        elif comp_type in [ComponentType.DOOR, ComponentType.DRAWER]:
             success_msg += "（含拉手）"
 
         return {

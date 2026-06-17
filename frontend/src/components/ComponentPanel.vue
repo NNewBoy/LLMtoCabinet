@@ -66,7 +66,7 @@ function getComponentTypeLabel(type: string): string {
     top_panel: '顶板',
     bottom_panel: '底板',
     shelf: '隔板',
-    single_door: '单开门',
+    door: '单开门',
     double_door: '双开门',
     drawer: '抽屉',
     divider: '分隔',

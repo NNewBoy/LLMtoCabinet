@@ -41,8 +41,8 @@ def add_component(
 
     Args:
         project_id: 项目ID
-        type: 组件类型 (side_panel/back_panel/top_panel/bottom_panel/shelf/single_door/double_door/drawer/divider/handle/custom)
-            - single_door: 单开门（绕左侧边旋转打开，默认门板类型）
+        type: 组件类型 (side_panel/back_panel/top_panel/bottom_panel/shelf/door/double_door/drawer/divider/handle/custom)
+            - door: 单开门（绕左侧边旋转打开，默认门板类型）
             - double_door: 双开门（左右两扇门板）
             - handle: 拉手（通常作为门板的子组件）
         name: 组件名称，如 "中层隔板"

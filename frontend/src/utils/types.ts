@@ -12,7 +12,7 @@ export type ComponentType =
   | 'top_panel'
   | 'bottom_panel'
   | 'shelf'
-  | 'single_door'
+  | 'door'
   | 'double_door'
   | 'drawer'
   | 'divider'
