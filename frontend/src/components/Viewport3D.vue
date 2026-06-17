@@ -31,6 +31,8 @@ let lastTime = 0
 const isExploded = ref(false)
 const isTransparent = ref(false)
 const doorsOpen = ref(false)
+const isAxesVisible = ref(false)
+let axesHelper: THREE.Group | null = null
 
 // 选中高亮相关
 let raycaster: THREE.Raycaster
@@ -42,6 +44,71 @@ function hexToNumber(hex: string): number {
   const cleaned = hex.replace('#', '')
   const parsed = parseInt(cleaned, 16)
   return isNaN(parsed) ? 0xD2B48C : parsed
+}
+
+function createAxisLabel(text: string, color: string): THREE.Sprite {
+  const canvas = document.createElement('canvas')
+  canvas.width = 128
+  canvas.height = 128
+  const ctx = canvas.getContext('2d')!
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.font = 'bold 72px Arial'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.lineWidth = 8
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.9)'
+  ctx.strokeText(text, 64, 64)
+  ctx.fillStyle = color
+  ctx.fillText(text, 64, 64)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false })
+  const sprite = new THREE.Sprite(material)
+  sprite.scale.set(120, 120, 1)
+  sprite.renderOrder = 1000
+  return sprite
+}
+
+function createAxesHelper(length: number): THREE.Group {
+  const group = new THREE.Group()
+  const headLength = length * 0.08
+  const headWidth = length * 0.04
+
+  const xArrow = new THREE.ArrowHelper(
+    new THREE.Vector3(1, 0, 0),
+    new THREE.Vector3(0, 0, 0),
+    length,
+    0xff3333,
+    headLength,
+    headWidth,
+  )
+  const yArrow = new THREE.ArrowHelper(
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3(0, 0, 0),
+    length,
+    0x33cc66,
+    headLength,
+    headWidth,
+  )
+  const zArrow = new THREE.ArrowHelper(
+    new THREE.Vector3(0, 0, 1),
+    new THREE.Vector3(0, 0, 0),
+    length,
+    0x3388ff,
+    headLength,
+    headWidth,
+  )
+
+  const xLabel = createAxisLabel('x', '#ff3333')
+  xLabel.position.set(length + 100, 0, 0)
+  const yLabel = createAxisLabel('y', '#33cc66')
+  yLabel.position.set(0, length + 100, 0)
+  const zLabel = createAxisLabel('z', '#3388ff')
+  zLabel.position.set(0, 0, length + 100)
+
+  group.add(xArrow, yArrow, zArrow, xLabel, yLabel, zLabel)
+  return group
 }
 
 function initScene() {
@@ -109,6 +176,10 @@ function initScene() {
   const gridHelper = new THREE.GridHelper(2000, 20, 0x444466, 0x333355)
   gridHelper.position.y = 0
   scene.add(gridHelper)
+
+  axesHelper = createAxesHelper(1000)
+  axesHelper.visible = false
+  scene.add(axesHelper)
 
   // 轨道控制器
   controls = new OrbitControls(camera, renderer.domElement)
@@ -478,6 +549,13 @@ function toggleTransparent() {
   }
 }
 
+function toggleAxes() {
+  isAxesVisible.value = !isAxesVisible.value
+  if (axesHelper) {
+    axesHelper.visible = isAxesVisible.value
+  }
+}
+
 // ==================== 门板/抽屉打开动画 ====================
 
 // 备份门板/抽屉的原始状态
@@ -843,7 +921,7 @@ onUnmounted(() => {
   renderer?.dispose()
 })
 
-defineExpose({ toggleExplode, toggleTransparent, toggleDoors, resetAll })
+defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, resetAll })
 </script>
 
 <template>
@@ -856,6 +934,7 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, resetAll })
       <button class="tool-btn" :class="{ active: isExploded }" @click="toggleExplode" title="爆炸图">爆炸图</button>
       <button class="tool-btn" :class="{ active: isTransparent }" @click="toggleTransparent" title="透视图">透视图</button>
       <button class="tool-btn" :class="{ active: doorsOpen }" @click="toggleDoors" title="门板/抽屉打开">开门</button>
+      <button class="tool-btn" :class="{ active: isAxesVisible }" @click="toggleAxes" title="显示/隐藏坐标系">坐标系</button>
       <button class="tool-btn" @click="resetAll" title="复原">复原</button>
     </div>
     <div class="hint">
