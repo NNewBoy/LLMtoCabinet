@@ -205,6 +205,19 @@ async def undo_operation(project_id: str):
     return result
 
 
+@router.post("/{project_id}/stop")
+async def stop_agent(project_id: str):
+    """停止正在进行的 Agent 对话"""
+    from api.websocket import _agent_tasks
+    task = _agent_tasks.get(project_id)
+    if task and not task.done():
+        task.cancel()
+        logger.info(f"停止 Agent 对话: {project_id}")
+        return {"success": True, "message": "对话已停止"}
+    logger.info(f"停止 Agent 对话失败，无进行中的对话: {project_id}")
+    return {"success": False, "message": "没有正在进行的对话"}
+
+
 @router.post("/{project_id}/redo")
 async def redo_operation(project_id: str):
     """重做已撤销操作"""

@@ -1,3 +1,4 @@
+import copy
 import logging
 from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
@@ -52,6 +53,7 @@ CABINET_SYSTEM_PROMPT = _base_prompt + (_interference_check_prompt if ENABLE_INT
 
 # Agent 缓存：project_id -> agent 实例
 _agents: dict[str, object] = {}
+_checkpointers: dict[str, MemorySaver] = {}
 
 
 def _create_agent(project_id: str):
@@ -137,6 +139,8 @@ def _create_agent(project_id: str):
         checkpointer=checkpointer,
     )
 
+    _checkpointers[project_id] = checkpointer
+
     logger.info(f"Agent 创建完成: project={project_id}")
     return agent
 
@@ -150,8 +154,34 @@ def get_or_create_agent(project_id: str):
     return _agents[project_id]
 
 
+def snapshot_agent_history(project_id: str) -> dict | None:
+    """保存当前 Agent 对话历史快照，用于暂停后放弃继续时恢复"""
+    checkpointer = _checkpointers.get(project_id)
+    if not checkpointer:
+        return None
+    return copy.deepcopy(checkpointer.__dict__)
+
+
+def restore_agent_history(project_id: str, snapshot: dict | None):
+    """恢复 Agent 对话历史到指定快照"""
+    if snapshot is None:
+        clear_agent_history(project_id)
+        return
+    checkpointer = _checkpointers.get(project_id)
+    if checkpointer:
+        checkpointer.__dict__.clear()
+        checkpointer.__dict__.update(copy.deepcopy(snapshot))
+        logger.info(f"已恢复 Agent 对话历史: project={project_id}")
+
+
 def clear_agent_history(project_id: str):
     """清空 Agent 对话历史（切换方案时调用）"""
+    removed = False
     if project_id in _agents:
         del _agents[project_id]
+        removed = True
+    if project_id in _checkpointers:
+        del _checkpointers[project_id]
+        removed = True
+    if removed:
         logger.info(f"已清空 Agent 对话历史: project={project_id}")

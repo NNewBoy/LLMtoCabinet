@@ -8,6 +8,8 @@
 - **实时3D预览** — 基于 Three.js 的 WebGL 渲染，支持旋转/缩放/平移
 - **智能Agent** — DeepAgents 框架驱动，自动理解意图并执行编辑操作
 - **连续对话** — 同一方案内复用 Agent 实例，支持上下文连续对话
+- **实时思考过程** — Agent 工具调用过程实时返回前端，避免长时间等待无反馈
+- **停止/继续对话** — 对话执行中可主动停止，停止后可继续执行或重新发起新对话
 - **Undo/Redo** — 完整的撤销/重做支持（Ctrl+Z / Ctrl+Y）
 - **干涉检查** — 编辑后自动检查组件重叠，确保模型无干涉（可通过配置禁用）
 - **Glassmorphism UI** — 现代深色主题，半透明毛玻璃效果
@@ -111,7 +113,7 @@ npm run dev
 
 ### 自然语言编辑
 
-在右侧聊天面板输入自然语言指令：
+在右侧聊天面板输入自然语言指令，或点击内置示例快速填入输入框：
 
 | 指令 | 效果 |
 |------|------|
@@ -198,6 +200,7 @@ npm run dev
 | PUT | `/api/projects/{id}/components/{cid}` | 修改组件属性 |
 | POST | `/api/projects/{id}/undo` | 撤销 |
 | POST | `/api/projects/{id}/redo` | 重做 |
+| POST | `/api/projects/{id}/stop` | 停止当前 Agent 对话 |
 | GET | `/api/projects/{id}/history` | 获取历史状态 |
 
 ### WebSocket
@@ -206,6 +209,9 @@ npm run dev
 
 ```
 客户端发送 → {"type": "chat_message", "text": "在中间加一块隔板"}
+客户端发送 → {"type": "continue_message"}
+服务端推送 ← {"type": "agent_status", "content": "正在查询柜子结构..."}
+服务端推送 ← {"type": "agent_stopped", "content": "对话已停止"}
 服务端推送 ← {"type": "cabinet_update", "cabinet": {...}}
 ```
 
@@ -230,7 +236,7 @@ npm run dev
 │   │   └── history.py                # Undo/Redo 栈
 │   ├── agent/
 │   │   ├── tools.py                  # Agent 工具函数
-│   │   ├── cabinet_agent.py          # DeepAgents 创建 + Agent 缓存 + 对话历史
+│   │   ├── cabinet_agent.py          # DeepAgents 创建 + Agent 缓存 + 对话历史快照/恢复
 │   │   └── skills/                   # SKILL.md 领域知识
 │   │       ├── cabinet_editing/SKILL.md
 │   │       └── cabinet_design/SKILL.md
@@ -273,7 +279,9 @@ npm run dev
                         ↓
            复用已有 Agent（MemorySaver 维护对话历史）
                         ↓
-           注入最新柜子状态上下文 → LLM 决策调用哪个 Tool
+           注入最新柜子状态上下文 → 实时推送思考/工具调用状态
+                        ↓
+           LLM 决策调用哪个 Tool
                         ↓
            CabinetManager 执行编辑操作
                         ↓
@@ -281,6 +289,11 @@ npm run dev
                         ↓
            WebSocket 推送至前端 → Three.js 重新渲染
 ```
+
+**停止/继续机制**：
+- 停止对话时，后端保存暂停前的柜子状态、操作历史和 Agent 对话历史快照，不立即推送模型更新
+- 点击继续执行时，保留暂停后的中间模型状态和 Agent 历史，继续上次任务
+- 重新发起新对话时，回滚暂停期间的模型修改，并恢复到暂停前的 Agent 历史快照
 
 **Skills vs Tools**：
 - **Skills** = `SKILL.md` 文件，提供柜子编辑的领域知识（坐标系、尺寸规范、校验规则）

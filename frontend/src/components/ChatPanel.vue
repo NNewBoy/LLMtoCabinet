@@ -2,6 +2,7 @@
 import { ref, nextTick, watch } from 'vue'
 import { useChatStore } from '../stores/chatStore'
 import { useWebSocketStore } from '../stores/websocketStore'
+import { apiUrl } from '../config'
 
 const chatStore = useChatStore()
 const wsStore = useWebSocketStore()
@@ -22,6 +23,15 @@ async function sendMessage() {
   inputText.value = ''
   wsStore.sendChatMessage(text)
   await scrollToBottom()
+}
+
+async function stopConversation() {
+  const projectId = wsStore.currentProjectId
+  try {
+    await fetch(apiUrl(`/api/projects/${projectId}/stop`), { method: 'POST' })
+  } catch (error) {
+    console.error('停止对话请求失败:', error)
+  }
 }
 
 function handleKeydown(event: KeyboardEvent) {
@@ -79,6 +89,14 @@ watch(() => chatStore.thinkingSteps.length, () => {
       >
         <div class="role-label">{{ msg.role === 'user' ? '你' : msg.role === 'assistant' ? 'AI' : '系统' }}</div>
         <div class="content">{{ msg.content }}</div>
+        <div v-if="msg.stopped" class="stopped-actions">
+          <span class="stopped-badge">已停止</span>
+          <button
+            v-if="!chatStore.isStreaming && !msg.continued"
+            @click="wsStore.continueConversation(msg.thinkingSteps || [], msg.id)"
+            class="continue-btn"
+          >继续执行</button>
+        </div>
       </div>
 
       <div v-if="chatStore.isStreaming" class="message assistant">
@@ -119,8 +137,17 @@ watch(() => chatStore.thinkingSteps.length, () => {
         :disabled="!wsStore.isConnected || chatStore.isStreaming"
       ></textarea>
       <button
+        v-if="chatStore.isStreaming"
+        @click="stopConversation"
+        class="send-btn stop-btn"
+        title="停止对话"
+      >
+        <span class="stop-icon">■</span>
+      </button>
+      <button
+        v-else
         @click="sendMessage"
-        :disabled="!inputText.trim() || !wsStore.isConnected || chatStore.isStreaming"
+        :disabled="!inputText.trim() || !wsStore.isConnected"
         class="send-btn"
       >
         <span class="send-icon">↑</span>
@@ -242,6 +269,41 @@ watch(() => chatStore.thinkingSteps.length, () => {
 .content {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.stopped-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.stopped-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-error);
+  background: rgba(248, 113, 113, 0.15);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.continue-btn {
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: rgba(129, 140, 248, 0.15);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.continue-btn:hover {
+  background: rgba(129, 140, 248, 0.3);
+  border-color: var(--color-primary);
 }
 
 .content.streaming {
@@ -393,6 +455,20 @@ watch(() => chatStore.thinkingSteps.length, () => {
 
 .send-icon {
   font-weight: bold;
+}
+
+.stop-btn {
+  background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
+}
+
+.stop-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(248, 113, 113, 0.4);
+}
+
+.stop-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* 移动端适配 */

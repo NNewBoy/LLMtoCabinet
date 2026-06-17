@@ -1,8 +1,9 @@
 import json
+import copy
 import logging
 import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from agent.cabinet_agent import get_or_create_agent
+from agent.cabinet_agent import get_or_create_agent, snapshot_agent_history, restore_agent_history
 from agent.tools import get_manager
 from engine.cabinet_manager import CabinetManager
 from utils.serialization import cabinet_to_dict, json_to_cabinet
@@ -50,6 +51,110 @@ class ConnectionManager:
 
 
 ws_manager = ConnectionManager()
+
+# 全局字典：跟踪正在运行的 Agent 任务，支持通过 REST API 取消
+_agent_tasks: dict[str, asyncio.Task] = {}
+
+# 暂停前状态：用于用户放弃继续、重新对话时回滚暂停期间的模型修改
+_paused_states: dict[str, dict] = {}
+
+
+def _save_paused_state(project_id: str, manager: CabinetManager):
+    if not manager.cabinet:
+        return
+    _paused_states[project_id] = {
+        "cabinet": manager.cabinet.model_copy(deep=True),
+        "history": copy.deepcopy(manager.history),
+        "agent_history": snapshot_agent_history(project_id),
+    }
+
+
+def _discard_paused_state(project_id: str, manager: CabinetManager):
+    state = _paused_states.pop(project_id, None)
+    if not state:
+        return False
+    manager.cabinet = state["cabinet"]
+    manager.history = state["history"]
+    restore_agent_history(project_id, state.get("agent_history"))
+    logger.info(f"已回滚暂停对话产生的模型修改，并恢复暂停前 Agent 历史: project={project_id}")
+    return True
+
+
+async def _run_agent(ws: WebSocket, project_id: str, manager: CabinetManager, text: str, save_rollback_state: bool = True):
+    """运行 Agent 流式对话（chat_message 和 continue_message 共用）"""
+    if save_rollback_state:
+        _save_paused_state(project_id, manager)
+    await ws.send_json({"type": "agent_thinking", "content": "正在分析您的指令..."})
+
+    try:
+        agent = get_or_create_agent(project_id)
+        recursion_limit = 200 if ENABLE_INTERFERENCE_CHECK else 50
+        agent_config = {
+            "recursion_limit": recursion_limit,
+            "configurable": {"thread_id": project_id},
+        }
+
+        response_content = ""
+
+        async def _run_agent_stream():
+            nonlocal response_content
+            async for event in agent.astream_events(
+                {"messages": [{"role": "user", "content": text}]},
+                version="v2",
+                config=agent_config,
+            ):
+                kind = event.get("event")
+                if kind == "on_chat_model_stream":
+                    chunk = event.get("data", {}).get("chunk")
+                    if chunk and hasattr(chunk, "content") and chunk.content:
+                        response_content += chunk.content
+                        await ws.send_json({
+                            "type": "agent_thinking",
+                            "content": chunk.content,
+                        })
+                elif kind == "on_tool_start":
+                    tool_name = event.get("name", "")
+                    tool_input = event.get("data", {}).get("input", {})
+                    thinking_desc = _format_tool_thinking(tool_name, tool_input)
+                    if thinking_desc:
+                        await ws.send_json({
+                            "type": "agent_status",
+                            "content": thinking_desc,
+                        })
+
+        task = asyncio.create_task(_run_agent_stream())
+        _agent_tasks[project_id] = task
+        cancelled = False
+
+        try:
+            await task
+        except asyncio.CancelledError:
+            cancelled = True
+            logger.info(f"Agent 对话被用户停止: project={project_id}")
+            await ws.send_json({"type": "agent_stopped", "content": "对话已停止"})
+        finally:
+            _agent_tasks.pop(project_id, None)
+
+        logger.info(f"Agent 响应完成: {response_content[:100]}...")
+
+        if not cancelled:
+            _paused_states.pop(project_id, None)
+
+        if not cancelled and manager.cabinet:
+            await ws.send_json({
+                "type": "cabinet_update",
+                "cabinet": cabinet_to_dict(manager.cabinet),
+            })
+
+    except Exception as e:
+        logger.error(f"Agent 执行失败: {str(e)}", exc_info=True)
+        await ws.send_json({
+            "type": "error",
+            "code": "AGENT_ERROR",
+            "message": f"Agent 执行失败: {str(e)}",
+        })
+
+    await ws.send_json({"type": "stream_end"})
 
 
 def _format_tool_thinking(tool_name: str, tool_input: dict) -> str:
@@ -110,6 +215,7 @@ def _format_tool_thinking(tool_name: str, tool_input: dict) -> str:
 @router.websocket("/ws/{project_id}")
 async def websocket_endpoint(ws: WebSocket, project_id: str):
     await ws_manager.connect(project_id, ws)
+    _paused_states.pop(project_id, None)
 
     # 页面初始化时：manager 有数据则直接用，否则从数据库加载
     manager = get_manager(project_id)
@@ -147,75 +253,17 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                     continue
 
                 logger.info(f"用户消息: {text}")
-
-                # 发送思考状态
-                await ws.send_json({"type": "agent_thinking", "content": "正在分析您的指令..."})
-
-                try:
-                    # 复用已有 Agent（保持对话连续性）
-                    agent = get_or_create_agent(project_id)
-
-                    # 查询最新柜子信息，注入到用户消息中作为上下文
-                    # Agent会判断是否需要调用查询接口
-                    # cabinet_info = manager.query(detail_level="summary")
-                    # context_prefix = f"[当前柜子状态]\n{json.dumps(cabinet_info, ensure_ascii=False)}\n\n"
-                    # enhanced_text = context_prefix + text
-                    enhanced_text = text
-
-                    # 使用 thread_id 维护对话历史
-                    # 开启干涉检查时，Agent 调用次数增多，需要提高递归上限
-                    recursion_limit = 200 if ENABLE_INTERFERENCE_CHECK else 50
-                    agent_config = {
-                        "recursion_limit": recursion_limit,
-                        "configurable": {"thread_id": project_id},
-                    }
-
-                    # 使用流式调用，同时收集最终响应
-                    response_content = ""
-                    async for event in agent.astream_events(
-                        {"messages": [{"role": "user", "content": enhanced_text}]},
-                        version="v2",
-                        config=agent_config,
-                    ):
-                        kind = event.get("event")
-                        if kind == "on_chat_model_stream":
-                            chunk = event.get("data", {}).get("chunk")
-                            if chunk and hasattr(chunk, "content") and chunk.content:
-                                response_content += chunk.content
-                                await ws.send_json({
-                                    "type": "agent_thinking",
-                                    "content": chunk.content,
-                                })
-                        elif kind == "on_tool_start":
-                            # 工具开始调用：推送思考状态，让用户知道 Agent 正在执行什么操作
-                            tool_name = event.get("name", "")
-                            tool_input = event.get("data", {}).get("input", {})
-                            # 生成可读的思考描述
-                            thinking_desc = _format_tool_thinking(tool_name, tool_input)
-                            if thinking_desc:
-                                await ws.send_json({
-                                    "type": "agent_status",
-                                    "content": thinking_desc,
-                                })
-
-                    logger.info(f"Agent 响应完成: {response_content[:100]}...")
-
-                    # 发送更新后的柜子模型
+                if _discard_paused_state(project_id, manager):
                     if manager.cabinet:
                         await ws.send_json({
                             "type": "cabinet_update",
                             "cabinet": cabinet_to_dict(manager.cabinet),
                         })
+                await _run_agent(ws, project_id, manager, text)
 
-                except Exception as e:
-                    logger.error(f"Agent 执行失败: {str(e)}", exc_info=True)
-                    await ws.send_json({
-                        "type": "error",
-                        "code": "AGENT_ERROR",
-                        "message": f"Agent 执行失败: {str(e)}",
-                    })
-
-                await ws.send_json({"type": "stream_end"})
+            elif msg_type == "continue_message":
+                logger.info(f"继续对话: project={project_id}")
+                await _run_agent(ws, project_id, manager, "继续上一次未完成的操作", save_rollback_state=False)
 
             elif msg_type == "request_sync":
                 if manager.cabinet:

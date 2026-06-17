@@ -109,7 +109,7 @@
 | OperationHistory | `engine/history.py` | ✅ | 操作历史管理 |
 | Agent Tools | `agent/tools.py` | ✅ | 7 个工具函数（含干涉检查、提交保存） |
 | Agent Skills | `agent/skills/` | ✅ | 2 个 Skill 文件 |
-| Agent | `agent/cabinet_agent.py` | ✅ | DeepAgents 创建 + Agent 缓存 + 对话历史管理 |
+| Agent | `agent/cabinet_agent.py` | ✅ | DeepAgents 创建 + Agent 缓存 + 对话历史管理 + 历史快照/恢复 |
 | 数据模型 | `models/cabinet.py` | ✅ | Cabinet/CabinetComponent 定义 |
 | 数据库模型 | `models/database.py` | ✅ | SQLAlchemy ORM 模型 |
 | 序列化工具 | `utils/serialization.py` | ✅ | JSON 序列化/反序列化 |
@@ -129,6 +129,7 @@
 | PUT | `/api/projects/{id}/components/{cid}` | 修改组件属性（颜色/材料等） |
 | POST | `/api/projects/{id}/undo` | 撤销操作（直接调用 CabinetManager） |
 | POST | `/api/projects/{id}/redo` | 重做操作（直接调用 CabinetManager） |
+| POST | `/api/projects/{id}/stop` | 停止当前 Agent 对话 |
 | GET | `/api/projects/{id}/history` | 获取历史状态（can_undo/can_redo） |
 | GET | `/api/projects/{id}/snapshots` | 获取快照列表 |
 | POST | `/api/projects/{id}/snapshots/{idx}/restore` | 恢复快照 |
@@ -176,9 +177,10 @@
 - [x] Agent对话要连续，不需要每次都重新启动，减少对话等待时间
 - [x] Agent每次对话前，要查询模型数据，确保模型是最新的
 - [x] Agent修改模型后要对模型进行干涉检查
-- [ ] 对话示例可点击快速选择
+- [x] 对话示例可点击快速选择
 - [x] Agent思考过程返回前端显示，用户可以实时查看
-- [ ] 对话中，前端可主动点击停止对话
+- [x] 对话中，前端可主动点击停止对话
+- [x] 停止后的对话可继续执行，重新发起新对话会回滚暂停修改并删除本次停止历史
 - [ ] 对话中切换方案，要停止旧对话
 - [ ] 3D视图视角调整
 - [ ] 增加模型AI级渲染功能，提供渲染图下载功能
@@ -292,6 +294,11 @@
 - 添加 ComponentPanel 组件列表面板
 
 ### 2026-06-17
+- **对话示例快捷填入**：ChatPanel 示例指令改为数组维护，点击示例可快速填入输入框
+- **Agent 思考过程展示**：后端实时推送工具调用状态，前端展示查询、添加、修改、干涉检查等步骤
+- **停止/继续对话**：新增 `POST /api/projects/{id}/stop`，对话执行中可停止，停止消息标注“已停止”并支持继续执行
+- **暂停回滚机制**：停止时保存 cabinet/history/Agent history 快照；继续执行保留中间状态；重新发起新对话时回滚暂停模型修改并恢复暂停前 Agent 历史
+- **Agent 快照优化**：`snapshot_agent_history` / `restore_agent_history` 只操作已有 checkpointer，避免新建和继续对话重复复用 Agent
 - **干涉检查功能**：添加组件干涉检查，使用 AABB 包围盒检测重叠
   - `check_interference()` 工具函数：检查组件间是否存在干涉
   - `commit_changes()` 工具函数：在干涉检查通过后保存快照

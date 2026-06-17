@@ -51,6 +51,43 @@ export const useChatStore = defineStore('chat', () => {
     thinkingSteps.value = []
   }
 
+  function stopStream() {
+    messages.value.push({
+      id: generateId(),
+      role: 'assistant',
+      content: currentStreamContent.value || '对话已停止',
+      timestamp: Date.now(),
+      stopped: true,
+      thinkingSteps: [...thinkingSteps.value],
+    })
+    isStreaming.value = false
+    currentStreamContent.value = ''
+    thinkingSteps.value = []
+  }
+
+  function continueStream(prevThinkingSteps: string[]) {
+    isStreaming.value = true
+    currentStreamContent.value = ''
+    thinkingSteps.value = [...prevThinkingSteps]
+  }
+
+  function markContinued(messageId: string) {
+    const msg = messages.value.find(m => m.id === messageId)
+    if (msg) {
+      msg.continued = true
+    }
+  }
+
+  function disableUncontinuedStoppedMessage() {
+    for (let i = messages.value.length - 1; i >= 0; i--) {
+      const msg = messages.value[i]
+      if (msg.role === 'assistant' && msg.stopped && !msg.continued) {
+        msg.continued = true
+        break
+      }
+    }
+  }
+
   function clearMessages() {
     messages.value = []
     currentStreamContent.value = ''
@@ -68,6 +105,10 @@ export const useChatStore = defineStore('chat', () => {
     appendStreamContent,
     addThinkingStep,
     finishStream,
+    stopStream,
+    continueStream,
+    markContinued,
+    disableUncontinuedStoppedMessage,
     clearMessages,
   }
 })

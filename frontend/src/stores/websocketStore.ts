@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import type { WsMessage, Cabinet } from '../utils/types'
 import { useCabinetStore } from './cabinetStore'
 import { useChatStore } from './chatStore'
-import { wsUrl } from '../config'
+import { apiUrl, wsUrl } from '../config'
 
 // Toast 通知回调（由 App.vue 注入）
 let toastCallback: ((message: string, type: string) => void) | null = null
@@ -100,6 +100,9 @@ export const useWebSocketStore = defineStore('websocket', () => {
           chatStore.addThinkingStep(data.content)
         }
         break
+      case 'agent_stopped':
+        chatStore.stopStream()
+        break
       case 'agent_response':
         if (data.content) {
           chatStore.finishStream()
@@ -124,9 +127,37 @@ export const useWebSocketStore = defineStore('websocket', () => {
       return
     }
     const chatStore = useChatStore()
+    chatStore.disableUncontinuedStoppedMessage()
     chatStore.addMessage('user', text)
     chatStore.startStream()
     ws.send(JSON.stringify({ type: 'chat_message', text }))
+  }
+
+  function continueConversation(prevThinkingSteps: string[], messageId: string) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      showToast('未连接到服务器，请稍后重试', 'warning')
+      return
+    }
+    const chatStore = useChatStore()
+    chatStore.continueStream(prevThinkingSteps)
+    chatStore.markContinued(messageId)
+    ws.send(JSON.stringify({ type: 'continue_message' }))
+  }
+
+  async function stopCurrentConversation(markStopped = true) {
+    const chatStore = useChatStore()
+    if (!chatStore.isStreaming) return
+
+    const projectId = currentProjectId.value
+    try {
+      await fetch(apiUrl(`/api/projects/${projectId}/stop`), { method: 'POST' })
+    } catch (error) {
+      console.error('停止旧对话失败:', error)
+    }
+
+    if (markStopped && chatStore.isStreaming) {
+      chatStore.stopStream()
+    }
   }
 
   function requestSync() {
@@ -161,6 +192,8 @@ export const useWebSocketStore = defineStore('websocket', () => {
     schemeListVersion,
     connect,
     sendChatMessage,
+    continueConversation,
+    stopCurrentConversation,
     requestSync,
     selectComponent,
     refreshSchemeList,

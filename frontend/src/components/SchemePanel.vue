@@ -43,13 +43,17 @@ watch(() => wsStore.schemeListVersion, () => {
 })
 
 async function switchScheme(id: string) {
+  if (id === wsStore.currentProjectId) return
+
   try {
+    wsStore.stopCurrentConversation(false)
+    chatStore.clearMessages()
+    wsStore.disconnect()
+
     const res = await fetch(apiUrl(`/api/projects/${id}`))
     const data = await res.json()
     if (data.cabinet) {
       cabinetStore.setCabinet(data.cabinet)
-      chatStore.clearMessages()
-      wsStore.disconnect()
       wsStore.connect(id)
     }
   } catch (e) {

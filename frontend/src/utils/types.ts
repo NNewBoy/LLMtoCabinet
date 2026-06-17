@@ -54,10 +54,13 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp: number
+  stopped?: boolean
+  continued?: boolean
+  thinkingSteps?: string[]
 }
 
 export interface WsMessage {
-  type: 'agent_thinking' | 'agent_status' | 'agent_response' | 'cabinet_update' | 'operation_result' | 'error' | 'stream_end'
+  type: 'agent_thinking' | 'agent_status' | 'agent_response' | 'agent_stopped' | 'cabinet_update' | 'operation_result' | 'error' | 'stream_end'
   content?: string
   cabinet?: Cabinet
   success?: boolean
