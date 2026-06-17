@@ -49,6 +49,10 @@ watch(() => chatStore.messages.length, () => {
 watch(() => chatStore.currentStreamContent, () => {
   scrollToBottom()
 })
+
+watch(() => chatStore.thinkingSteps.length, () => {
+  scrollToBottom()
+})
 </script>
 
 <template>
@@ -80,8 +84,28 @@ watch(() => chatStore.currentStreamContent, () => {
       <div v-if="chatStore.isStreaming" class="message assistant">
         <div class="role-label">AI</div>
         <div class="content streaming">
-          <span class="typing-indicator"></span>
-          {{ chatStore.currentStreamContent || '思考中...' }}
+          <!-- 思考步骤展示 -->
+          <div v-if="chatStore.thinkingSteps.length > 0" class="thinking-steps">
+            <div
+              v-for="(step, idx) in chatStore.thinkingSteps"
+              :key="idx"
+              class="thinking-step"
+              :class="{ 'step-active': idx === chatStore.thinkingSteps.length - 1 && !chatStore.currentStreamContent }"
+            >
+              <span v-if="idx === chatStore.thinkingSteps.length - 1 && !chatStore.currentStreamContent" class="step-spinner"></span>
+              <span v-else class="step-done">✓</span>
+              <span class="step-text">{{ step }}</span>
+            </div>
+          </div>
+          <!-- 流式文本 -->
+          <div v-if="chatStore.currentStreamContent" class="stream-text">
+            <span class="typing-indicator"></span>
+            {{ chatStore.currentStreamContent }}
+          </div>
+          <div v-else-if="chatStore.thinkingSteps.length === 0" class="stream-text">
+            <span class="typing-indicator"></span>
+            思考中...
+          </div>
         </div>
       </div>
     </div>
@@ -222,6 +246,56 @@ watch(() => chatStore.currentStreamContent, () => {
 
 .content.streaming {
   color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* 思考步骤样式 */
+.thinking-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--spacing-sm);
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--color-primary);
+}
+
+.thinking-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.thinking-step.step-active {
+  color: var(--color-text-secondary);
+}
+
+.step-done {
+  color: var(--color-success);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.step-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(129, 140, 248, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.stream-text {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-sm);

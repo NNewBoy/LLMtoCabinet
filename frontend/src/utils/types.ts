@@ -57,7 +57,7 @@ export interface ChatMessage {
 }
 
 export interface WsMessage {
-  type: 'agent_thinking' | 'agent_response' | 'cabinet_update' | 'operation_result' | 'error' | 'stream_end'
+  type: 'agent_thinking' | 'agent_status' | 'agent_response' | 'cabinet_update' | 'operation_result' | 'error' | 'stream_end'
   content?: string
   cabinet?: Cabinet
   success?: boolean

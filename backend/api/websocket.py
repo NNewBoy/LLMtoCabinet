@@ -52,6 +52,61 @@ class ConnectionManager:
 ws_manager = ConnectionManager()
 
 
+def _format_tool_thinking(tool_name: str, tool_input: dict) -> str:
+    """将工具调用格式化为可读的思考状态描述"""
+    if not tool_name:
+        return ""
+
+    # 工具名称到中文描述的映射
+    TOOL_LABELS = {
+        "query_cabinet": "查询柜子结构",
+        "add_component": "添加组件",
+        "remove_component": "删除组件",
+        "modify_component": "修改组件属性",
+        "undo_redo": "撤销/重做操作",
+        "check_interference": "检查干涉",
+        "commit_changes": "保存编辑结果",
+    }
+
+    label = TOOL_LABELS.get(tool_name, tool_name)
+
+    if tool_name == "query_cabinet":
+        detail = tool_input.get("detail_level", "summary")
+        comp_id = tool_input.get("component_id")
+        if comp_id:
+            return f"🔍 正在查询组件 {comp_id} 的详细信息..."
+        return f"🔍 正在查询柜子结构（{detail}）..."
+
+    elif tool_name == "add_component":
+        comp_type = tool_input.get("type", "组件")
+        name = tool_input.get("name", "")
+        return f"➕ 正在添加{comp_type}「{name}」..."
+
+    elif tool_name == "remove_component":
+        comp_id = tool_input.get("component_id", "")
+        return f"🗑️ 正在删除组件 {comp_id}..."
+
+    elif tool_name == "modify_component":
+        target = tool_input.get("target_id", "")
+        props = tool_input.get("properties", {})
+        prop_keys = "、".join(props.keys()) if props else "属性"
+        return f"✏️ 正在修改 {target} 的{prop_keys}..."
+
+    elif tool_name == "undo_redo":
+        action = tool_input.get("action", "")
+        action_label = "撤销" if action == "undo" else "重做"
+        return f"↩️ 正在执行{action_label}操作..."
+
+    elif tool_name == "check_interference":
+        return "🔍 正在检查组件干涉..."
+
+    elif tool_name == "commit_changes":
+        desc = tool_input.get("description", "")
+        return f"💾 正在保存编辑结果：{desc}..."
+
+    return f"⚙️ 正在执行：{label}..."
+
+
 @router.websocket("/ws/{project_id}")
 async def websocket_endpoint(ws: WebSocket, project_id: str):
     await ws_manager.connect(project_id, ws)
@@ -130,6 +185,17 @@ async def websocket_endpoint(ws: WebSocket, project_id: str):
                                 await ws.send_json({
                                     "type": "agent_thinking",
                                     "content": chunk.content,
+                                })
+                        elif kind == "on_tool_start":
+                            # 工具开始调用：推送思考状态，让用户知道 Agent 正在执行什么操作
+                            tool_name = event.get("name", "")
+                            tool_input = event.get("data", {}).get("input", {})
+                            # 生成可读的思考描述
+                            thinking_desc = _format_tool_thinking(tool_name, tool_input)
+                            if thinking_desc:
+                                await ws.send_json({
+                                    "type": "agent_status",
+                                    "content": thinking_desc,
                                 })
 
                     logger.info(f"Agent 响应完成: {response_content[:100]}...")

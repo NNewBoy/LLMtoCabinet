@@ -95,6 +95,11 @@ export const useWebSocketStore = defineStore('websocket', () => {
           chatStore.appendStreamContent(data.content)
         }
         break
+      case 'agent_status':
+        if (data.content) {
+          chatStore.addThinkingStep(data.content)
+        }
+        break
       case 'agent_response':
         if (data.content) {
           chatStore.finishStream()

@@ -17,6 +17,7 @@ export const useChatStore = defineStore('chat', () => {
   const messages = ref<ChatMessage[]>([])
   const isStreaming = ref(false)
   const currentStreamContent = ref('')
+  const thinkingSteps = ref<string[]>([]) // Agent 思考步骤（工具调用状态）
 
   function addMessage(role: 'user' | 'assistant' | 'system', content: string) {
     messages.value.push({
@@ -30,10 +31,15 @@ export const useChatStore = defineStore('chat', () => {
   function startStream() {
     isStreaming.value = true
     currentStreamContent.value = ''
+    thinkingSteps.value = []
   }
 
   function appendStreamContent(text: string) {
     currentStreamContent.value += text
+  }
+
+  function addThinkingStep(text: string) {
+    thinkingSteps.value.push(text)
   }
 
   function finishStream() {
@@ -42,21 +48,25 @@ export const useChatStore = defineStore('chat', () => {
     }
     isStreaming.value = false
     currentStreamContent.value = ''
+    thinkingSteps.value = []
   }
 
   function clearMessages() {
     messages.value = []
     currentStreamContent.value = ''
     isStreaming.value = false
+    thinkingSteps.value = []
   }
 
   return {
     messages,
     isStreaming,
     currentStreamContent,
+    thinkingSteps,
     addMessage,
     startStream,
     appendStreamContent,
+    addThinkingStep,
     finishStream,
     clearMessages,
   }
