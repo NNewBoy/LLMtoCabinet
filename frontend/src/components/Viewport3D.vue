@@ -75,30 +75,32 @@ function createAxesHelper(length: number): THREE.Group {
   const headLength = length * 0.08
   const headWidth = length * 0.04
 
-  const xArrow = new THREE.ArrowHelper(
-    new THREE.Vector3(1, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-    length,
-    0xff3333,
-    headLength,
-    headWidth,
-  )
-  const yArrow = new THREE.ArrowHelper(
-    new THREE.Vector3(0, 1, 0),
-    new THREE.Vector3(0, 0, 0),
-    length,
-    0x33cc66,
-    headLength,
-    headWidth,
-  )
-  const zArrow = new THREE.ArrowHelper(
-    new THREE.Vector3(0, 0, 1),
-    new THREE.Vector3(0, 0, 0),
-    length,
-    0x3388ff,
-    headLength,
-    headWidth,
-  )
+  const makeArrow = (dir: THREE.Vector3, color: number) => {
+    const arrow = new THREE.ArrowHelper(
+      dir,
+      new THREE.Vector3(0, 0, 0),
+      length,
+      color,
+      headLength,
+      headWidth,
+    )
+    // 设置箭头不被遮挡
+    arrow.traverse(child => {
+      const mesh = child as THREE.Mesh
+      if (mesh.material) {
+        const mat = mesh.material as THREE.LineBasicMaterial | THREE.MeshBasicMaterial
+        mat.depthTest = false
+        mat.depthWrite = false
+        mat.transparent = true
+      }
+    })
+    arrow.renderOrder = 999
+    return arrow
+  }
+
+  const xArrow = makeArrow(new THREE.Vector3(1, 0, 0), 0xff3333)
+  const yArrow = makeArrow(new THREE.Vector3(0, 1, 0), 0x33cc66)
+  const zArrow = makeArrow(new THREE.Vector3(0, 0, 1), 0x3388ff)
 
   const xLabel = createAxisLabel('x', '#ff3333')
   xLabel.position.set(length + 100, 0, 0)
