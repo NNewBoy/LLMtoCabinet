@@ -32,7 +32,12 @@ const isExploded = ref(false)
 const isTransparent = ref(false)
 const doorsOpen = ref(false)
 const isAxesVisible = ref(false)
+const isGridVisible = ref(true)
+const isShadowVisible = ref(true)
+let gridHelper: THREE.GridHelper | null = null
+let groundMesh: THREE.Mesh | null = null
 let axesHelper: THREE.Group | null = null
+let dirLight: THREE.DirectionalLight | null = null
 
 // 选中高亮相关
 let raycaster: THREE.Raycaster
@@ -138,7 +143,7 @@ function initScene() {
   scene.add(ambientLight)
 
   // 主光源 - 对角线方向照射，阴影均匀
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.9)
+  dirLight = new THREE.DirectionalLight(0xffffff, 0.9)
   dirLight.position.set(2500, 4000, 2500)
   dirLight.target.position.set(0, 0, 0)
   scene.add(dirLight.target)
@@ -168,14 +173,14 @@ function initScene() {
   // 地面 - 接收阴影
   const groundGeometry = new THREE.PlaneGeometry(4000, 4000)
   const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.3 })
-  const ground = new THREE.Mesh(groundGeometry, groundMaterial)
-  ground.rotation.x = -Math.PI / 2
-  ground.position.y = -1
-  ground.receiveShadow = true
-  scene.add(ground)
+  groundMesh = new THREE.Mesh(groundGeometry, groundMaterial)
+  groundMesh.rotation.x = -Math.PI / 2
+  groundMesh.position.y = -1
+  groundMesh.receiveShadow = true
+  scene.add(groundMesh)
 
   // 地面网格
-  const gridHelper = new THREE.GridHelper(2000, 20, 0x444466, 0x333355)
+  gridHelper = new THREE.GridHelper(2000, 20, 0x444466, 0x333355)
   gridHelper.position.y = 0
   scene.add(gridHelper)
 
@@ -429,8 +434,8 @@ function renderComponent(
   })
 
   const mesh = new THREE.Mesh(geometry, material)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
+  mesh.castShadow = isShadowVisible.value
+  mesh.receiveShadow = isShadowVisible.value
 
   // 添加边缘线以显示轮廓
   const edges = new THREE.EdgesGeometry(geometry)
@@ -570,6 +575,31 @@ function toggleAxes() {
   if (axesHelper) {
     axesHelper.visible = isAxesVisible.value
   }
+}
+
+function toggleGrid() {
+  isGridVisible.value = !isGridVisible.value
+  if (gridHelper) {
+    gridHelper.visible = isGridVisible.value
+  }
+}
+
+function toggleShadow() {
+  isShadowVisible.value = !isShadowVisible.value
+  const enabled = isShadowVisible.value
+  // 关闭方向光投射阴影
+  if (dirLight) {
+    dirLight.castShadow = enabled
+  }
+  // 关闭地面接收阴影
+  if (groundMesh) {
+    groundMesh.visible = enabled
+  }
+  // 关闭所有 mesh 的投射和接收阴影
+  meshes.forEach(mesh => {
+    mesh.castShadow = enabled
+    mesh.receiveShadow = enabled
+  })
 }
 
 // ==================== 门板/抽屉打开动画 ====================
@@ -937,7 +967,7 @@ onUnmounted(() => {
   renderer?.dispose()
 })
 
-defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, resetAll })
+defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggleGrid, toggleShadow, resetAll })
 </script>
 
 <template>
@@ -951,6 +981,8 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, resetA
       <button class="tool-btn" :class="{ active: isTransparent }" @click="toggleTransparent" title="透视图">透视图</button>
       <button class="tool-btn" :class="{ active: doorsOpen }" @click="toggleDoors" title="门板/抽屉打开">开门</button>
       <button class="tool-btn" :class="{ active: isAxesVisible }" @click="toggleAxes" title="显示/隐藏坐标系">坐标系</button>
+      <button class="tool-btn" :class="{ active: isGridVisible }" @click="toggleGrid" title="显示/隐藏地面网格">网格</button>
+      <button class="tool-btn" :class="{ active: isShadowVisible }" @click="toggleShadow" title="显示/隐藏阴影">阴影</button>
       <button class="tool-btn" @click="resetAll" title="复原">复原</button>
     </div>
     <div class="hint">
