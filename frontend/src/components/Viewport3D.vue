@@ -132,6 +132,7 @@ function initScene() {
   renderer = new THREE.WebGLRenderer({
     canvas: canvasRef.value,
     antialias: true,
+    preserveDrawingBuffer: true,
   })
   renderer.setSize(canvasRef.value.clientWidth, canvasRef.value.clientHeight)
   renderer.setPixelRatio(window.devicePixelRatio)
@@ -963,11 +964,311 @@ onMounted(() => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('enter-render-mode', onEnterRenderMode)
+  window.removeEventListener('exit-render-mode', onExitRenderMode)
   canvasRef.value?.removeEventListener('click', onMouseClick)
   renderer?.dispose()
 })
 
-defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggleGrid, toggleShadow, resetAll })
+// ==================== 渲染截图模式 ====================
+
+// 保存进入渲染模式前的视图状态
+let savedRenderState: {
+  background: THREE.Color | null
+  isExploded: boolean
+  isTransparent: boolean
+  doorsOpen: boolean
+  isAxesVisible: boolean
+  isGridVisible: boolean
+  isShadowVisible: boolean
+  cameraPosition: THREE.Vector3
+  cameraTarget: THREE.Vector3
+} | null = null
+
+// 进入渲染截图模式：关闭所有视觉干扰，背景改白
+function enterRenderMode() {
+  if (!camera || !controls) return
+
+  // 保存当前状态
+  savedRenderState = {
+    background: scene.background instanceof THREE.Color ? scene.background.clone() : null,
+    isExploded: isExploded.value,
+    isTransparent: isTransparent.value,
+    doorsOpen: doorsOpen.value,
+    isAxesVisible: isAxesVisible.value,
+    isGridVisible: isGridVisible.value,
+    isShadowVisible: isShadowVisible.value,
+    cameraPosition: camera.position.clone(),
+    cameraTarget: controls.target.clone(),
+  }
+
+  // 关闭门板（立即，无动画）
+  if (doorsOpen.value) {
+    meshes.forEach((mesh, id) => {
+      const type = mesh.userData.componentType as string
+      const orig = doorOriginals.get(id)
+      if (!orig) return
+
+      if (isDoorType(type) && orig.pivotGroup) {
+        const group = orig.pivotGroup
+        // 将子物体移回父组件
+        if (orig.childMeshIds) {
+          for (const cid of orig.childMeshIds) {
+            const childMesh = meshes.get(cid)
+            const childOrig = doorOriginals.get(cid)
+            if (childMesh && childOrig) {
+              group.remove(childMesh)
+              childOrig.parent.add(childMesh)
+              childMesh.position.set(childOrig.posX, childOrig.posY, childOrig.posZ)
+              childMesh.rotation.set(0, childOrig.rotY, 0)
+            }
+          }
+        }
+        group.remove(mesh)
+        orig.parent.add(mesh)
+        mesh.position.set(orig.posX, orig.posY, orig.posZ)
+        mesh.rotation.y = orig.rotY
+        scene.remove(group)
+      } else if (type === 'drawer') {
+        mesh.position.z = orig.posZ
+        if (orig.childMeshIds) {
+          for (const cid of orig.childMeshIds) {
+            const childMesh = meshes.get(cid)
+            const childOrig = doorOriginals.get(cid)
+            if (childMesh && childOrig) childMesh.position.z = childOrig.posZ
+          }
+        }
+      }
+    })
+    doorOriginals.clear()
+    doorsOpen.value = false
+  }
+
+  // 关闭爆炸图、透视图（立即还原）
+  if (isExploded.value || isTransparent.value) {
+    meshes.forEach((mesh, id) => {
+      const origPos = originalPositions.get(id)
+      const origRot = originalRotations.get(id)
+      const origMat = originalMaterials.get(id)
+      if (origPos) mesh.position.copy(origPos)
+      if (origRot) mesh.rotation.copy(origRot)
+      if (origMat && isTransparent.value) mesh.material = origMat.clone()
+    })
+    isExploded.value = false
+    isTransparent.value = false
+  }
+
+  // 关闭坐标系
+  if (isAxesVisible.value && axesHelper) {
+    axesHelper.visible = false
+    isAxesVisible.value = false
+  }
+
+  // 关闭网格
+  if (isGridVisible.value && gridHelper) {
+    gridHelper.visible = false
+    isGridVisible.value = false
+  }
+
+  // 关闭阴影
+  if (isShadowVisible.value) {
+    if (dirLight) dirLight.castShadow = false
+    if (groundMesh) groundMesh.visible = false
+    meshes.forEach(mesh => {
+      mesh.castShadow = false
+      mesh.receiveShadow = false
+    })
+    isShadowVisible.value = false
+  }
+
+  // 背景改白
+  scene.background = new THREE.Color(0xffffff)
+}
+
+// 退出渲染模式：恢复之前的状态
+function exitRenderMode() {
+  if (!savedRenderState) return
+
+  // 恢复背景
+  scene.background = savedRenderState.background || new THREE.Color(0x0f172a)
+
+  // 恢复阴影
+  if (savedRenderState.isShadowVisible) {
+    if (dirLight) dirLight.castShadow = true
+    if (groundMesh) groundMesh.visible = true
+    meshes.forEach(mesh => {
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+    })
+    isShadowVisible.value = true
+  }
+
+  // 恢复网格
+  if (savedRenderState.isGridVisible && gridHelper) {
+    gridHelper.visible = true
+    isGridVisible.value = true
+  }
+
+  // 恢复坐标系
+  if (savedRenderState.isAxesVisible && axesHelper) {
+    axesHelper.visible = true
+    isAxesVisible.value = true
+  }
+
+  // 恢复透视图
+  if (savedRenderState.isTransparent) {
+    meshes.forEach(mesh => {
+      const mat = mesh.material as THREE.MeshStandardMaterial
+      mat.transparent = true
+      mat.opacity = 0.3
+      mat.needsUpdate = true
+    })
+    isTransparent.value = true
+  }
+
+  // 恢复爆炸图
+  if (savedRenderState.isExploded) {
+    const center = new THREE.Vector3(0, 1000, 0)
+    meshes.forEach(mesh => {
+      const dir = mesh.position.clone().sub(center).normalize()
+      const offset = dir.multiplyScalar(300)
+      mesh.position.add(offset)
+    })
+    isExploded.value = true
+  }
+
+  // 恢复门板
+  if (savedRenderState.doorsOpen) {
+    toggleDoors()
+  }
+
+  // 恢复相机
+  camera.position.copy(savedRenderState.cameraPosition)
+  controls.target.copy(savedRenderState.cameraTarget)
+  controls.update()
+
+  savedRenderState = null
+}
+
+// 设置相机角度（柜子居中，留白适中）
+function setCameraAngle(angle: 'front' | 'top' | 'side_45') {
+  if (!camera || !controls) return
+  const cab = cabinetStore.cabinet
+  // 柜子渲染原点偏移后，世界中心在 (0, height/2, 0)
+  const centerX = 0
+  const centerY = cab ? cab.height / 2 : 1000
+  const centerZ = 0
+
+  const W = cab ? cab.length : 800
+  const H = cab ? cab.height : 2000
+  const D = cab ? cab.width : 600
+  const aspect = camera.aspect
+  const fov = camera.fov * (Math.PI / 180)
+
+  const halfFovV = fov / 2
+  const halfFovH = Math.atan(Math.tan(halfFovV) * aspect)
+
+  // 计算相机到柜子中心的距离
+  // 相机在 center + dist * viewDir 处看向 center，需要所有8个角点在视锥内且留白5%
+  // 关键：角点到相机的深度 = dist - dot(corner, viewDir)，而非 dist
+  function calcDist(viewDirX: number, viewDirY: number, viewDirZ: number): number {
+    // 归一化 viewDir
+    const vLen = Math.sqrt(viewDirX * viewDirX + viewDirY * viewDirY + viewDirZ * viewDirZ)
+    const vnx = viewDirX / vLen, vny = viewDirY / vLen, vnz = viewDirZ / vLen
+    // 相机 right = cross(viewDir, worldUp)
+    const rx = -vnz, ry = 0, rz = vnx
+    const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
+    const rnx = rx / rLen, rny = ry / rLen, rnz = rz / rLen
+    // 相机 up = cross(right, viewDir)
+    const ux = rny * vnz - rnz * vny
+    const uy = rnz * vnx - rnx * vnz
+    const uz = rnx * vny - rny * vnx
+    const uLen = Math.sqrt(ux * ux + uy * uy + uz * uz)
+    const unw = ux / uLen, uny = uy / uLen, unz = uz / uLen
+
+    // 柜子8个角点，相对于柜子中心 (0, centerY, 0)
+    const hw = W / 2, hh = H / 2, hd = D / 2
+    const corners = [
+      [-hw, -hh, -hd], [hw, -hh, -hd], [-hw, hh, -hd], [hw, hh, -hd],
+      [-hw, -hh, hd],  [hw, -hh, hd],  [-hw, hh, hd],  [hw, hh, hd],
+    ]
+
+    // 对每个角点：dist ≥ |projR|/(tan(halfFovH)*fitRatio) + dot(corner, viewDir)
+    //          dist ≥ |projU|/(tan(halfFovV)*fitRatio) + dot(corner, viewDir)
+    // 水平和垂直约束独立计算，取所有角点中最大值
+    const fitRatio = 0.9
+    const limitH = Math.tan(halfFovH) * fitRatio
+    const limitV = Math.tan(halfFovV) * fitRatio
+    let result = 0
+    for (const [cx, cy, cz] of corners) {
+      const dViewDir = cx * vnx + cy * vny + cz * vnz
+      const projR = cx * rnx + cy * rny + cz * rnz
+      const projU = cx * unw + cy * uny + cz * unz
+      const distH = Math.abs(projR) / limitH + dViewDir
+      const distV = Math.abs(projU) / limitV + dViewDir
+      const dist = Math.max(distH, distV)
+      if (dist > result) result = dist
+    }
+    return result
+  }
+
+  switch (angle) {
+    case 'front': {
+      // 从 +Z 看柜子开口，viewDir = (0, 0, -1)
+      const dist = calcDist(0, 0, -1)
+      camera.position.set(centerX, centerY, centerZ + dist)
+      break
+    }
+    case 'top': {
+      // 45°从 +Y +Z 方向看向柜子中心，顶板最高点在屏幕95%位置（上方留白5%）
+      const topDist = calcDist(0, -1, -1)
+      // calcDist 保证留白5%（限制方向在90%位置），需要缩放到顶板在95%位置
+      const dist = topDist * 0.95 / 0.9
+      const d = dist / Math.sqrt(2)
+      camera.position.set(centerX, centerY + d, centerZ + d)
+      break
+    }
+    case 'side_45': {
+      // 从 +X +Y +Z 看柜子，viewDir = (-1, -1, -1)
+      const dist = calcDist(-1, -1, -1)
+      const d = dist / Math.sqrt(3)
+      camera.position.set(centerX + d, centerY + d, centerZ + d)
+      break
+    }
+  }
+  controls.target.set(centerX, centerY, centerZ)
+  camera.up.set(0, 1, 0)
+  controls.update()
+}
+
+// 监听渲染截图的事件
+let isInRenderMode = false
+
+function onEnterRenderMode(e: Event) {
+  const detail = (e as CustomEvent).detail
+  const angle = detail?.angle || 'front'
+
+  // 仅首次进入时保存状态并关闭视觉干扰
+  if (!isInRenderMode) {
+    enterRenderMode()
+    isInRenderMode = true
+  }
+
+  // 每次都调整相机角度
+  setCameraAngle(angle)
+}
+
+function onExitRenderMode() {
+  if (isInRenderMode) {
+    exitRenderMode()
+    isInRenderMode = false
+  }
+}
+
+window.addEventListener('enter-render-mode', onEnterRenderMode)
+window.addEventListener('exit-render-mode', onExitRenderMode)
+
+defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggleGrid, toggleShadow, resetAll, setCameraAngle, enterRenderMode, exitRenderMode })
 </script>
 
 <template>

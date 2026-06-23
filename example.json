@@ -1,0 +1,38 @@
+{
+    "styles": [
+        {
+            "value": "modern_minimalist",
+            "label": "现代简约"
+        }
+    ],
+    "lighting": [
+        {
+            "value": "natural",
+            "label": "自然光"
+        }
+    ],
+    "view_angles": [
+        {
+            "value": "front",
+            "label": "正面"
+        }
+    ],
+    "room_types": [
+        {
+            "value": "living_room",
+            "label": "客厅"
+        }
+    ],
+    "materials": [
+        {
+            "value": "oak_wood",
+            "label": "橡木"
+        }
+    ],
+    "categories": [
+        {
+            "value": "wardrobe",
+            "label": "衣柜"
+        }
+    ]
+}

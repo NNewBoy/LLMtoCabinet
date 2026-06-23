@@ -3,12 +3,14 @@ import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { apiUrl } from '../config'
+import RenderModal from './RenderModal.vue'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
 const projectName = computed(() => cabinetStore.cabinet?.name || '标准柜')
 const canUndo = ref(false)
 const canRedo = ref(false)
+const showRenderModal = ref(false)
 
 async function fetchHistoryStatus() {
   if (!wsStore.currentProjectId) {
@@ -116,6 +118,10 @@ defineExpose({ fetchHistoryStatus })
         <span class="btn-icon">💾</span>
         <span class="btn-label">保存</span>
       </button>
+      <button class="btn btn-render" @click="showRenderModal = true">
+        <span class="btn-icon">🖼</span>
+        <span class="btn-label">渲染</span>
+      </button>
     </div>
     <div class="header-right">
       <span class="status" :class="{ connected: wsStore.isConnected }">
@@ -124,6 +130,7 @@ defineExpose({ fetchHistoryStatus })
       </span>
     </div>
   </header>
+  <RenderModal :visible="showRenderModal" @close="showRenderModal = false" />
 </template>
 
 <style scoped>
@@ -257,6 +264,18 @@ defineExpose({ fetchHistoryStatus })
   background: rgba(52, 211, 153, 0.25);
   border-color: rgba(52, 211, 153, 0.5);
   box-shadow: 0 4px 16px rgba(52, 211, 153, 0.2);
+}
+
+.btn-render {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: var(--color-warning);
+}
+
+.btn-render:hover {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2);
 }
 
 .header-right {
