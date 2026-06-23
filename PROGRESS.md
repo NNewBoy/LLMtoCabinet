@@ -355,6 +355,17 @@ LLMtoCabinet_deeepseek/
 └── SPEC.md                 # 规格说明书
 ```
 
+### 2026-06-24
+- **渲染图上传改造**：截图上传接口由 JSON 改为 `multipart/form-data`
+  - 新增 `dataUrlToFile` 函数：将 canvas 的 base64 data URL 解码为二进制，封装成 `File` 对象（保留原 MIME 类型）
+  - `uploadScreenshot` 重写：用 `FormData` 包装 `file` 字段，POST 到 `/renderApi/images/upload`，返回 `data.data.image_id`
+  - 使用 `fetch` + `FormData` 时不手动设置 `Content-Type`，由浏览器自动添加带 boundary 的 `multipart/form-data` 头
+- **渲染请求参数变更**：`handleSubmit` 中 `image_url` 参数替换为 `image_id`，与上传接口返回字段对齐
+- **渲染跳转策略优化**：
+  - 本地开发环境（`import.meta.env.DEV`）：origin 改为 `${protocol}//${hostname}:5173`，跳转到 5173 端口前端服务
+  - 生产环境：使用 `window.location.origin`，行为不变
+  - 移动端检测：通过 `navigator.userAgent` 识别 Android/iPhone/iPad 等设备，命中时用 `window.location.href` 在当前页加载渲染结果，PC 端保持 `window.open` 新窗口打开
+
 ### 2026-06-23
 - **渲染截图相机角度优化**：重写 `setCameraAngle` 函数，基于透视投影数学精确计算相机距离
   - 正确处理柜子非中心原点坐标（X/Z 居中，Y 从 0 开始）
@@ -368,4 +379,4 @@ LLMtoCabinet_deeepseek/
 
 ---
 
-*最后更新：2026-06-23*
+*最后更新：2026-06-24*

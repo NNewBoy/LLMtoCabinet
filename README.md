@@ -18,6 +18,8 @@
 - **3D动画** — 门板开合动画（双开门左右分别打开）
 - **坐标系显示** — 3D 视图可显示带箭头和 x/y/z 标签的坐标系，柜子开口方向为 +Z
 - **渲染截图** — 支持 front / top / side_45 三种预设角度的高质量截图，自动计算相机距离确保留白 5%
+- **渲染图上传** — 截图转为 File 对象通过 `multipart/form-data` 上传至 `/renderApi/images/upload`，渲染请求使用 `image_id` 标识图片
+- **智能跳转** — 本地开发自动跳转 5173 端口，生产环境使用当前 origin；移动端在当前页加载渲染结果，PC 端新窗口打开
 
 ## 技术栈
 
@@ -48,7 +50,7 @@ python -m venv venv
 source venv/bin/activate
 
 # Windows (PowerShell)
-.\venv\Scripts\Activate.ps1
+venv\Scripts\activate
 
 # 安装依赖
 pip install -r requirements.txt
@@ -172,7 +174,8 @@ npm run dev
   - 透视图：半透明显示内部结构
   - 开门：门板/抽屉开合动画
   - 复原：恢复初始状态
-- **渲染截图**：支持三种预设角度（front 正面 / top 45°俯视 / side_45 斜45°），进入渲染模式后背景变白、关闭坐标系/网格/阴影，相机自动调整确保留白 5%
+- **渲染截图**：支持三种预设角度（front 正面 / top 45°俯视 / side_45 斜45°），进入渲染模式后背景变白、关闭坐标系/网格/阴影，相机自动调整确保留白 5%。截图通过 `multipart/form-data` 上传至 `/renderApi/images/upload` 获取 `image_id`，渲染请求使用 `image_id` 替代 `image_url`
+- **渲染跳转**：本地开发环境自动跳转到 5173 端口的前端服务，生产环境使用当前 origin；移动端在当前页面加载渲染结果，PC 端在新窗口打开
 
 ### 方案管理
 

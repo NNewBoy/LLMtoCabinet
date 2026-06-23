@@ -99,18 +99,32 @@ function setAngleAndCapture(angle: 'front' | 'top' | 'side_45') {
   })
 }
 
-// 上传截图到后端获取URL
+// 将 data URL 转换为 File 对象
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [meta, base64] = dataUrl.split(',')
+  const mime = meta.match(/:(.*?);/)?.[1] || 'image/png'
+  const binary = atob(base64)
+  const arr = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    arr[i] = binary.charCodeAt(i)
+  }
+  return new File([arr], filename, { type: mime })
+}
+
+// 上传截图到后端获取 image_id
 async function uploadScreenshot(): Promise<string> {
   if (!screenshotUrl.value) return ''
   try {
-    const res = await fetch(apiUrl('/api/render/upload-image'), {
+    const file = dataUrlToFile(screenshotUrl.value, 'screenshot.png')
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(apiUrl('/renderApi/images/upload'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: screenshotUrl.value }),
+      body: formData,
     })
     if (res.ok) {
       const data = await res.json()
-      return data.url || ''
+      return data.data?.image_id || ''
     }
   } catch (e) {
     console.error('上传截图失败:', e)
@@ -120,16 +134,16 @@ async function uploadScreenshot(): Promise<string> {
 
 // 提交渲染
 async function handleSubmit() {
-  let imageUrl = ''
+  let imageId = ''
 
-  // 上传截图获取URL
+  // 上传截图获取 image_id
   if (screenshotUrl.value) {
-    imageUrl = await uploadScreenshot()
+    imageId = await uploadScreenshot()
   }
 
   // 构建查询参数
   const params = new URLSearchParams()
-  if (imageUrl) params.set('image_url', imageUrl)
+  if (imageId) params.set('image_id', imageId)
   if (form.style) params.set('style', form.style)
   if (form.lighting) params.set('lighting', form.lighting)
   if (form.viewAngle) params.set('view_angle', form.viewAngle)
@@ -147,8 +161,18 @@ async function handleSubmit() {
   params.set('depth', String(Math.round(cabinetDepth.value)))
 
   const path = renderStyle.value === 'single' ? '/render/single' : '/render/scene'
-  const url = `${window.location.origin}${path}?${params.toString()}`
-  window.open(url, '_blank')
+  // 本地开发跳转到 5173 端口，生产环境使用当前 origin
+  const origin = import.meta.env.DEV
+    ? `${window.location.protocol}//${window.location.hostname}:5173`
+    : window.location.origin
+  const url = `${origin}${path}?${params.toString()}`
+  // 非PC端直接在当前页面加载
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  if (isMobile) {
+    window.location.href = url
+  } else {
+    window.open(url, '_blank')
+  }
 }
 
 // 弹窗打开时加载预设并截图，关闭时恢复视图
