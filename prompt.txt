@@ -1,0 +1,20 @@
+##一
+我想撰写一个软件SPEC，在以下需求的基础上进行优化：
+1、软件功能：实现一个编辑单个柜子家具3D模型的在线网站，用户可以通过自然语言对柜子的各板件和组件进行编辑
+2、软件架构：前端负责渲染、AI交流；后端负责实现数据记录，柜子编辑功能，以及实现Agent+skills；后端维护柜子object进行编辑，并将object传递给前端进行渲染
+3、软件框架：前端Vue3+Vite+threejs，后端Python+FastAPI+SQLite+DeepAgents
+4、Agent实现：通过DeepAgents框架调用LLM模型，通过SKILL.md实现柜子编辑，由DeepAgents确定使用哪个skill
+5、DeepAgents框架文档：https://docs.langchain.com/oss/python/deepagents/overview
+6、柜子object赢包含：长、宽、高、坐标、朝向、材料、类型、子物体等
+
+##二
+1、@file:SPEC2.md 基于这个SPEC文档进行设计与规划，完成完整的项目，使用Claude Code编写代码
+2、记录完成情况，写一个markdown文件
+3、写一个README.md说明文档
+
+##三
+继续完成Phase 2: DeepAgents LLM 集成，使用Claude Code生成代码
+
+Resume this session with:
+  hermes --resume 20260614_153936_2bd7c2
+  hermes -c "Resume Interrupted Operation"
