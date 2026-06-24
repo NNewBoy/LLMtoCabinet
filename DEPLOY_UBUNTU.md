@@ -89,7 +89,7 @@ python3.11 --version
 cd /var/LLMtoCabinet/backend
 
 # 创建虚拟环境
-python3.11 -m venv venv
+python -m venv venv
 
 # 激活虚拟环境
 source venv/bin/activate
@@ -483,7 +483,7 @@ npm run build
 sudo rm -rf /var/www/llmtocabinet/*
 
 # 复制新的静态文件
-sudo cp -r dist/* /var/www/LLMtoCabinet/
+sudo cp -r dist/* /var/www/llmtocabinet/
 
 # 重启后端服务
 sudo systemctl restart LLMtoCabinet

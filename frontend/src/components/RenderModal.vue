@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElColorPicker } from 'element-plus'
 import 'element-plus/es/components/color-picker/style/css'
-import { apiUrl } from '../config'
+import { renderApiUrl } from '../config'
 import { useCabinetStore } from '../stores/cabinetStore'
 import type { CabinetComponent } from '../utils/types'
 
@@ -79,7 +79,7 @@ const isCapturing = ref(false)
 // 加载预设数据
 async function loadPresets() {
   try {
-    const res = await fetch(apiUrl('/render_api/params/presets'))
+    const res = await fetch(renderApiUrl('/render_api/params/presets'))
     if (res.ok) {
       const data = (await res.json())?.data || {}
       styles.value = data.styles || []
@@ -157,7 +157,7 @@ async function uploadScreenshot(): Promise<string> {
     formData.append('cabinet_d', String(Math.round(cabinetDepth.value)))
     formData.append('material', form.material)
     formData.append('color', form.color)
-    const res = await fetch(apiUrl('/render_api/images/upload'), {
+    const res = await fetch(renderApiUrl('/render_api/images/upload'), {
       method: 'POST',
       body: formData,
     })

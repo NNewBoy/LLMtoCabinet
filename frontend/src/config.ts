@@ -13,3 +13,8 @@ export function wsUrl(projectId: string): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   return `${protocol}//${window.location.host}${API_BASE}${WS_PATH}/${projectId}`
 }
+
+// 构建 API URL
+export function renderApiUrl(path: string): string {
+  return `${path}`
+}
