@@ -213,6 +213,7 @@ npm run build
 
 ```bash
 sudo mkdir -p /var/www/llmtocabinet
+sudo rm -rf /var/www/llmtocabinet/*
 sudo cp -r /var/LLMtoCabinet/frontend/dist/* /var/www/llmtocabinet/
 sudo chown -R www-data:www-data /var/www/llmtocabinet
 ```
@@ -477,6 +478,9 @@ pip install -r requirements.txt
 cd ../frontend
 npm install
 npm run build
+
+# 清空旧文件
+sudo rm -rf /var/www/llmtocabinet/*
 
 # 复制新的静态文件
 sudo cp -r dist/* /var/www/LLMtoCabinet/
