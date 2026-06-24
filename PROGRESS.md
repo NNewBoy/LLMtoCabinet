@@ -356,6 +356,10 @@ LLMtoCabinet_deeepseek/
 ```
 
 ### 2026-06-24
+- **渲染表单自动填充**：RenderModal 打开时从柜子模型计算最常用的颜色和材质
+  - `collectAllComponents`：递归遍历组件树（含子组件如拉手），收集所有板件
+  - `mostFrequent`：统计出现次数最多的值
+  - 弹窗打开后 `initFormFromCabinet` 将柜子中使用最多的 color 和 material 填入表单，覆盖预设默认值
 - **渲染图上传改造**：截图上传接口由 JSON 改为 `multipart/form-data`
   - 新增 `dataUrlToFile` 函数：将 canvas 的 base64 data URL 解码为二进制，封装成 `File` 对象（保留原 MIME 类型）
   - `uploadScreenshot` 重写：用 `FormData` 包装 `file` 字段，POST 到 `/render_api/images/upload`，返回 `data.data.image_id`

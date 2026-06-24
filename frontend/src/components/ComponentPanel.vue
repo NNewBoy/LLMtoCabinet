@@ -25,9 +25,12 @@ const presetColors = [
 const presetMaterials = [
   { name: '多层板', value: 'plywood' },
   { name: '中密度板', value: 'mdf' },
-  { name: '刨花板', value: 'particleboard' },
-  { name: '橡木', value: 'oak' },
-  { name: '胡桃木', value: 'walnut' },
+  { name: '橡木', value: 'oak_wood' },
+  { name: '胡桃木', value: 'walnut_wood' },
+  { name: '樱桃木', value: 'cherry_wood' },
+  { name: '白色烤漆', value: 'white_lacquer' },
+  { name: '金属', value: 'metal' },
+  { name: '玻璃', value: 'glass' },
 ]
 
 const components = computed(() => {

@@ -4,6 +4,7 @@ import { ElColorPicker } from 'element-plus'
 import 'element-plus/es/components/color-picker/style/css'
 import { apiUrl } from '../config'
 import { useCabinetStore } from '../stores/cabinetStore'
+import type { CabinetComponent } from '../utils/types'
 
 const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -37,6 +38,39 @@ const form = reactive({
 const cabinetWidth = computed(() => cabinetStore.cabinet?.length || 800)
 const cabinetHeight = computed(() => cabinetStore.cabinet?.height || 2000)
 const cabinetDepth = computed(() => cabinetStore.cabinet?.width || 600)
+
+// 递归收集所有组件（含子组件）
+function collectAllComponents(components: CabinetComponent[]): CabinetComponent[] {
+  const result: CabinetComponent[] = []
+  for (const comp of components) {
+    result.push(comp)
+    if (comp.children?.length) {
+      result.push(...collectAllComponents(comp.children))
+    }
+  }
+  return result
+}
+
+// 取出现次数最多的值
+function mostFrequent(values: string[]): string {
+  if (!values.length) return ''
+  const counts: Record<string, number> = {}
+  for (const v of values) {
+    counts[v] = (counts[v] || 0) + 1
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+// 从柜子模型计算最常用的颜色和材质，填入表单
+function initFormFromCabinet() {
+  const components = cabinetStore.cabinet?.components
+  if (!components?.length) return
+  const all = collectAllComponents(components)
+  const topColor = mostFrequent(all.map(c => c.color).filter(Boolean))
+  const topMaterial = mostFrequent(all.map(c => c.material).filter(Boolean))
+  if (topColor) form.color = topColor
+  if (topMaterial) form.material = topMaterial
+}
 
 // 截图状态
 const screenshotUrl = ref('')
@@ -118,6 +152,11 @@ async function uploadScreenshot(): Promise<string> {
     const file = dataUrlToFile(screenshotUrl.value, 'screenshot.png')
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('cabinet_w', String(Math.round(cabinetWidth.value)))
+    formData.append('cabinet_h', String(Math.round(cabinetHeight.value)))
+    formData.append('cabinet_d', String(Math.round(cabinetDepth.value)))
+    formData.append('material', form.material)
+    formData.append('color', form.color)
     const res = await fetch(apiUrl('/render_api/images/upload'), {
       method: 'POST',
       body: formData,
@@ -179,7 +218,9 @@ async function handleSubmit() {
 watch(() => props.visible, (val) => {
   if (val) {
     renderModeActive = false
-    loadPresets()
+    loadPresets().then(() => {
+      initFormFromCabinet()
+    })
     setAngleAndCapture('front')
   }
 })
@@ -294,13 +335,13 @@ function close() {
           <!-- 颜色 -->
           <div class="form-group">
             <label class="form-label">颜色</label>
-            <ElColorPicker v-model="form.color" show-alpha />
+            <ElColorPicker v-model="form.color" />
           </div>
 
           <!-- 背景颜色（单品渲染专属） -->
           <div v-if="renderStyle === 'single'" class="form-group">
             <label class="form-label">背景颜色</label>
-            <ElColorPicker v-model="form.bgColor" show-alpha />
+            <ElColorPicker v-model="form.bgColor" />
           </div>
 
           <!-- 额外描述 -->

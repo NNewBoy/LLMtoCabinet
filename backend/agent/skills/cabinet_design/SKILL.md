@@ -28,9 +28,12 @@ description: >
 ## 材料类型
 - plywood：多层板（默认）
 - mdf：中密度纤维板
-- particleboard：刨花板
-- oak：橡木
-- walnut：胡桃木
+- oak_wood：橡木
+- walnut_wood：胡桃木
+- cherry_wood：樱桃木
+- white_lacquer：白色烤漆
+- metal：金属
+- glass：玻璃
 
 ## 颜色预设
 - 原木色：#D2B48C
