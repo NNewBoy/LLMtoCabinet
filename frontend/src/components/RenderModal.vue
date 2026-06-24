@@ -45,7 +45,7 @@ const isCapturing = ref(false)
 // 加载预设数据
 async function loadPresets() {
   try {
-    const res = await fetch(apiUrl('/renderApi/params/presets'))
+    const res = await fetch(apiUrl('/render_api/params/presets'))
     if (res.ok) {
       const data = (await res.json())?.data || {}
       styles.value = data.styles || []
@@ -118,7 +118,7 @@ async function uploadScreenshot(): Promise<string> {
     const file = dataUrlToFile(screenshotUrl.value, 'screenshot.png')
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch(apiUrl('/renderApi/images/upload'), {
+    const res = await fetch(apiUrl('/render_api/images/upload'), {
       method: 'POST',
       body: formData,
     })
@@ -160,10 +160,10 @@ async function handleSubmit() {
   params.set('height', String(Math.round(cabinetHeight.value)))
   params.set('depth', String(Math.round(cabinetDepth.value)))
 
-  const path = renderStyle.value === 'single' ? '/render/single' : '/render/scene'
+  const path = renderStyle.value === 'single' ? '/llmimagerender/render/single' : '/llmimagerender/render/scene'
   // 本地开发跳转到 5173 端口，生产环境使用当前 origin
   const origin = import.meta.env.DEV
-    ? `${window.location.protocol}//${window.location.hostname}:5173`
+    ? `${window.location.protocol}//${window.location.hostname}:5175`
     : window.location.origin
   const url = `${origin}${path}?${params.toString()}`
   // 非PC端直接在当前页面加载

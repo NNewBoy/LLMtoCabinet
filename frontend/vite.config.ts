@@ -12,9 +12,8 @@ export default defineConfig({
         target: 'ws://localhost:8001',
         ws: true,
       },
-      '/renderApi': {
+      '/render_api': {
         target: 'http://localhost:8002',
-        rewrite: (path) => path.replace(/^\/renderApi/, '/api'),
       }
     },
   },

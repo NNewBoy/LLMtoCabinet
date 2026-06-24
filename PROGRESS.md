@@ -358,7 +358,7 @@ LLMtoCabinet_deeepseek/
 ### 2026-06-24
 - **渲染图上传改造**：截图上传接口由 JSON 改为 `multipart/form-data`
   - 新增 `dataUrlToFile` 函数：将 canvas 的 base64 data URL 解码为二进制，封装成 `File` 对象（保留原 MIME 类型）
-  - `uploadScreenshot` 重写：用 `FormData` 包装 `file` 字段，POST 到 `/renderApi/images/upload`，返回 `data.data.image_id`
+  - `uploadScreenshot` 重写：用 `FormData` 包装 `file` 字段，POST 到 `/render_api/images/upload`，返回 `data.data.image_id`
   - 使用 `fetch` + `FormData` 时不手动设置 `Content-Type`，由浏览器自动添加带 boundary 的 `multipart/form-data` 头
 - **渲染请求参数变更**：`handleSubmit` 中 `image_url` 参数替换为 `image_id`，与上传接口返回字段对齐
 - **渲染跳转策略优化**：
