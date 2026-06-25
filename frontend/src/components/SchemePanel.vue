@@ -130,7 +130,7 @@ onMounted(() => {
     <div class="action-bar">
       <div class="input-group">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        <input
+        <el-input
           v-model="newName"
           class="name-input"
           placeholder="新方案名称..."
@@ -140,14 +140,14 @@ onMounted(() => {
       <div class="action-row">
         <div class="template-group">
           <svg class="template-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          <select v-model="selectedTemplate" class="template-select">
-            <option v-for="t in templates" :key="t.value" :value="t.value">{{ t.label }}</option>
-          </select>
+          <el-select v-model="selectedTemplate" class="template-select">
+            <el-option v-for="t in templates" :key="t.value" :label="t.label" :value="t.value" />
+          </el-select>
         </div>
-        <button class="action-btn create" @click="createScheme">
+        <el-button class="action-btn create" type="primary" @click="createScheme">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           <span>新建</span>
-        </button>
+        </el-button>
       </div>
     </div>
 
@@ -161,7 +161,7 @@ onMounted(() => {
         @click="switchScheme(scheme.id)"
       >
         <div class="scheme-info">
-          <input
+          <el-input
             v-if="editingId === scheme.id"
             v-model="editingName"
             class="rename-input"
@@ -236,25 +236,10 @@ onMounted(() => {
 
 .name-input {
   width: 100%;
-  padding: 12px 14px 12px 38px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  color: var(--color-text-primary);
-  font-size: 14px;
-  outline: none;
-  transition: all 200ms ease;
-  backdrop-filter: blur(8px);
 }
 
-.name-input:focus {
-  border-color: rgba(34, 197, 94, 0.5);
-  background: rgba(15, 23, 42, 0.7);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1), 0 0 20px rgba(34, 197, 94, 0.05);
-}
-
-.name-input::placeholder {
-  color: var(--color-text-muted);
+.name-input :deep(.el-input__wrapper) {
+  padding-left: 38px;
 }
 
 .action-row {
@@ -287,33 +272,10 @@ onMounted(() => {
 
 .template-select {
   width: 100%;
-  padding: 10px 32px 10px 38px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  outline: none;
-  cursor: pointer;
-  min-height: 44px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  backdrop-filter: blur(8px);
-  transition: all 200ms ease;
 }
 
-.template-select:focus {
-  border-color: rgba(129, 140, 248, 0.5);
-  background-color: rgba(15, 23, 42, 0.7);
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1), 0 0 20px rgba(129, 140, 248, 0.05);
-}
-
-.template-select option {
-  background: #0f172a;
-  color: #F8FAFC;
-  padding: 8px;
+.template-select :deep(.el-select__wrapper) {
+  padding-left: 38px;
 }
 
 .action-btn {
@@ -321,20 +283,11 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
   white-space: nowrap;
-  transition: all 200ms ease;
-  min-height: 44px;
   backdrop-filter: blur(8px);
-  position: relative;
-  overflow: hidden;
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
 }
 
 .btn-icon {
@@ -343,29 +296,9 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.action-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0) 0%, rgba(34, 197, 94, 0.08) 100%);
-  opacity: 0;
-  transition: opacity 200ms ease;
-}
-
 .action-btn:hover {
   border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.action-btn:hover::before {
-  opacity: 1;
-}
-
-.action-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .action-btn.create {
@@ -377,7 +310,6 @@ onMounted(() => {
 .action-btn.create:hover {
   background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.12) 100%);
   border-color: rgba(34, 197, 94, 0.45);
-  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .scheme-list {
@@ -428,13 +360,10 @@ onMounted(() => {
 
 .rename-input {
   flex: 1;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  background: var(--glass-bg);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  outline: none;
+}
+
+.rename-input :deep(.el-input__wrapper) {
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
@@ -505,19 +434,15 @@ onMounted(() => {
 
   .name-input {
     font-size: 16px;
-    padding: 10px 12px 10px 34px;
   }
 
   .action-btn {
     padding: 8px 14px;
-    min-height: 36px;
     font-size: 12px;
   }
 
   .template-select {
     font-size: 12px;
-    padding: 8px 28px 8px 34px;
-    min-height: 36px;
   }
 
   .btn-icon {

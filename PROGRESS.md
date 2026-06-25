@@ -91,12 +91,13 @@
 
 | 组件 | 文件 | 状态 | 功能说明 |
 |------|------|------|----------|
-| HeaderBar | `HeaderBar.vue` | ✅ | 顶部导航栏（撤销/重做/保存）Glassmorphism 风格 |
-| Viewport3D | `Viewport3D.vue` | ✅ | 3D 渲染视图 + 工具栏 + 点击选中 + 阴影 |
-| ChatPanel | `ChatPanel.vue` | ✅ | AI 对话面板 Glassmorphism 风格 |
-| ComponentPanel | `ComponentPanel.vue` | ✅ | 组件树 + 属性 + 颜色/材料选择 |
+| HeaderBar | `HeaderBar.vue` | ✅ | 顶部导航栏（撤销/重做/保存/渲染/工具下拉列表）Element Plus 化 |
+| Viewport3D | `Viewport3D.vue` | ✅ | 3D 渲染视图 + 点击选中 + 阴影（工具栏已迁移至 HeaderBar） |
+| RenderModal | `RenderModal.vue` | ✅ | 渲染设置弹窗（截图角度/风格/材质/颜色，自动填充柜子属性） |
+| ChatPanel | `ChatPanel.vue` | ✅ | AI 对话面板 Element Plus 化 |
+| ComponentPanel | `ComponentPanel.vue` | ✅ | 组件树 + 属性 + 颜色/材料选择 Element Plus 化 |
 | HistoryPanel | `HistoryPanel.vue` | ✅ | 历史版本列表 |
-| SchemePanel | `SchemePanel.vue` | ✅ | 方案管理（新建/切换/重命名/删除） |
+| SchemePanel | `SchemePanel.vue` | ✅ | 方案管理（新建/切换/重命名/删除）Element Plus 化 |
 | ToastNotification | `ToastNotification.vue` | ✅ | Toast 通知组件 Glassmorphism 风格 |
 
 ---
@@ -335,12 +336,19 @@ LLMtoCabinet_deeepseek/
 │       ├── components/     # Vue 组件
 │       │   ├── HeaderBar.vue
 │       │   ├── Viewport3D.vue
+│       │   ├── RenderModal.vue
 │       │   ├── ChatPanel.vue
 │       │   ├── ComponentPanel.vue
 │       │   ├── HistoryPanel.vue
 │       │   ├── SchemePanel.vue
 │       │   └── ToastNotification.vue
+│       ├── styles/
+│       │   └── theme.css   # Glassmorphism + Dark Mode 主题 + Element Plus 暗色覆盖
 │       ├── stores/         # Pinia 状态管理
+│       │   ├── cabinetStore.ts
+│       │   ├── chatStore.ts
+│       │   ├── viewportStore.ts
+│       │   └── websocketStore.ts
 │       └── utils/          # 工具函数和类型定义
 ├── backend/
 │   ├── agent/              # Agent 相关
@@ -369,6 +377,31 @@ LLMtoCabinet_deeepseek/
   - 本地开发环境（`import.meta.env.DEV`）：origin 改为 `${protocol}//${hostname}:5173`，跳转到 5173 端口前端服务
   - 生产环境：使用 `window.location.origin`，行为不变
   - 移动端检测：通过 `navigator.userAgent` 识别 Android/iPhone/iPad 等设备，命中时用 `window.location.href` 在当前页加载渲染结果，PC 端保持 `window.open` 新窗口打开
+- **Element Plus 全局集成**：`main.ts` 中全局引入 Element Plus 和 `element-plus/dist/index.css`，`document.documentElement.classList.add('dark')` 启用暗色模式
+- **主题 CSS 抽离**：从 `App.vue` 中提取全局样式到 `src/styles/theme.css`
+  - 设计令牌（Design Tokens）：保留项目原有配色体系（靛蓝紫主色、翡翠绿成功色等）
+  - Element Plus 暗色模式覆盖（`html.dark` 选择器）：Button、Tabs、Input、Select、Dialog、MessageBox、Popover、ColorPicker、Upload 等 20+ 组件
+  - 全局重置、Glassmorphism 工具类、滚动条、选中文本、`prefers-reduced-motion` 无障碍支持
+  - 按钮禁用态样式（`is-disabled`）：所有变体（primary/success/warning/danger/default/link）覆盖 hover/focus/active 状态，`opacity: 0.45` + `cursor: not-allowed`
+  - Input/Textarea 禁用态样式：`.el-textarea.is-disabled .el-textarea__inner` 和 `.el-input.is-disabled .el-input__wrapper`
+- **前端组件 Element Plus 化**：全部原生 HTML 元素替换为 Element Plus 组件
+  - `<button>` → `<el-button>`（HeaderBar 7个、RenderModal 7个、ChatPanel 3个、ComponentPanel 2个、SchemePanel 3个）
+  - `<select>` → `<el-select>` + `<el-option>`（RenderModal 5个、ComponentPanel 1个、SchemePanel 1个）
+  - `<textarea>` → `<el-input type="textarea">`（ChatPanel 1个、RenderModal 1个）
+  - `<input>` → `<el-input>`（SchemePanel 2个）
+  - App.vue 移动端 tab buttons 保持不变（按要求排除）
+- **CSS 清理**：移除 Element Plus 替换后不再需要的旧样式
+  - HeaderBar：`.btn` 简化（移除 padding/border-radius/font-size/cursor/transition/::before 伪元素）
+  - RenderModal：`.form-select` 移除 30+ 行原生 select 样式，`.form-textarea` 移除原生 textarea 样式，`.toggle-btn`/`.angle-btn`/`.btn-cancel`/`.btn-submit` 简化
+  - ChatPanel：`.chat-input textarea` 移除 20 行原生样式，`.send-btn`/`.stop-btn`/`.example`/`.continue-btn` 简化
+  - ComponentPanel：`.expand-btn` 简化，`.prop-select` 移除原生 select 样式
+  - SchemePanel：`.name-input`/`.template-select` 移除原生样式（改用 `:deep()` 保留图标偏移），`.action-btn` 移除 `::before` 伪元素
+- **工具栏迁移**：Viewport3D 中的工具栏（爆炸图/透视图/开门/坐标系/网格/阴影/复原）迁移到 HeaderBar
+  - 新增 `viewportStore.ts`：Pinia store 管理 6 个工具状态 + `toggleSignal` 信号机制
+  - HeaderBar 渲染按钮右侧新增「工具」el-popover 下拉列表，select 风格垂直列表，活跃项带 ✓ 勾选标记
+  - Viewport3D 通过 `watch(viewportStore.toggleSignal)` 监听信号执行 Three.js 操作
+  - Viewport3D 中移除 toolbar 模板和 CSS
+- **渲染弹窗取消选中**：点击渲染按钮时调用 `cabinetStore.selectComponent(null)` 取消 3D 视图中物体的选中状态
 
 ### 2026-06-23
 - **渲染截图相机角度优化**：重写 `setCameraAngle` 函数，基于透视投影数学精确计算相机距离

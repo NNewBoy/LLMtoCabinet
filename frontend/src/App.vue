@@ -8,7 +8,7 @@ import SchemePanel from './components/SchemePanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useWebSocketStore, setToastCallback } from './stores/websocketStore'
 import { useCabinetStore, setToastCallback as setCabinetToastCallback } from './stores/cabinetStore'
-import { onMounted, ref, watch, computed } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
@@ -131,79 +131,7 @@ const tabs = [
   </div>
 </template>
 
-<style>
-/* 基础重置 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-}
-
-html, body, #app {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-  color: #e2e8f0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Glassmorphism + Dark Mode 颜色变量 */
-:root {
-  /* 主色调 */
-  --color-primary: #818cf8;
-  --color-primary-hover: #6366f1;
-  --color-primary-glow: rgba(129, 140, 248, 0.3);
-  
-  /* 语义色 */
-  --color-success: #34d399;
-  --color-success-glow: rgba(52, 211, 153, 0.3);
-  --color-warning: #fbbf24;
-  --color-warning-glow: rgba(251, 191, 36, 0.3);
-  --color-error: #f87171;
-  --color-error-glow: rgba(248, 113, 113, 0.3);
-  
-  /* Glassmorphism 背景 */
-  --glass-bg: rgba(15, 23, 42, 0.6);
-  --glass-bg-hover: rgba(30, 41, 59, 0.7);
-  --glass-bg-active: rgba(51, 65, 85, 0.8);
-  --glass-border: rgba(148, 163, 184, 0.15);
-  --glass-border-hover: rgba(148, 163, 184, 0.25);
-  --glass-blur: 12px;
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  
-  /* 文字颜色 */
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  
-  /* 间距系统 */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-2xl: 32px;
-  
-  /* 圆角 */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  
-  /* 动画 */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+<style scoped>
 /* 应用容器 */
 .app-container {
   display: flex;
@@ -391,44 +319,5 @@ html, body, #app {
   .tool-panel {
     width: 400px;
   }
-}
-
-/* Glassmorphism 通用样式类 */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-.glass-hover:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-}
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.3);
-}
-
-/* 选中文本样式 */
-::selection {
-  background: rgba(129, 140, 248, 0.3);
-  color: var(--color-text-primary);
 }
 </style>

@@ -6,9 +6,11 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { useCabinetStore } from '../stores/cabinetStore'
+import { useViewportStore } from '../stores/viewportStore'
 import type { Cabinet, CabinetComponent } from '../utils/types'
 
 const cabinetStore = useCabinetStore()
+const viewportStore = useViewportStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 let scene: THREE.Scene
@@ -27,13 +29,7 @@ let originalRotations: Map<string, THREE.Euler> = new Map()
 let activeTweens: Array<{ update: (dt: number) => boolean }> = []
 let lastTime = 0
 
-// 功能状态
-const isExploded = ref(false)
-const isTransparent = ref(false)
-const doorsOpen = ref(false)
-const isAxesVisible = ref(false)
-const isGridVisible = ref(true)
-const isShadowVisible = ref(true)
+// 功能状态（从 viewportStore 统一管理）
 let gridHelper: THREE.GridHelper | null = null
 let groundMesh: THREE.Mesh | null = null
 let axesHelper: THREE.Group | null = null
@@ -321,9 +317,9 @@ function renderCabinet(cabinet: Cabinet) {
   }
 
   // 重置功能状态
-  isExploded.value = false
-  isTransparent.value = false
-  doorsOpen.value = false
+  viewportStore.isExploded = false
+  viewportStore.isTransparent = false
+  viewportStore.doorsOpen = false
 
   // 根据柜子尺寸调整相机位置和目标点
   const centerX = 0
@@ -435,8 +431,8 @@ function renderComponent(
   })
 
   const mesh = new THREE.Mesh(geometry, material)
-  mesh.castShadow = isShadowVisible.value
-  mesh.receiveShadow = isShadowVisible.value
+  mesh.castShadow = viewportStore.isShadowVisible
+  mesh.receiveShadow = viewportStore.isShadowVisible
 
   // 添加边缘线以显示轮廓
   const edges = new THREE.EdgesGeometry(geometry)
@@ -522,7 +518,7 @@ function updateTweens(dt: number) {
 // ==================== 爆炸图 ====================
 
 function toggleExplode() {
-  if (isExploded.value) {
+  if (viewportStore.isExploded) {
     // 还原
     meshes.forEach((mesh, id) => {
       const orig = originalPositions.get(id)
@@ -532,7 +528,7 @@ function toggleExplode() {
         addTween(mesh, 'position', 'z', orig.z)
       }
     })
-    isExploded.value = false
+    viewportStore.isExploded = false
   } else {
     // 爆炸：每个组件沿其相对于柜体中心的方向向外偏移
     const center = new THREE.Vector3(0, 1000, 0) // 柜体中心
@@ -543,14 +539,14 @@ function toggleExplode() {
       addTween(mesh, 'position', 'y', mesh.position.y + offset.y)
       addTween(mesh, 'position', 'z', mesh.position.z + offset.z)
     })
-    isExploded.value = true
+    viewportStore.isExploded = true
   }
 }
 
 // ==================== 透视图 ====================
 
 function toggleTransparent() {
-  if (isTransparent.value) {
+  if (viewportStore.isTransparent) {
     // 还原材质
     meshes.forEach((mesh, id) => {
       const orig = originalMaterials.get(id)
@@ -558,7 +554,7 @@ function toggleTransparent() {
         mesh.material = orig.clone()
       }
     })
-    isTransparent.value = false
+    viewportStore.isTransparent = false
   } else {
     // 半透明 + 线框
     meshes.forEach((mesh) => {
@@ -567,27 +563,27 @@ function toggleTransparent() {
       mat.opacity = 0.3
       mat.needsUpdate = true
     })
-    isTransparent.value = true
+    viewportStore.isTransparent = true
   }
 }
 
 function toggleAxes() {
-  isAxesVisible.value = !isAxesVisible.value
+  viewportStore.isAxesVisible = !viewportStore.isAxesVisible
   if (axesHelper) {
-    axesHelper.visible = isAxesVisible.value
+    axesHelper.visible = viewportStore.isAxesVisible
   }
 }
 
 function toggleGrid() {
-  isGridVisible.value = !isGridVisible.value
+  viewportStore.isGridVisible = !viewportStore.isGridVisible
   if (gridHelper) {
-    gridHelper.visible = isGridVisible.value
+    gridHelper.visible = viewportStore.isGridVisible
   }
 }
 
 function toggleShadow() {
-  isShadowVisible.value = !isShadowVisible.value
-  const enabled = isShadowVisible.value
+  viewportStore.isShadowVisible = !viewportStore.isShadowVisible
+  const enabled = viewportStore.isShadowVisible
   // 关闭方向光投射阴影
   if (dirLight) {
     dirLight.castShadow = enabled
@@ -647,7 +643,7 @@ function findChildMeshIds(parentId: string): string[] {
 }
 
 function toggleDoors() {
-  if (doorsOpen.value) {
+  if (viewportStore.doorsOpen) {
     // 关闭：动画还原
     meshes.forEach((mesh, id) => {
       const type = mesh.userData.componentType as string
@@ -704,7 +700,7 @@ function toggleDoors() {
         }
       }
     })
-    doorsOpen.value = false
+    viewportStore.doorsOpen = false
     // 延迟清理备份数据，等关闭动画完成
     setTimeout(() => doorOriginals.clear(), 700)
   } else {
@@ -841,7 +837,7 @@ function toggleDoors() {
         }
       }
     })
-    doorsOpen.value = true
+    viewportStore.doorsOpen = true
   }
 }
 
@@ -849,7 +845,7 @@ function toggleDoors() {
 
 function resetAll() {
   // 先关闭门板/抽屉（如果已打开）
-  if (doorsOpen.value) {
+  if (viewportStore.doorsOpen) {
     meshes.forEach((mesh, id) => {
       const type = mesh.userData.componentType as string
       if (isDoorType(type) || type === 'drawer') {
@@ -921,9 +917,9 @@ function resetAll() {
   deselectMesh()
   cabinetStore.selectComponent(null)
 
-  isExploded.value = false
-  isTransparent.value = false
-  doorsOpen.value = false
+  viewportStore.isExploded = false
+  viewportStore.isTransparent = false
+  viewportStore.doorsOpen = false
 }
 
 // ==================== 动画循环 ====================
@@ -953,6 +949,20 @@ watch(() => cabinetStore.selectedComponentId, (newId) => {
     }
   } else {
     deselectMesh()
+  }
+})
+
+// 监听 HeaderBar 工具栏触发信号
+watch(() => viewportStore.toggleSignal, (signal) => {
+  if (!signal) return
+  switch (signal.action) {
+    case 'explode': toggleExplode(); break
+    case 'transparent': toggleTransparent(); break
+    case 'doors': toggleDoors(); break
+    case 'axes': toggleAxes(); break
+    case 'grid': toggleGrid(); break
+    case 'shadow': toggleShadow(); break
+    case 'resetAll': resetAll(); break
   }
 })
 
@@ -992,18 +1002,18 @@ function enterRenderMode() {
   // 保存当前状态
   savedRenderState = {
     background: scene.background instanceof THREE.Color ? scene.background.clone() : null,
-    isExploded: isExploded.value,
-    isTransparent: isTransparent.value,
-    doorsOpen: doorsOpen.value,
-    isAxesVisible: isAxesVisible.value,
-    isGridVisible: isGridVisible.value,
-    isShadowVisible: isShadowVisible.value,
+    isExploded: viewportStore.isExploded,
+    isTransparent: viewportStore.isTransparent,
+    doorsOpen: viewportStore.doorsOpen,
+    isAxesVisible: viewportStore.isAxesVisible,
+    isGridVisible: viewportStore.isGridVisible,
+    isShadowVisible: viewportStore.isShadowVisible,
     cameraPosition: camera.position.clone(),
     cameraTarget: controls.target.clone(),
   }
 
   // 关闭门板（立即，无动画）
-  if (doorsOpen.value) {
+  if (viewportStore.doorsOpen) {
     meshes.forEach((mesh, id) => {
       const type = mesh.userData.componentType as string
       const orig = doorOriginals.get(id)
@@ -1041,44 +1051,44 @@ function enterRenderMode() {
       }
     })
     doorOriginals.clear()
-    doorsOpen.value = false
+    viewportStore.doorsOpen = false
   }
 
   // 关闭爆炸图、透视图（立即还原）
-  if (isExploded.value || isTransparent.value) {
+  if (viewportStore.isExploded || viewportStore.isTransparent) {
     meshes.forEach((mesh, id) => {
       const origPos = originalPositions.get(id)
       const origRot = originalRotations.get(id)
       const origMat = originalMaterials.get(id)
       if (origPos) mesh.position.copy(origPos)
       if (origRot) mesh.rotation.copy(origRot)
-      if (origMat && isTransparent.value) mesh.material = origMat.clone()
+      if (origMat && viewportStore.isTransparent) mesh.material = origMat.clone()
     })
-    isExploded.value = false
-    isTransparent.value = false
+    viewportStore.isExploded = false
+    viewportStore.isTransparent = false
   }
 
   // 关闭坐标系
-  if (isAxesVisible.value && axesHelper) {
+  if (viewportStore.isAxesVisible && axesHelper) {
     axesHelper.visible = false
-    isAxesVisible.value = false
+    viewportStore.isAxesVisible = false
   }
 
   // 关闭网格
-  if (isGridVisible.value && gridHelper) {
+  if (viewportStore.isGridVisible && gridHelper) {
     gridHelper.visible = false
-    isGridVisible.value = false
+    viewportStore.isGridVisible = false
   }
 
   // 关闭阴影
-  if (isShadowVisible.value) {
+  if (viewportStore.isShadowVisible) {
     if (dirLight) dirLight.castShadow = false
     if (groundMesh) groundMesh.visible = false
     meshes.forEach(mesh => {
       mesh.castShadow = false
       mesh.receiveShadow = false
     })
-    isShadowVisible.value = false
+    viewportStore.isShadowVisible = false
   }
 
   // 背景改白
@@ -1100,19 +1110,19 @@ function exitRenderMode() {
       mesh.castShadow = true
       mesh.receiveShadow = true
     })
-    isShadowVisible.value = true
+    viewportStore.isShadowVisible = true
   }
 
   // 恢复网格
   if (savedRenderState.isGridVisible && gridHelper) {
     gridHelper.visible = true
-    isGridVisible.value = true
+    viewportStore.isGridVisible = true
   }
 
   // 恢复坐标系
   if (savedRenderState.isAxesVisible && axesHelper) {
     axesHelper.visible = true
-    isAxesVisible.value = true
+    viewportStore.isAxesVisible = true
   }
 
   // 恢复透视图
@@ -1123,7 +1133,7 @@ function exitRenderMode() {
       mat.opacity = 0.3
       mat.needsUpdate = true
     })
-    isTransparent.value = true
+    viewportStore.isTransparent = true
   }
 
   // 恢复爆炸图
@@ -1134,7 +1144,7 @@ function exitRenderMode() {
       const offset = dir.multiplyScalar(300)
       mesh.position.add(offset)
     })
-    isExploded.value = true
+    viewportStore.isExploded = true
   }
 
   // 恢复门板
@@ -1277,18 +1287,6 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggle
     <div v-if="!cabinetStore.cabinet" class="loading-overlay">
       <p>等待加载柜子模型...</p>
     </div>
-    <div class="toolbar">
-      <button class="tool-btn" :class="{ active: isExploded }" @click="toggleExplode" title="爆炸图">爆炸图</button>
-      <button class="tool-btn" :class="{ active: isTransparent }" @click="toggleTransparent" title="透视图">透视图</button>
-      <button class="tool-btn" :class="{ active: doorsOpen }" @click="toggleDoors" title="门板/抽屉打开">开门</button>
-      <button class="tool-btn" :class="{ active: isAxesVisible }" @click="toggleAxes" title="显示/隐藏坐标系">坐标系</button>
-      <button class="tool-btn" :class="{ active: isGridVisible }" @click="toggleGrid" title="显示/隐藏地面网格">网格</button>
-      <button class="tool-btn" :class="{ active: isShadowVisible }" @click="toggleShadow" title="显示/隐藏阴影">阴影</button>
-      <button class="tool-btn" @click="resetAll" title="复原">复原</button>
-    </div>
-    <div class="hint">
-      <span>点击组件可选中查看属性</span>
-    </div>
   </div>
 </template>
 
@@ -1318,49 +1316,4 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggle
   font-size: 16px;
 }
 
-.toolbar {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tool-btn {
-  padding: 8px 14px;
-  border: 1px solid #0f3460;
-  border-radius: 6px;
-  background: rgba(26, 26, 46, 0.85);
-  color: #e0e0e0;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-  white-space: nowrap;
-  backdrop-filter: blur(4px);
-}
-
-.tool-btn:hover {
-  background: #0f3460;
-  border-color: #e94560;
-}
-
-.tool-btn.active {
-  background: #e94560;
-  border-color: #e94560;
-  color: white;
-}
-
-.hint {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(26, 26, 46, 0.85);
-  padding: 6px 16px;
-  border-radius: 4px;
-  color: #888;
-  font-size: 12px;
-  backdrop-filter: blur(4px);
-}
 </style>

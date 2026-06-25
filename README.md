@@ -25,10 +25,10 @@
 
 | 层级 | 技术 |
 |------|------|
-| 前端 | Vue 3 + TypeScript + Vite + Three.js + Pinia |
+| 前端 | Vue 3 + TypeScript + Vite + Three.js + Pinia + Element Plus |
 | 后端 | Python + FastAPI + SQLite + DeepAgents |
 | 通信 | WebSocket (实时双向) + REST API |
-| UI 风格 | Glassmorphism + Dark Mode |
+| UI 风格 | Glassmorphism + Dark Mode + Element Plus 暗色覆盖 |
 
 ## 快速开始
 
@@ -168,11 +168,14 @@ npm run dev
 - **旋转**：鼠标左键拖拽
 - **缩放**：鼠标滚轮
 - **平移**：鼠标右键拖拽
-- **选中**：点击组件高亮显示（蓝色边框描边）
-- **工具栏**：
-  - 爆炸图：组件分离展示
+- **选中**：点击组件高亮显示（蓝色边框描边），打开渲染弹窗时自动取消选中
+- **工具栏**（顶部导航栏「工具」下拉列表）：
+  - 爆炸图：组件分离展示（✓ 标记切换）
   - 透视图：半透明显示内部结构
   - 开门：门板/抽屉开合动画
+  - 坐标系：显示/隐藏坐标轴
+  - 网格：显示/隐藏地面网格
+  - 阴影：显示/隐藏阴影
   - 复原：恢复初始状态
 - **渲染截图**：支持三种预设角度（front 正面 / top 45°俯视 / side_45 斜45°），进入渲染模式后背景变白、关闭坐标系/网格/阴影，相机自动调整确保留白 5%。截图通过 `multipart/form-data` 上传至 `/render_api/images/upload` 获取 `image_id`，渲染请求使用 `image_id` 替代 `image_url`
 - **渲染跳转**：本地开发环境自动跳转到 5173 端口的前端服务，生产环境使用当前 origin；移动端在当前页面加载渲染结果，PC 端在新窗口打开
@@ -194,6 +197,7 @@ npm run dev
 - **背景**：深蓝渐变 `#0f172a → #1e1b4b`
 - **毛玻璃效果**：`backdrop-filter: blur(12px)`
 - **边框**：`rgba(148, 163, 184, 0.15)`
+- **Element Plus 暗色覆盖**：`src/styles/theme.css` 统一管理所有组件的暗色模式样式（按钮、输入框、选择器、对话框、弹出层等），包含禁用态样式
 
 ### 动画效果
 
@@ -267,9 +271,12 @@ npm run dev
     ├── src/
     │   ├── App.vue                   # 主布局（响应式）
     │   ├── config.ts                 # API/WS 路径配置
+    │   ├── styles/
+    │   │   └── theme.css             # Glassmorphism + Dark Mode 主题 + Element Plus 暗色覆盖
     │   ├── components/
-    │   │   ├── HeaderBar.vue         # 顶部工具栏
+    │   │   ├── HeaderBar.vue         # 顶部工具栏（撤销/重做/保存/渲染/工具）
     │   │   ├── Viewport3D.vue        # Three.js 3D 渲染
+    │   │   ├── RenderModal.vue       # 渲染设置弹窗
     │   │   ├── ChatPanel.vue         # AI 对话面板
     │   │   ├── ComponentPanel.vue    # 组件树 + 属性
     │   │   ├── HistoryPanel.vue      # 历史版本
@@ -278,6 +285,7 @@ npm run dev
     │   └── stores/
     │       ├── cabinetStore.ts       # 柜子状态
     │       ├── chatStore.ts          # 对话状态
+    │       ├── viewportStore.ts      # 工具栏状态（爆炸图/透视图/开门等）
     │       └── websocketStore.ts     # WebSocket 连接
     └── vite.config.ts                # 含 base 路径和 API/WebSocket 代理
 ```

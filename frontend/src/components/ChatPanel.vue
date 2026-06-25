@@ -127,16 +127,18 @@ watch(() => chatStore.thinkingSteps.length, () => {
             </svg>
             已停止
           </span>
-          <button
+          <el-button
             v-if="!chatStore.isStreaming && !msg.continued"
             @click="wsStore.continueConversation(msg.thinkingSteps || [], msg.id)"
             class="continue-btn"
+            link
+            type="primary"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
             继续执行
-          </button>
+          </el-button>
         </div>
       </div>
 
@@ -185,30 +187,35 @@ watch(() => chatStore.thinkingSteps.length, () => {
 
     <!-- 输入区域 -->
     <div class="chat-input">
-      <textarea
+      <el-input
         v-model="inputText"
+        type="textarea"
         @keydown="handleKeydown"
         :placeholder="chatStore.isStreaming ? '等待回复完成...' : '输入编辑指令...'"
-        rows="2"
+        :rows="2"
         :disabled="!wsStore.isConnected || chatStore.isStreaming"
         aria-label="编辑指令输入"
-      ></textarea>
-      <button
+      ></el-input>
+      <el-button
         v-if="chatStore.isStreaming"
         @click="stopConversation"
         class="send-btn stop-btn"
+        circle
+        type="danger"
         title="停止对话"
         aria-label="停止对话"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
           <rect x="6" y="6" width="12" height="12" rx="2"/>
         </svg>
-      </button>
-      <button
+      </el-button>
+      <el-button
         v-else
         @click="sendMessage"
         :disabled="!inputText.trim() || !wsStore.isConnected"
         class="send-btn"
+        circle
+        type="primary"
         title="发送"
         aria-label="发送消息"
       >
@@ -216,7 +223,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
           <line x1="12" y1="19" x2="12" y2="5"/>
           <polyline points="5 12 12 5 19 12"/>
         </svg>
-      </button>
+      </el-button>
     </div>
   </div>
 </template>
@@ -471,23 +478,17 @@ watch(() => chatStore.thinkingSteps.length, () => {
   padding: 3px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
   background: rgba(129, 140, 248, 0.12);
-  border: 1px solid rgba(129, 140, 248, 0.25);
+  border-color: rgba(129, 140, 248, 0.25);
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease-out;
   min-height: 28px;
+  height: auto;
 }
 
 .continue-btn:hover {
   background: rgba(129, 140, 248, 0.25);
   border-color: var(--color-primary);
-  transform: translateY(-1px);
-}
-
-.continue-btn:active {
-  transform: translateY(0) scale(0.97);
 }
 
 .continue-btn svg {
@@ -584,42 +585,15 @@ watch(() => chatStore.thinkingSteps.length, () => {
   padding: var(--spacing-md);
   border-top: 1px solid var(--glass-border);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--spacing-sm);
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(16px);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.chat-input textarea {
+.chat-input .el-textarea {
   flex: 1;
-  height: 66px;
-  padding: var(--spacing-md);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background: rgba(15, 23, 42, 0.4);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-family: inherit;
-  resize: none;
-  outline: none;
-  transition: all 0.2s ease-out;
-  backdrop-filter: blur(8px);
-}
-
-.chat-input textarea:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-glow);
-  background: rgba(15, 23, 42, 0.5);
-}
-
-.chat-input textarea:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.chat-input textarea::placeholder {
-  color: var(--color-text-muted);
 }
 
 /* ==================== 按钮 ==================== */
@@ -628,15 +602,6 @@ watch(() => chatStore.thinkingSteps.length, () => {
   height: 44px;
   min-width: 44px;
   min-height: 44px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-primary) 0%, #a78bfa 100%);
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(129, 140, 248, 0.2);
 }
@@ -647,33 +612,24 @@ watch(() => chatStore.thinkingSteps.length, () => {
 }
 
 .send-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--color-primary-glow);
 }
 
-.send-btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.95);
-}
-
-.send-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
 .stop-btn {
-  background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
+  background: var(--color-error);
+  border-color: var(--color-error);
   box-shadow: 0 2px 8px rgba(248, 113, 113, 0.2);
+}
+
+.stop-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 6px 20px var(--color-error-glow);
 }
 
 .stop-btn svg {
   width: 16px;
   height: 16px;
-}
-
-.stop-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(248, 113, 113, 0.4);
 }
 
 /* ==================== 动画 ==================== */

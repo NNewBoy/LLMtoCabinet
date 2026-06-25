@@ -147,14 +147,15 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
               @click="selectComponent(comp.id)"
             >
               <div class="item-content">
-                <button
+                <el-button
                   v-if="hasChildren(comp)"
                   class="expand-btn"
                   :class="{ expanded: isExpanded(comp.id) }"
+                  link
                   @click="toggleExpand(comp.id, $event)"
                 >
                   ▶
-                </button>
+                </el-button>
                 <span v-else class="expand-placeholder"></span>
                 <span class="component-name">{{ comp.name }}</span>
                 <span class="component-type">{{ getComponentTypeLabel(comp.type) }}</span>
@@ -171,14 +172,15 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
                   @click.stop="selectComponent(child.id)"
                 >
                   <div class="item-content">
-                    <button
+                    <el-button
                       v-if="hasChildren(child)"
                       class="expand-btn"
                       :class="{ expanded: isExpanded(child.id) }"
+                      link
                       @click="toggleExpand(child.id, $event)"
                     >
                       ▶
-                    </button>
+                    </el-button>
                     <span v-else class="expand-placeholder"></span>
                     <span class="component-name">{{ child.name }}</span>
                     <span class="component-type">{{ getComponentTypeLabel(child.type) }}</span>
@@ -234,15 +236,13 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
           </div>
           <div class="prop-row">
             <span class="prop-label">材料</span>
-            <select
+            <el-select
               class="prop-select"
-              :value="selectedComponent.material"
-              @change="updateMaterial(($event.target as HTMLSelectElement).value)"
+              :model-value="selectedComponent.material"
+              @change="updateMaterial($event)"
             >
-              <option v-for="mat in presetMaterials" :key="mat.value" :value="mat.value">
-                {{ mat.name }}
-              </option>
-            </select>
+              <el-option v-for="mat in presetMaterials" :key="mat.value" :label="mat.name" :value="mat.value" />
+            </el-select>
           </div>
           <div class="prop-row color-row">
             <span class="prop-label">颜色</span>
@@ -324,10 +324,6 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   font-size: 12px;
 }
 
-.tree-item {
-  margin-bottom: 2px;
-}
-
 .tree-item.selected > .item-content {
   background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(129, 140, 248, 0.15) 100%);
   border-color: rgba(129, 140, 248, 0.3);
@@ -343,6 +339,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   transition: all var(--transition-fast);
   min-height: 36px;
   border: 1px solid transparent;
+  margin-bottom: 2px;
 }
 
 .item-content:hover {
@@ -355,19 +352,12 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 }
 
 .expand-btn {
-  background: none;
-  border: none;
   color: var(--color-text-muted);
-  cursor: pointer;
   padding: 8px;
   margin: -8px;
   width: 34px;
   height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 10px;
-  transition: all var(--transition-fast);
   border-radius: var(--radius-sm);
 }
 
@@ -466,26 +456,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 }
 
 .prop-select {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  color: var(--color-text-primary);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  cursor: pointer;
-  outline: none;
-  transition: all var(--transition-fast);
-  backdrop-filter: blur(8px);
-}
-
-.prop-select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-glow);
-}
-
-.prop-select option {
-  background: #1e293b;
-  color: var(--color-text-primary);
+  min-width: 120px;
 }
 
 .color-row {

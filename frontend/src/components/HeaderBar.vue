@@ -1,16 +1,33 @@
 <script setup lang="ts">
 import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
+import { useViewportStore } from '../stores/viewportStore'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { apiUrl } from '../config'
 import RenderModal from './RenderModal.vue'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
+const viewportStore = useViewportStore()
 const projectName = computed(() => cabinetStore.cabinet?.name || '标准柜')
 const canUndo = ref(false)
 const canRedo = ref(false)
 const showRenderModal = ref(false)
+const showToolsPopover = ref(false)
+
+// 工具栏配置
+const toolItems = [
+  { action: 'explode' as const, label: '爆炸图', icon: '💥', stateKey: 'isExploded' as const },
+  { action: 'transparent' as const, label: '透视图', icon: '👁', stateKey: 'isTransparent' as const },
+  { action: 'doors' as const, label: '开门', icon: '🚪', stateKey: 'doorsOpen' as const },
+  { action: 'axes' as const, label: '坐标系', icon: '📐', stateKey: 'isAxesVisible' as const },
+  { action: 'grid' as const, label: '网格', icon: '🔲', stateKey: 'isGridVisible' as const },
+  { action: 'shadow' as const, label: '阴影', icon: '🌗', stateKey: 'isShadowVisible' as const },
+]
+
+function handleToolClick(action: string) {
+  viewportStore.toggle(action as any)
+}
 
 async function fetchHistoryStatus() {
   if (!wsStore.currentProjectId) {
@@ -84,6 +101,11 @@ async function handleSave() {
   }
 }
 
+function openRenderModal() {
+  cabinetStore.selectComponent(null)
+  showRenderModal.value = true
+}
+
 defineExpose({ fetchHistoryStatus })
 </script>
 
@@ -96,7 +118,7 @@ defineExpose({ fetchHistoryStatus })
       <span class="project-name">{{ projectName }}</span>
     </div>
     <div class="header-center">
-      <button
+      <el-button
         class="btn"
         @click="handleUndo"
         :disabled="!wsStore.isConnected || !canUndo"
@@ -104,8 +126,8 @@ defineExpose({ fetchHistoryStatus })
       >
         <span class="btn-icon">↩</span>
         <span class="btn-label">撤销</span>
-      </button>
-      <button
+      </el-button>
+      <el-button
         class="btn"
         @click="handleRedo"
         :disabled="!wsStore.isConnected || !canRedo"
@@ -113,15 +135,49 @@ defineExpose({ fetchHistoryStatus })
       >
         <span class="btn-icon">↪</span>
         <span class="btn-label">重做</span>
-      </button>
-      <button class="btn btn-save" @click="handleSave">
+      </el-button>
+      <el-button class="btn btn-save" @click="handleSave">
         <span class="btn-icon">💾</span>
         <span class="btn-label">保存</span>
-      </button>
-      <button class="btn btn-render" @click="showRenderModal = true">
+      </el-button>
+      <el-button class="btn btn-render" @click="openRenderModal">
         <span class="btn-icon">🖼</span>
         <span class="btn-label">渲染</span>
-      </button>
+      </el-button>
+      <el-popover
+        :visible="showToolsPopover"
+        placement="bottom"
+        :width="200"
+        trigger="click"
+        :show-arrow="false"
+        popper-class="tools-popover"
+        @update:visible="(val: boolean) => showToolsPopover = val"
+      >
+        <template #reference>
+          <el-button class="btn btn-tools" :class="{ active: showToolsPopover }">
+            <span class="btn-icon">🛠</span>
+            <span class="btn-label">工具</span>
+          </el-button>
+        </template>
+        <div class="tools-list">
+          <div
+            v-for="item in toolItems"
+            :key="item.action"
+            class="tools-option"
+            :class="{ selected: viewportStore[item.stateKey] }"
+            @click="handleToolClick(item.action)"
+          >
+            <span class="tools-option-icon">{{ item.icon }}</span>
+            <span class="tools-option-label">{{ item.label }}</span>
+            <span v-if="viewportStore[item.stateKey]" class="tools-option-check">✓</span>
+          </div>
+          <div class="tools-divider"></div>
+          <div class="tools-option tools-option-reset" @click="handleToolClick('resetAll')">
+            <span class="tools-option-icon">↺</span>
+            <span class="tools-option-label">复原</span>
+          </div>
+        </div>
+      </el-popover>
     </div>
     <div class="header-right">
       <span class="status" :class="{ connected: wsStore.isConnected }">
@@ -194,52 +250,28 @@ defineExpose({ fetchHistoryStatus })
   z-index: 1;
 }
 
+.header-center .el-button {
+  margin-left: 0;  
+}
+
 .btn {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  padding: 8px 14px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  font-size: 13px;
-  transition: all var(--transition-fast);
   min-height: 36px;
   backdrop-filter: blur(8px);
   position: relative;
   overflow: hidden;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(129, 140, 248, 0) 0%, rgba(129, 140, 248, 0.1) 100%);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--color-text-primary);
 }
 
 .btn:hover:not(:disabled) {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.btn:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-.btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+  color: var(--color-text-primary);
 }
 
 .btn-label {
@@ -263,7 +295,6 @@ defineExpose({ fetchHistoryStatus })
 .btn-save:hover {
   background: rgba(52, 211, 153, 0.25);
   border-color: rgba(52, 211, 153, 0.5);
-  box-shadow: 0 4px 16px rgba(52, 211, 153, 0.2);
 }
 
 .btn-render {
@@ -275,7 +306,22 @@ defineExpose({ fetchHistoryStatus })
 .btn-render:hover {
   background: rgba(251, 191, 36, 0.25);
   border-color: rgba(251, 191, 36, 0.5);
-  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2);
+}
+
+.btn-tools {
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: var(--color-primary);
+}
+
+.btn-tools:hover {
+  background: rgba(129, 140, 248, 0.25);
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
+.btn-tools.active {
+  background: rgba(129, 140, 248, 0.3);
+  border-color: var(--color-primary);
 }
 
 .header-right {
@@ -340,9 +386,7 @@ defineExpose({ fetchHistoryStatus })
   }
 
   .btn {
-    padding: 6px 8px;
     min-height: 32px;
-    font-size: 12px;
   }
 }
 
@@ -359,5 +403,77 @@ defineExpose({ fetchHistoryStatus })
   .status-text {
     display: inline;
   }
+}
+</style>
+
+<style>
+.tools-popover {
+  --el-popover-padding: 8px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(148, 163, 184, 0.15) !important;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.tools-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tools-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.tools-option:hover {
+  background: rgba(30, 41, 59, 0.7);
+  color: #f1f5f9;
+}
+
+.tools-option.selected {
+  background: rgba(129, 140, 248, 0.12);
+  color: #818cf8;
+}
+
+.tools-option-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tools-option-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.tools-option-check {
+  font-size: 12px;
+  color: #818cf8;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.tools-divider {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.1);
+  margin: 4px 0;
+}
+
+.tools-option-reset {
+  color: #f87171;
+}
+
+.tools-option-reset:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
 }
 </style>

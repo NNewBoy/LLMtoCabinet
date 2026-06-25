@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from 'vue'
-import { ElColorPicker } from 'element-plus'
-import 'element-plus/es/components/color-picker/style/css'
 import { renderApiUrl } from '../config'
 import { useCabinetStore } from '../stores/cabinetStore'
 import type { CabinetComponent } from '../utils/types'
@@ -241,7 +239,7 @@ function close() {
       <div class="modal-container">
         <div class="modal-header">
           <h2 class="modal-title">渲染设置</h2>
-          <button class="modal-close" @click="close">&times;</button>
+          <el-button class="modal-close" link @click="close">&times;</el-button>
         </div>
 
         <div class="modal-body">
@@ -249,16 +247,16 @@ function close() {
           <div class="form-group">
             <label class="form-label">渲染类型</label>
             <div class="toggle-group">
-              <button
+              <el-button
                 class="toggle-btn"
                 :class="{ active: renderStyle === 'single' }"
                 @click="renderStyle = 'single'"
-              >单品渲染</button>
-              <button
+              >单品渲染</el-button>
+              <el-button
                 class="toggle-btn"
                 :class="{ active: renderStyle === 'scene' }"
                 @click="renderStyle = 'scene'"
-              >场景渲染</button>
+              >场景渲染</el-button>
             </div>
           </div>
 
@@ -273,21 +271,21 @@ function close() {
                 {{ isCapturing ? '截图中...' : '暂无截图' }}
               </div>
               <div class="angle-buttons">
-                <button
+                <el-button
                   class="angle-btn"
                   :class="{ active: form.imageAngle === 'front' }"
                   @click="setAngleAndCapture('front')"
-                >正面</button>
-                <button
+                >正面</el-button>
+                <el-button
                   class="angle-btn"
                   :class="{ active: form.imageAngle === 'top' }"
                   @click="setAngleAndCapture('top')"
-                >顶视</button>
-                <button
+                >顶视</el-button>
+                <el-button
                   class="angle-btn"
                   :class="{ active: form.imageAngle === 'side_45' }"
                   @click="setAngleAndCapture('side_45')"
-                >侧面45°</button>
+                >侧面45°</el-button>
               </div>
             </div>
           </div>
@@ -295,41 +293,41 @@ function close() {
           <!-- 渲染风格 -->
           <div class="form-group">
             <label class="form-label">渲染风格</label>
-            <select v-model="form.style" class="form-select">
-              <option v-for="s in styles" :key="s.value" :value="s.value">{{ s.label }}</option>
-            </select>
+            <el-select v-model="form.style" class="form-select">
+              <el-option v-for="s in styles" :key="s.value" :label="s.label" :value="s.value" />
+            </el-select>
           </div>
 
           <!-- 光照条件 -->
           <div class="form-group">
             <label class="form-label">光照条件</label>
-            <select v-model="form.lighting" class="form-select">
-              <option v-for="l in lightings" :key="l.value" :value="l.value">{{ l.label }}</option>
-            </select>
+            <el-select v-model="form.lighting" class="form-select">
+              <el-option v-for="l in lightings" :key="l.value" :label="l.label" :value="l.value" />
+            </el-select>
           </div>
 
           <!-- 视角 -->
           <div class="form-group">
             <label class="form-label">视角</label>
-            <select v-model="form.viewAngle" class="form-select">
-              <option v-for="v in viewAngles" :key="v.value" :value="v.value">{{ v.label }}</option>
-            </select>
+            <el-select v-model="form.viewAngle" class="form-select">
+              <el-option v-for="v in viewAngles" :key="v.value" :label="v.label" :value="v.value" />
+            </el-select>
           </div>
 
           <!-- 户型（场景渲染专属） -->
           <div v-if="renderStyle === 'scene'" class="form-group">
             <label class="form-label">户型</label>
-            <select v-model="form.roomType" class="form-select">
-              <option v-for="r in roomTypes" :key="r.value" :value="r.value">{{ r.label }}</option>
-            </select>
+            <el-select v-model="form.roomType" class="form-select">
+              <el-option v-for="r in roomTypes" :key="r.value" :label="r.label" :value="r.value" />
+            </el-select>
           </div>
 
           <!-- 柜体材质 -->
           <div class="form-group">
             <label class="form-label">柜体材质</label>
-            <select v-model="form.material" class="form-select">
-              <option v-for="m in materials" :key="m.value" :value="m.value">{{ m.label }}</option>
-            </select>
+            <el-select v-model="form.material" class="form-select">
+              <el-option v-for="m in materials" :key="m.value" :label="m.label" :value="m.value" />
+            </el-select>
           </div>
 
           <!-- 颜色 -->
@@ -347,12 +345,13 @@ function close() {
           <!-- 额外描述 -->
           <div class="form-group">
             <label class="form-label">额外描述</label>
-            <textarea
+            <el-input
               v-model="form.description"
+              type="textarea"
               class="form-textarea"
-              rows="2"
+              :rows="2"
               placeholder="输入渲染的额外描述..."
-            ></textarea>
+            ></el-input>
           </div>
 
           <!-- 尺寸信息 -->
@@ -376,8 +375,8 @@ function close() {
         </div>
 
         <div class="modal-footer">
-          <button class="btn-cancel" @click="close">取消</button>
-          <button class="btn-submit" @click="handleSubmit">提交渲染</button>
+          <el-button class="btn-cancel" @click="close">取消</el-button>
+          <el-button class="btn-submit" type="primary" @click="handleSubmit">提交渲染</el-button>
         </div>
       </div>
     </div>
@@ -429,13 +428,9 @@ function close() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
   color: var(--color-text-muted);
   font-size: 20px;
-  cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
 }
 
 .modal-close:hover {
@@ -467,53 +462,11 @@ function close() {
 }
 
 .form-select {
-  padding: 8px 12px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%2394a3b8' stroke-width='1.5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
-}
-
-.form-select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-glow);
-}
-
-.form-select option {
-  background: #1e293b;
-  color: var(--color-text-primary);
+  width: 100%;
 }
 
 .form-textarea {
-  padding: 8px 12px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-  outline: none;
-  transition: all var(--transition-fast);
-}
-
-.form-textarea:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-glow);
-}
-
-.form-textarea::placeholder {
-  color: var(--color-text-muted);
+  width: 100%;
 }
 
 /* 渲染类型切换 */
@@ -524,18 +477,14 @@ function close() {
 
 .toggle-btn {
   flex: 1;
-  padding: 8px 12px;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-color: var(--glass-border);
   color: var(--color-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .toggle-btn:hover {
   background: var(--glass-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .toggle-btn.active {
@@ -585,18 +534,14 @@ function close() {
 
 .angle-btn {
   flex: 1;
-  padding: 6px 10px;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
+  border-color: var(--glass-border);
   color: var(--color-text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .angle-btn:hover {
   background: var(--glass-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .angle-btn.active {
@@ -642,40 +587,27 @@ function close() {
 }
 
 .btn-cancel {
-  padding: 8px 20px;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-color: var(--glass-border);
   color: var(--color-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .btn-cancel:hover {
   background: var(--glass-bg-hover);
   color: var(--color-text-primary);
+  border-color: var(--glass-border-hover);
 }
 
 .btn-submit {
-  padding: 8px 20px;
   background: linear-gradient(135deg, var(--color-primary) 0%, #a78bfa 100%);
   border: none;
-  border-radius: var(--radius-md);
   color: white;
-  font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .btn-submit:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 16px var(--color-primary-glow);
-}
-
-.btn-submit:active {
-  transform: translateY(0);
+  opacity: 0.9;
 }
 
 /* 移动端适配 */
