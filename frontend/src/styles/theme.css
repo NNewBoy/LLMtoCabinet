@@ -774,12 +774,6 @@ html:not(.dark) .el-descriptions__content {
   color: var(--color-text-primary);
 }
 
-/* Image Viewer */
-html:not(.dark) .el-image-viewer__wrapper {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-}
-
 /* ---- Element Plus 暗色模式覆盖 (Dark Glass) ---- */
 
 /* Card */
@@ -1237,10 +1231,4 @@ html.dark .el-descriptions__label {
 html.dark .el-descriptions__content {
   background: transparent;
   color: var(--color-text-primary);
-}
-
-/* Image Viewer */
-html.dark .el-image-viewer__wrapper {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
 }
