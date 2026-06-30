@@ -280,7 +280,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   font-weight: 600;
   color: var(--color-text-muted);
   padding: var(--spacing-md) var(--spacing-lg);
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--glass-bg);
   text-transform: uppercase;
   letter-spacing: 1px;
   border-bottom: 1px solid var(--glass-border);

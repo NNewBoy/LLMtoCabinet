@@ -7,10 +7,12 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useViewportStore } from '../stores/viewportStore'
+import { useThemeStore } from '../stores/theme'
 import type { Cabinet, CabinetComponent } from '../utils/types'
 
 const cabinetStore = useCabinetStore()
 const viewportStore = useViewportStore()
+const themeStore = useThemeStore()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 let scene: THREE.Scene
@@ -34,6 +36,7 @@ let gridHelper: THREE.GridHelper | null = null
 let groundMesh: THREE.Mesh | null = null
 let axesHelper: THREE.Group | null = null
 let dirLight: THREE.DirectionalLight | null = null
+let ambientLightRef: THREE.AmbientLight | null = null
 
 // 选中高亮相关
 let raycaster: THREE.Raycaster
@@ -114,11 +117,26 @@ function createAxesHelper(length: number): THREE.Group {
   return group
 }
 
+// 根据当前主题更新3D场景背景和环境光
+function updateSceneBackground() {
+  if (!scene) return
+  scene.background = new THREE.Color(themeStore.isDark ? 0x0f172a : 0xeef2f8)
+}
+
+function updateSceneTheme() {
+  if (!scene) return
+  updateSceneBackground()
+  // 浅色模式提高环境光强度，让板件更明亮
+  if (ambientLightRef) {
+    ambientLightRef.intensity = themeStore.isDark ? 0.5 : 0.8
+  }
+}
+
 function initScene() {
   if (!canvasRef.value) return
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x0f172a)
+  updateSceneBackground()
 
   const aspect = canvasRef.value.clientWidth / canvasRef.value.clientHeight
   camera = new THREE.PerspectiveCamera(50, aspect, 1, 10000)
@@ -136,8 +154,8 @@ function initScene() {
 
   // 光照 - 侧上方光源设置以显示板件轮廓
   // 环境光 - 提供基础照明
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-  scene.add(ambientLight)
+  ambientLightRef = new THREE.AmbientLight(0xffffff, themeStore.isDark ? 0.5 : 0.8)
+  scene.add(ambientLightRef)
 
   // 主光源 - 对角线方向照射，阴影均匀
   dirLight = new THREE.DirectionalLight(0xffffff, 0.9)
@@ -966,6 +984,11 @@ watch(() => viewportStore.toggleSignal, (signal) => {
   }
 })
 
+// 主题切换时更新3D场景
+watch(() => themeStore.isDark, () => {
+  updateSceneTheme()
+})
+
 onMounted(() => {
   initScene()
   animate()
@@ -1100,7 +1123,7 @@ function exitRenderMode() {
   if (!savedRenderState) return
 
   // 恢复背景
-  scene.background = savedRenderState.background || new THREE.Color(0x0f172a)
+  scene.background = savedRenderState.background || new THREE.Color(themeStore.isDark ? 0x0f172a : 0xeef2f8)
 
   // 恢复阴影
   if (savedRenderState.isShadowVisible) {

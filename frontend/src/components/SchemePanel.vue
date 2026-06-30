@@ -196,8 +196,8 @@ onMounted(() => {
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
   backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
   position: relative;
@@ -210,7 +210,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--glass-border-hover) 50%, transparent 100%);
 }
 
 .input-group {
@@ -285,8 +285,8 @@ onMounted(() => {
   gap: 6px;
   white-space: nowrap;
   backdrop-filter: blur(8px);
-  background: rgba(15, 23, 42, 0.5);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
   color: var(--color-text-primary);
 }
 
@@ -297,7 +297,7 @@ onMounted(() => {
 }
 
 .action-btn:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--glass-border-hover);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
@@ -349,7 +349,7 @@ onMounted(() => {
 .scheme-item.current {
   background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(129, 140, 248, 0.15) 100%);
   border-color: rgba(129, 140, 248, 0.3);
-  color: white;
+  color: var(--color-primary);
 }
 
 .scheme-actions {
@@ -412,7 +412,7 @@ onMounted(() => {
 }
 
 .scheme-item.current .scheme-name {
-  color: white;
+  color: var(--color-primary);
 }
 
 .scheme-time {
@@ -422,7 +422,7 @@ onMounted(() => {
 }
 
 .scheme-item.current .scheme-time {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-primary);
 }
 
 /* 移动端适配 */

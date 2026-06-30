@@ -127,7 +127,7 @@ watch(() => cabinetStore.cabinet, () => {
 .snapshot-item.current {
   background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(129, 140, 248, 0.15) 100%);
   border-color: rgba(129, 140, 248, 0.3);
-  color: white;
+  color: var(--color-primary);
 }
 
 .snap-info {
@@ -146,8 +146,8 @@ watch(() => cabinetStore.cabinet, () => {
 }
 
 .snapshot-item.current .snap-index {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(129, 140, 248, 0.2);
+  color: var(--color-primary);
 }
 
 .snap-desc {
@@ -160,7 +160,7 @@ watch(() => cabinetStore.cabinet, () => {
 }
 
 .snapshot-item.current .snap-desc {
-  color: white;
+  color: var(--color-primary);
 }
 
 .snap-time {
@@ -169,7 +169,7 @@ watch(() => cabinetStore.cabinet, () => {
 }
 
 .snapshot-item.current .snap-time {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-primary);
 }
 
 /* 移动端适配 */

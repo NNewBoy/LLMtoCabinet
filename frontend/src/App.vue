@@ -8,10 +8,12 @@ import SchemePanel from './components/SchemePanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useWebSocketStore, setToastCallback } from './stores/websocketStore'
 import { useCabinetStore, setToastCallback as setCabinetToastCallback } from './stores/cabinetStore'
+import { useThemeStore } from './stores/theme'
 import { onMounted, ref, watch } from 'vue'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
+const themeStore = useThemeStore()
 const activeTab = ref<'chat' | 'component' | 'history' | 'scheme'>('chat')
 const toastRef = ref<InstanceType<typeof ToastNotification> | null>(null)
 const isMobile = ref(false)
@@ -22,6 +24,9 @@ function checkMobile() {
 }
 
 onMounted(() => {
+  // 初始化主题：优先 URI 参数 ?theme=light|dark，其次 localStorage，默认 dark
+  themeStore.init()
+
   // 注入 Toast 回调
   const toastFn = (message: string, type: string) => {
     toastRef.value?.addToast(message, type as any)
@@ -167,7 +172,7 @@ const tabs = [
 .tool-tabs {
   display: flex;
   border-bottom: 1px solid var(--glass-border);
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--glass-bg);
   backdrop-filter: blur(8px);
 }
 

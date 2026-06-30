@@ -363,7 +363,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
 }
 
 .message.assistant {
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   align-self: flex-start;
   backdrop-filter: blur(12px);
@@ -478,7 +478,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
   padding: 3px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #f1f5f9;
   background: rgba(129, 140, 248, 0.12);
   border-color: rgba(129, 140, 248, 0.25);
   border-radius: var(--radius-sm);
@@ -489,6 +489,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
 .continue-btn:hover {
   background: rgba(129, 140, 248, 0.25);
   border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .continue-btn svg {
@@ -510,7 +511,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
   flex-direction: column;
   gap: 6px;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--glass-bg);
   border-radius: var(--radius-sm);
   border-left: 2px solid var(--color-primary);
   backdrop-filter: blur(4px);
@@ -587,7 +588,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
 }

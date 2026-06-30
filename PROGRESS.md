@@ -347,6 +347,7 @@ LLMtoCabinet_deeepseek/
 │       ├── stores/         # Pinia 状态管理
 │       │   ├── cabinetStore.ts
 │       │   ├── chatStore.ts
+│       │   ├── themeStore.ts   # 主题状态（浅色/暗色切换）
 │       │   ├── viewportStore.ts
 │       │   └── websocketStore.ts
 │       └── utils/          # 工具函数和类型定义
@@ -362,6 +363,30 @@ LLMtoCabinet_deeepseek/
 │   └── main.py             # 入口文件
 └── SPEC.md                 # 规格说明书
 ```
+
+### 2026-06-25
+- **浅色主题支持**：新增 Glassmorphism + Light Mode 主题，与原有 Dark Mode 并行支持
+  - `theme.css` 重构：`:root` 定义浅色默认变量，`html.dark` 选择器覆盖暗色变量
+  - 新增浅色主题变量：浅蓝渐变背景 `#eef2f8 → #e0e7ff`、浅色玻璃背景、浅色边框等
+  - 新增 `--bg-modal-overlay`、`--bg-preview` 等主题感知变量
+  - Element Plus 浅色/暗色模式全覆盖（按钮、输入框、选择器、对话框、弹出层等）
+- **主题切换功能**：HeaderBar 工具栏新增 ☀/☾ 切换按钮
+  - 新增 `stores/theme.ts`：Pinia store 管理主题状态
+  - 优先级：URI 参数 `?theme=light|dark` > localStorage > 默认 dark
+  - 切换通过 `html.dark` class 控制，CSS 变量即时生效，无需刷新页面
+  - `main.ts` 移除硬编码 `classList.add('dark')`，改由 theme store 控制
+  - `App.vue` onMounted 调用 `themeStore.init()`
+- **URI 传参支持**：外部平台可通过 `?theme=light` 或 `?theme=dark` 跳转指定主题
+- **组件主题适配修复**：修复多个组件中硬编码暗色颜色未跟随主题切换
+  - App.vue：`.tool-tabs` 背景改用 `var(--glass-bg)`
+  - HistoryPanel.vue：选中态 `color: white` → `var(--color-primary)`
+  - SchemePanel.vue：选中态 `color: white`、时间戳 `rgba(255,255,255,0.7)` → `var(--color-primary)`
+  - RenderModal.vue：遮罩层 `rgba(0,0,0,0.6)` → `var(--bg-modal-overlay)`，预览背景 → `var(--bg-preview)`
+- **3D 场景主题切换**：Viewport3D 3D 渲染场景跟随主题切换
+  - 新增 `updateSceneBackground()`：暗色 `0x0f172a` / 浅色 `0xeef2f8`
+  - 新增 `updateSceneTheme()`：同步更新背景和环境光强度（暗色 0.5 / 浅色 0.8）
+  - `watch(themeStore.isDark)` 监听主题变化自动更新 3D 场景
+  - `exitRenderMode` 恢复背景改用主题感知颜色
 
 ### 2026-06-24
 - **渲染表单自动填充**：RenderModal 打开时从柜子模型计算最常用的颜色和材质
@@ -416,4 +441,4 @@ LLMtoCabinet_deeepseek/
 
 ---
 
-*最后更新：2026-06-24*
+*最后更新：2026-06-25*

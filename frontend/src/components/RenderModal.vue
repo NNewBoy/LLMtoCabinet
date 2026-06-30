@@ -387,7 +387,7 @@ function close() {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--bg-modal-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -398,13 +398,13 @@ function close() {
 .modal-container {
   width: 480px;
   max-height: 85vh;
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--bg-glass-solid);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--glass-shadow-lg);
 }
 
 .modal-header {
@@ -506,7 +506,7 @@ function close() {
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--glass-border);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg-preview);
 }
 
 .screenshot-preview img {

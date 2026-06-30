@@ -2,6 +2,7 @@
 import { useWebSocketStore, showToast } from '../stores/websocketStore'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useViewportStore } from '../stores/viewportStore'
+import { useThemeStore } from '../stores/theme'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { apiUrl } from '../config'
 import RenderModal from './RenderModal.vue'
@@ -9,6 +10,7 @@ import RenderModal from './RenderModal.vue'
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
 const viewportStore = useViewportStore()
+const themeStore = useThemeStore()
 const projectName = computed(() => cabinetStore.cabinet?.name || '标准柜')
 const canUndo = ref(false)
 const canRedo = ref(false)
@@ -144,6 +146,10 @@ defineExpose({ fetchHistoryStatus })
         <span class="btn-icon">🖼</span>
         <span class="btn-label">渲染</span>
       </el-button>
+      <el-button class="btn btn-theme" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换到浅色' : '切换到暗色'">
+        <span class="btn-icon">{{ themeStore.isDark ? '☀' : '☾' }}</span>
+        <span class="btn-label">{{ themeStore.isDark ? '浅色' : '暗色' }}</span>
+      </el-button>
       <el-popover
         :visible="showToolsPopover"
         placement="bottom"
@@ -196,7 +202,7 @@ defineExpose({ fetchHistoryStatus })
   justify-content: space-between;
   padding: 0 var(--spacing-lg);
   height: 56px;
-  background: rgba(15, 23, 42, 0.7);
+  background: var(--bg-glass-header);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--glass-border);
@@ -308,6 +314,18 @@ defineExpose({ fetchHistoryStatus })
   border-color: rgba(251, 191, 36, 0.5);
 }
 
+.btn-theme {
+  background: rgba(129, 140, 248, 0.1);
+  border-color: rgba(129, 140, 248, 0.2);
+  color: var(--color-text-secondary);
+}
+
+.btn-theme:hover {
+  background: rgba(129, 140, 248, 0.2);
+  border-color: rgba(129, 140, 248, 0.4);
+  color: var(--color-primary);
+}
+
 .btn-tools {
   background: rgba(129, 140, 248, 0.15);
   border-color: rgba(129, 140, 248, 0.3);
@@ -409,10 +427,10 @@ defineExpose({ fetchHistoryStatus })
 <style>
 .tools-popover {
   --el-popover-padding: 8px !important;
-  background: rgba(15, 23, 42, 0.95) !important;
-  border: 1px solid rgba(148, 163, 184, 0.15) !important;
+  background: var(--bg-glass-solid) !important;
+  border: 1px solid var(--glass-border) !important;
   backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: var(--glass-shadow-lg) !important;
 }
 
 .tools-list {
@@ -426,7 +444,7 @@ defineExpose({ fetchHistoryStatus })
   gap: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
@@ -434,13 +452,13 @@ defineExpose({ fetchHistoryStatus })
 }
 
 .tools-option:hover {
-  background: rgba(30, 41, 59, 0.7);
-  color: #f1f5f9;
+  background: var(--glass-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .tools-option.selected {
   background: rgba(129, 140, 248, 0.12);
-  color: #818cf8;
+  color: var(--color-primary);
 }
 
 .tools-option-icon {
@@ -457,23 +475,23 @@ defineExpose({ fetchHistoryStatus })
 
 .tools-option-check {
   font-size: 12px;
-  color: #818cf8;
+  color: var(--color-primary);
   font-weight: 600;
   flex-shrink: 0;
 }
 
 .tools-divider {
   height: 1px;
-  background: rgba(148, 163, 184, 0.1);
+  background: var(--glass-border);
   margin: 4px 0;
 }
 
 .tools-option-reset {
-  color: #f87171;
+  color: var(--color-error);
 }
 
 .tools-option-reset:hover {
   background: rgba(248, 113, 113, 0.12);
-  color: #fca5a5;
+  color: var(--color-error);
 }
 </style>

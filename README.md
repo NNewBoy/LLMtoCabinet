@@ -12,7 +12,8 @@
 - **停止/继续对话** — 对话执行中可主动停止，停止后可继续执行或重新发起新对话
 - **Undo/Redo** — 完整的撤销/重做支持（Ctrl+Z / Ctrl+Y）
 - **干涉检查** — 编辑后自动检查组件重叠，确保模型无干涉（可通过配置禁用）
-- **Glassmorphism UI** — 现代深色主题，半透明毛玻璃效果
+- **Glassmorphism UI** — 支持浅色/暗色双主题，半透明毛玻璃效果，一键切换无需刷新
+- **主题切换** — 顶部工具栏一键切换浅色/暗色主题，支持 URI 参数 `?theme=light|dark` 外部跳转指定主题，3D 场景背景和光照同步切换
 - **响应式设计** — 支持 PC、平板、移动端自适应布局
 - **丰富组件** — 支持侧板、隔板、单开门、双开门、抽屉、拉手等多种组件，门板/抽屉自动配拉手
 - **3D动画** — 门板开合动画（双开门左右分别打开）
@@ -28,7 +29,7 @@
 | 前端 | Vue 3 + TypeScript + Vite + Three.js + Pinia + Element Plus |
 | 后端 | Python + FastAPI + SQLite + DeepAgents |
 | 通信 | WebSocket (实时双向) + REST API |
-| UI 风格 | Glassmorphism + Dark Mode + Element Plus 暗色覆盖 |
+| UI 风格 | Glassmorphism + Light/Dark Mode + Element Plus 主题覆盖 |
 
 ## 快速开始
 
@@ -190,14 +191,18 @@ npm run dev
 
 ## 设计风格
 
-### Glassmorphism + Dark Mode
+### Glassmorphism + Light/Dark Mode
 
 - **主色调**：靛蓝紫 `#818cf8`
 - **成功色**：翡翠绿 `#34d399`
-- **背景**：深蓝渐变 `#0f172a → #1e1b4b`
+- **浅色主题背景**：浅蓝渐变 `#eef2f8 → #e0e7ff`
+- **暗色主题背景**：深蓝渐变 `#0f172a → #1e1b4b`
 - **毛玻璃效果**：`backdrop-filter: blur(12px)`
-- **边框**：`rgba(148, 163, 184, 0.15)`
-- **Element Plus 暗色覆盖**：`src/styles/theme.css` 统一管理所有组件的暗色模式样式（按钮、输入框、选择器、对话框、弹出层等），包含禁用态样式
+- **边框**：`rgba(148, 163, 184, 0.15)`（暗色）/ `rgba(15, 23, 42, 0.08)`（浅色）
+- **主题切换**：CSS 变量驱动，`html.dark` 选择器覆盖暗色变量，切换即时生效无需刷新
+- **URI 传参**：`?theme=light|dark` 支持外部平台跳转指定主题
+- **Element Plus 主题覆盖**：`src/styles/theme.css` 统一管理所有组件的浅色/暗色模式样式（按钮、输入框、选择器、对话框、弹出层等），包含禁用态样式
+- **3D 场景主题**：浅色模式背景 `#eef2f8` + 环境光强度 0.8，暗色模式背景 `#0f172a` + 环境光强度 0.5
 
 ### 动画效果
 
@@ -285,6 +290,7 @@ npm run dev
     │   └── stores/
     │       ├── cabinetStore.ts       # 柜子状态
     │       ├── chatStore.ts          # 对话状态
+    │       ├── themeStore.ts         # 主题状态（浅色/暗色切换、URI传参、localStorage持久化）
     │       ├── viewportStore.ts      # 工具栏状态（爆炸图/透视图/开门等）
     │       └── websocketStore.ts     # WebSocket 连接
     └── vite.config.ts                # 含 base 路径和 API/WebSocket 代理

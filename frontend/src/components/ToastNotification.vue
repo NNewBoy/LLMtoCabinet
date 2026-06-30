@@ -79,7 +79,7 @@ defineExpose({ addToast })
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
-  background: rgba(15, 23, 42, 0.8);
+  background: var(--bg-glass-solid);
   border: 1px solid var(--glass-border);
   color: var(--color-text-primary);
   font-size: 13px;
@@ -107,22 +107,22 @@ defineExpose({ addToast })
 
 .toast.success {
   border-color: rgba(52, 211, 153, 0.3);
-  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, var(--bg-glass-solid) 100%);
 }
 
 .toast.error {
   border-color: rgba(248, 113, 113, 0.3);
-  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, var(--bg-glass-solid) 100%);
 }
 
 .toast.warning {
   border-color: rgba(251, 191, 36, 0.3);
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, var(--bg-glass-solid) 100%);
 }
 
 .toast.info {
   border-color: rgba(129, 140, 248, 0.3);
-  background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, var(--bg-glass-solid) 100%);
 }
 
 .toast-icon {
