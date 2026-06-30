@@ -415,7 +415,7 @@ onMounted(() => {
 }
 
 .scheme-name {
-  font-size: 13px;
+  font-size: 14px;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -446,16 +446,16 @@ onMounted(() => {
   }
 
   .name-input {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .action-btn {
     padding: 8px 14px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .template-select {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .btn-icon {
@@ -473,11 +473,11 @@ onMounted(() => {
   }
 
   .scheme-name {
-    font-size: 12px;
+    font-size: 15px;
   }
 
   .scheme-time {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .scheme-actions {
@@ -494,7 +494,7 @@ onMounted(() => {
 
   .rename-input {
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 12px;
+    font-size: 15px;
   }
 }
 </style>

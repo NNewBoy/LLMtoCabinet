@@ -227,7 +227,7 @@ const tabs = [
 
 .tab-btn.active {
   color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+  background: rgba(129, 140, 248, 0.15);
 }
 
 .tab-btn.active::before {
@@ -243,7 +243,7 @@ const tabs = [
 }
 
 .tab-label {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -296,7 +296,7 @@ const tabs = [
   border: none;
   border-radius: 0;
   color: var(--color-text-muted);
-  font-size: 9px;
+  font-size: 14px;
   cursor: pointer;
   transition: all var(--transition-fast);
   min-height: 44px;
@@ -336,6 +336,22 @@ const tabs = [
 @media (max-width: 767px) {
   .tool-panel {
     width: 100%;
+  }
+
+  .tab-btn {
+    font-size: 14px;
+  }
+
+  .tab-label {
+    font-size: 14px;
+  }
+
+  .tab-icon {
+    font-size: 20px;
+  }
+
+  .mobile-tab-btn {
+    font-size: 14px;
   }
 }
 

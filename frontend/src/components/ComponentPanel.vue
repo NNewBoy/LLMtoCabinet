@@ -276,7 +276,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 }
 
 .section-title {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-muted);
   padding: var(--spacing-md) var(--spacing-lg);
@@ -321,7 +321,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 }
 
 .tree {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .tree-item.selected > .item-content {
@@ -357,7 +357,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   margin: -8px;
   width: 34px;
   height: 34px;
-  font-size: 10px;
+  font-size: 12px;
   border-radius: var(--radius-sm);
 }
 
@@ -387,7 +387,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 }
 
 .component-type {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--color-text-muted);
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -402,7 +402,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 }
 
 .children-count {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--color-success);
   background: rgba(52, 211, 153, 0.1);
   border: 1px solid rgba(52, 211, 153, 0.2);
@@ -517,7 +517,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 @media (max-width: 767px) {
   .section-title {
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 9px;
+    font-size: 15px;
   }
 
   .tree-section {
@@ -542,26 +542,22 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
     gap: var(--spacing-xs);
   }
 
-  .expand-btn {
-    width: 14px;
-    height: 14px;
-  }
 
   .expand-placeholder {
     width: 14px;
   }
 
   .component-name {
-    font-size: 11px;
+    font-size: 15px;
   }
 
   .component-type {
-    font-size: 9px;
+    font-size: 13px;
     padding: 1px 4px;
   }
 
   .children-count {
-    font-size: 9px;
+    font-size: 13px;
     padding: 1px 4px;
   }
 
@@ -575,12 +571,12 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
 
   .prop-row {
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .prop-select {
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .color-option {

@@ -208,6 +208,7 @@ defineExpose({ addToast })
 
   .toast {
     padding: var(--spacing-md);
+    font-size: 14px;
   }
 
   .toast:hover {

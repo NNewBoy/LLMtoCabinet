@@ -665,7 +665,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
 
   .message {
     max-width: 92%;
-    font-size: 13px;
+    font-size: 15px;
     padding: var(--spacing-sm);
   }
 
@@ -707,11 +707,11 @@ watch(() => chatStore.thinkingSteps.length, () => {
   }
 
   .empty-title {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .example {
-    font-size: 11px;
+    font-size: 13px;
     padding: var(--spacing-xs) var(--spacing-sm);
   }
 
@@ -728,6 +728,18 @@ watch(() => chatStore.thinkingSteps.length, () => {
   .role-avatar svg {
     width: 12px;
     height: 12px;
+  }
+
+  .role-label {
+    font-size: 12px;
+  }
+
+  .continue-btn {
+    font-size: 13px;
+  }
+
+  .thinking-step {
+    font-size: 13px;
   }
 }
 

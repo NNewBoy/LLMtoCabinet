@@ -151,7 +151,7 @@ watch(() => cabinetStore.cabinet, () => {
 }
 
 .snap-desc {
-  font-size: 12px;
+  font-size: 14px;
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -189,17 +189,17 @@ watch(() => cabinetStore.cabinet, () => {
   }
 
   .snap-index {
-    font-size: 10px;
+    font-size: 12px;
     padding: 2px 6px;
   }
 
   .snap-desc {
-    font-size: 11px;
+    font-size: 15px;
     max-width: 140px;
   }
 
   .snap-time {
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 </style>
