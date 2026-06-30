@@ -91,7 +91,7 @@
 
 | 组件 | 文件 | 状态 | 功能说明 |
 |------|------|------|----------|
-| HeaderBar | `HeaderBar.vue` | ✅ | 顶部导航栏（撤销/重做/保存/渲染/工具下拉列表）Element Plus 化 |
+| HeaderBar | `HeaderBar.vue` | ✅ | 顶部导航栏（撤销/重做/保存/渲染/工具/主题）Element Plus + Icons 化，移动端撤销/重做折叠到工具弹窗 |
 | Viewport3D | `Viewport3D.vue` | ✅ | 3D 渲染视图 + 点击选中 + 阴影（工具栏已迁移至 HeaderBar） |
 | RenderModal | `RenderModal.vue` | ✅ | 渲染设置弹窗（截图角度/风格/材质/颜色，自动填充柜子属性） |
 | ChatPanel | `ChatPanel.vue` | ✅ | AI 对话面板 Element Plus 化 |
@@ -414,7 +414,7 @@ LLMtoCabinet_deeepseek/
   - `<select>` → `<el-select>` + `<el-option>`（RenderModal 5个、ComponentPanel 1个、SchemePanel 1个）
   - `<textarea>` → `<el-input type="textarea">`（ChatPanel 1个、RenderModal 1个）
   - `<input>` → `<el-input>`（SchemePanel 2个）
-  - App.vue 移动端 tab buttons 保持不变（按要求排除）
+  - App.vue 移动端/PC 端 tab buttons 改用 `<el-button>` + `<el-icon>`（ChatRound/Box/List/Folder 图标）
 - **CSS 清理**：移除 Element Plus 替换后不再需要的旧样式
   - HeaderBar：`.btn` 简化（移除 padding/border-radius/font-size/cursor/transition/::before 伪元素）
   - RenderModal：`.form-select` 移除 30+ 行原生 select 样式，`.form-textarea` 移除原生 textarea 样式，`.toggle-btn`/`.angle-btn`/`.btn-cancel`/`.btn-submit` 简化
@@ -439,6 +439,20 @@ LLMtoCabinet_deeepseek/
   - 能同时看到柜身正面和完整顶板
 - **RenderModal 渲染模式**：支持 front / top / side_45 三种截图角度，背景白色，关闭坐标系/网格/阴影等视觉干扰
 
+### 2026-07-01
+- **图标系统迁移**：全站 emoji/文字/SVG 图标统一替换为 `@element-plus/icons-vue` 组件（`<el-icon>`）
+  - HeaderBar：↩/↪/💾/🖼/🛠/✓/↺/☀/☾ 及工具项 emoji（💥/👁/🚪/📐/🔲/🌗）全部替换为 Element Plus 图标组件（RefreshLeft/RefreshRight/FolderChecked/Picture/Tools/Check/Refresh/Sunny/MoonNight/Expand/View/Open/Aim/Grid/Cloudy）
+  - SchemePanel：3 处 SVG 图标替换为 Plus/Grid/Edit/Delete，2 个原生 `<button>` 替换为 `<el-button>` + `<el-icon>`
+  - App.vue：4 个 tab 的 emoji（💬/🧩/📋/📁）替换为 ChatRound/Box/List/Folder，PC 端和移动端 tab 原生 `<button>` 替换为 `<el-button>` + `<el-icon>` 动态组件
+- **移动端顶栏优化**：缓解 HeaderBar 拥挤问题（overflow-menu 模式）
+  - HeaderBar 移到移动端布局顶部（移除 `order: -1` hack）
+  - 撤销/重做按钮移动端隐藏，折叠到「工具」下拉弹窗顶部（带 disabled 态），PC 端保持独立按钮
+  - 移动端顶栏从 6 个按钮减至 4 个（保存/渲染/工具/主题）
+- **SchemePanel 布局修复**：方案名过长挤出操作区
+  - `.scheme-info` 添加 `flex: 1; min-width: 0; overflow: hidden`，`.scheme-actions` 添加 `flex-shrink: 0`
+- **SchemePanel 重命名聚焦修复**：`autofocus` 在 v-if 动态插入时不可靠
+  - 改用函数 ref `:ref="(el) => { if (el) (renameInputRef as any) = el }"` 捕获实例，`nextTick` 后调用 `focus()`
+
 ---
 
-*最后更新：2026-06-25*
+*最后更新：2026-07-01*

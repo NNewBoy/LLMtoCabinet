@@ -10,6 +10,7 @@ import { useWebSocketStore, setToastCallback } from './stores/websocketStore'
 import { useCabinetStore, setToastCallback as setCabinetToastCallback } from './stores/cabinetStore'
 import { useThemeStore } from './stores/theme'
 import { onMounted, ref, watch } from 'vue'
+import { ChatRound, Box, List, Folder } from '@element-plus/icons-vue'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
@@ -51,10 +52,10 @@ watch(() => cabinetStore.componentClickSignal, () => {
 
 // Tab 配置
 const tabs = [
-  { key: 'chat', icon: '💬', label: '对话' },
-  { key: 'component', icon: '🧩', label: '组件' },
-  { key: 'history', icon: '📋', label: '历史' },
-  { key: 'scheme', icon: '📁', label: '方案' },
+  { key: 'chat', icon: ChatRound, label: '对话' },
+  { key: 'component', icon: Box, label: '组件' },
+  { key: 'history', icon: List, label: '历史' },
+  { key: 'scheme', icon: Folder, label: '方案' },
 ] as const
 </script>
 
@@ -69,16 +70,16 @@ const tabs = [
         </div>
         <div class="tool-panel">
           <div class="tool-tabs">
-            <button
+            <el-button
               v-for="tab in tabs"
               :key="tab.key"
               class="tab-btn"
               :class="{ active: activeTab === tab.key }"
               @click="activeTab = tab.key"
             >
-              <span class="tab-icon">{{ tab.icon }}</span>
+              <el-icon class="tab-icon"><component :is="tab.icon" /></el-icon>
               <span class="tab-label">{{ tab.label }}</span>
-            </button>
+            </el-button>
           </div>
           <div class="tool-content">
             <div v-show="activeTab === 'chat'" class="tab-panel">
@@ -100,21 +101,21 @@ const tabs = [
 
     <!-- 移动端布局 -->
     <template v-else>
+      <HeaderBar class="mobile-header" />
       <div class="mobile-viewport">
         <Viewport3D />
       </div>
-      <HeaderBar class="mobile-header" />
       <div class="mobile-tabs">
-        <button
+        <el-button
           v-for="tab in tabs"
           :key="tab.key"
           class="mobile-tab-btn"
           :class="{ active: activeTab === tab.key }"
           @click="activeTab = tab.key"
         >
-          <span class="tab-icon">{{ tab.icon }}</span>
+          <el-icon class="tab-icon"><component :is="tab.icon" /></el-icon>
           <span class="tab-label">{{ tab.label }}</span>
-        </button>
+        </el-button>
       </div>
       <div class="mobile-tool-panel">
         <div v-show="activeTab === 'chat'" class="tab-panel">
@@ -183,15 +184,28 @@ const tabs = [
   align-items: center;
   gap: 2px;
   padding: 12px 8px;
+  margin: 0;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
+  border-radius: 0;
   color: var(--color-text-muted);
   font-size: 11px;
   cursor: pointer;
   transition: all var(--transition-fast);
   min-height: 48px;
+  height: auto;
   position: relative;
+  --el-button-bg-color: transparent;
+  --el-button-border-color: transparent;
+  --el-button-hover-bg-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-hover-text-color: var(--color-text-secondary);
+  --el-button-active-bg-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-active-text-color: var(--color-primary);
+  --el-button-text-color: var(--color-text-muted);
+  box-shadow: none;
 }
 
 .tab-btn::before {
@@ -222,11 +236,10 @@ const tabs = [
 
 .tab-icon {
   font-size: 18px;
-  filter: grayscale(0.3);
 }
 
 .tab-btn.active .tab-icon {
-  filter: grayscale(0);
+  color: var(--color-primary);
 }
 
 .tab-label {
@@ -261,7 +274,7 @@ const tabs = [
 }
 
 .mobile-header {
-  order: -1;
+  flex-shrink: 0;
 }
 
 .mobile-tabs {
@@ -281,11 +294,23 @@ const tabs = [
   padding: 6px 2px;
   background: none;
   border: none;
+  border-radius: 0;
   color: var(--color-text-muted);
   font-size: 9px;
   cursor: pointer;
   transition: all var(--transition-fast);
   min-height: 44px;
+  height: auto;
+  --el-button-bg-color: transparent;
+  --el-button-border-color: transparent;
+  --el-button-hover-bg-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-hover-text-color: var(--color-text-secondary);
+  --el-button-active-bg-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-active-text-color: var(--color-primary);
+  --el-button-text-color: var(--color-text-muted);
+  box-shadow: none;
 }
 
 .mobile-tab-btn:hover,

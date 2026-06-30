@@ -50,7 +50,7 @@
 
   /* 遮罩层 - 浅色 */
   --bg-modal-overlay: rgba(15, 23, 42, 0.4);
-  --bg-preview: rgba(15, 23, 42, 0.05);
+  --bg-preview: rgba(15, 23, 42, 0.02);
 
   /* 间距系统 */
   --spacing-xs: 4px;

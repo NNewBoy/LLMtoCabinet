@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import { useChatStore } from '../stores/chatStore'
 import { apiUrl } from '../config'
+import { Plus, Grid, Edit, Delete } from '@element-plus/icons-vue'
 
 interface Scheme {
   id: string
@@ -20,6 +21,7 @@ const newName = ref('')
 const selectedTemplate = ref('cabinet')
 const editingId = ref<string | null>(null)
 const editingName = ref('')
+const renameInputRef = ref<{ focus: () => void } | null>(null)
 
 const templates = [
   { value: 'cabinet', label: '标准柜' },
@@ -91,6 +93,9 @@ function startRename(scheme: Scheme, event: Event) {
   event.stopPropagation()
   editingId.value = scheme.id
   editingName.value = scheme.name
+  nextTick(() => {
+    renameInputRef.value?.focus()
+  })
 }
 
 async function confirmRename(id: string) {
@@ -129,7 +134,7 @@ onMounted(() => {
   <div class="scheme-panel">
     <div class="action-bar">
       <div class="input-group">
-        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <el-icon class="input-icon"><Plus /></el-icon>
         <el-input
           v-model="newName"
           class="name-input"
@@ -139,13 +144,13 @@ onMounted(() => {
       </div>
       <div class="action-row">
         <div class="template-group">
-          <svg class="template-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <el-icon class="template-icon"><Grid /></el-icon>
           <el-select v-model="selectedTemplate" class="template-select">
             <el-option v-for="t in templates" :key="t.value" :label="t.label" :value="t.value" />
           </el-select>
         </div>
         <el-button class="action-btn create" type="primary" @click="createScheme">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <el-icon class="btn-icon"><Plus /></el-icon>
           <span>新建</span>
         </el-button>
       </div>
@@ -163,20 +168,20 @@ onMounted(() => {
         <div class="scheme-info">
           <el-input
             v-if="editingId === scheme.id"
+            :ref="(el: any) => { if (el) (renameInputRef as any) = el }"
             v-model="editingName"
             class="rename-input"
             @click.stop
             @keydown.enter="confirmRename(scheme.id)"
             @keydown.escape="cancelRename"
             @blur="confirmRename(scheme.id)"
-            autofocus
           />
           <span v-else class="scheme-name">{{ scheme.name }}</span>
         </div>
         <div class="scheme-actions">
           <span class="scheme-time">{{ formatTime(scheme.updated_at) }}</span>
-          <button class="action-icon-btn" @click="startRename(scheme, $event)" title="重命名">✎</button>
-          <button class="delete-btn" @click="deleteScheme(scheme.id, $event)" title="删除">×</button>
+          <el-button class="action-icon-btn" @click="startRename(scheme, $event)" title="重命名"><el-icon><Edit /></el-icon></el-button>
+          <el-button class="delete-btn" @click="deleteScheme(scheme.id, $event)" title="删除"><el-icon><Delete /></el-icon></el-button>
         </div>
       </div>
     </div>
@@ -222,8 +227,7 @@ onMounted(() => {
 .input-icon {
   position: absolute;
   left: 12px;
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
   color: var(--color-text-muted);
   pointer-events: none;
   transition: color 200ms ease;
@@ -258,8 +262,7 @@ onMounted(() => {
 .template-icon {
   position: absolute;
   left: 12px;
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
   color: var(--color-text-muted);
   pointer-events: none;
   transition: color 200ms ease;
@@ -291,8 +294,7 @@ onMounted(() => {
 }
 
 .btn-icon {
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -356,6 +358,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.scheme-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
 .rename-input {
@@ -372,9 +383,10 @@ onMounted(() => {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   padding: var(--spacing-xs);
+  margin: 0;
   line-height: 1;
   display: none;
   min-width: 32px;
@@ -419,6 +431,7 @@ onMounted(() => {
   font-size: 11px;
   color: var(--color-text-muted);
   white-space: nowrap;
+  margin-left: 5px;
 }
 
 .scheme-item.current .scheme-time {
@@ -446,8 +459,7 @@ onMounted(() => {
   }
 
   .btn-icon {
-    width: 14px;
-    height: 14px;
+    font-size: 14px;
   }
 
   .scheme-list {
@@ -477,7 +489,7 @@ onMounted(() => {
     display: flex;
     min-width: 28px;
     min-height: 28px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .rename-input {

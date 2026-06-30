@@ -6,6 +6,11 @@ import { useThemeStore } from '../stores/theme'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { apiUrl } from '../config'
 import RenderModal from './RenderModal.vue'
+import {
+  RefreshLeft, RefreshRight, FolderChecked, Picture,
+  Tools, Check, Refresh, Expand, View, Open, Aim, Grid, Cloudy,
+  Sunny, Moon,
+} from '@element-plus/icons-vue'
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
@@ -19,12 +24,12 @@ const showToolsPopover = ref(false)
 
 // 工具栏配置
 const toolItems = [
-  { action: 'explode' as const, label: '爆炸图', icon: '💥', stateKey: 'isExploded' as const },
-  { action: 'transparent' as const, label: '透视图', icon: '👁', stateKey: 'isTransparent' as const },
-  { action: 'doors' as const, label: '开门', icon: '🚪', stateKey: 'doorsOpen' as const },
-  { action: 'axes' as const, label: '坐标系', icon: '📐', stateKey: 'isAxesVisible' as const },
-  { action: 'grid' as const, label: '网格', icon: '🔲', stateKey: 'isGridVisible' as const },
-  { action: 'shadow' as const, label: '阴影', icon: '🌗', stateKey: 'isShadowVisible' as const },
+  { action: 'explode' as const, label: '爆炸图', icon: Expand, stateKey: 'isExploded' as const },
+  { action: 'transparent' as const, label: '透视图', icon: View, stateKey: 'isTransparent' as const },
+  { action: 'doors' as const, label: '开门', icon: Open, stateKey: 'doorsOpen' as const },
+  { action: 'axes' as const, label: '坐标系', icon: Aim, stateKey: 'isAxesVisible' as const },
+  { action: 'grid' as const, label: '网格', icon: Grid, stateKey: 'isGridVisible' as const },
+  { action: 'shadow' as const, label: '阴影', icon: Cloudy, stateKey: 'isShadowVisible' as const },
 ]
 
 function handleToolClick(action: string) {
@@ -121,34 +126,30 @@ defineExpose({ fetchHistoryStatus })
     </div>
     <div class="header-center">
       <el-button
-        class="btn"
+        class="btn btn-undo"
         @click="handleUndo"
         :disabled="!wsStore.isConnected || !canUndo"
         title="撤销"
       >
-        <span class="btn-icon">↩</span>
+        <el-icon class="btn-icon"><RefreshLeft /></el-icon>
         <span class="btn-label">撤销</span>
       </el-button>
       <el-button
-        class="btn"
+        class="btn btn-redo"
         @click="handleRedo"
         :disabled="!wsStore.isConnected || !canRedo"
         title="重做"
       >
-        <span class="btn-icon">↪</span>
+        <el-icon class="btn-icon"><RefreshRight /></el-icon>
         <span class="btn-label">重做</span>
       </el-button>
       <el-button class="btn btn-save" @click="handleSave">
-        <span class="btn-icon">💾</span>
+        <el-icon class="btn-icon"><FolderChecked /></el-icon>
         <span class="btn-label">保存</span>
       </el-button>
       <el-button class="btn btn-render" @click="openRenderModal">
-        <span class="btn-icon">🖼</span>
+        <el-icon class="btn-icon"><Picture /></el-icon>
         <span class="btn-label">渲染</span>
-      </el-button>
-      <el-button class="btn btn-theme" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换到浅色' : '切换到暗色'">
-        <span class="btn-icon">{{ themeStore.isDark ? '☀' : '☾' }}</span>
-        <span class="btn-label">{{ themeStore.isDark ? '浅色' : '暗色' }}</span>
       </el-button>
       <el-popover
         :visible="showToolsPopover"
@@ -161,11 +162,28 @@ defineExpose({ fetchHistoryStatus })
       >
         <template #reference>
           <el-button class="btn btn-tools" :class="{ active: showToolsPopover }">
-            <span class="btn-icon">🛠</span>
+            <el-icon class="btn-icon"><Tools /></el-icon>
             <span class="btn-label">工具</span>
           </el-button>
         </template>
         <div class="tools-list">
+          <div
+            class="tools-option tools-history-item"
+            :class="{ disabled: !wsStore.isConnected || !canUndo }"
+            @click="handleUndo"
+          >
+            <el-icon class="tools-option-icon"><RefreshLeft /></el-icon>
+            <span class="tools-option-label">撤销</span>
+          </div>
+          <div
+            class="tools-option tools-history-item"
+            :class="{ disabled: !wsStore.isConnected || !canRedo }"
+            @click="handleRedo"
+          >
+            <el-icon class="tools-option-icon"><RefreshRight /></el-icon>
+            <span class="tools-option-label">重做</span>
+          </div>
+          <div class="tools-divider tools-history-divider"></div>
           <div
             v-for="item in toolItems"
             :key="item.action"
@@ -173,17 +191,24 @@ defineExpose({ fetchHistoryStatus })
             :class="{ selected: viewportStore[item.stateKey] }"
             @click="handleToolClick(item.action)"
           >
-            <span class="tools-option-icon">{{ item.icon }}</span>
+            <el-icon class="tools-option-icon"><component :is="item.icon" /></el-icon>
             <span class="tools-option-label">{{ item.label }}</span>
-            <span v-if="viewportStore[item.stateKey]" class="tools-option-check">✓</span>
+            <el-icon v-if="viewportStore[item.stateKey]" class="tools-option-check"><Check /></el-icon>
           </div>
           <div class="tools-divider"></div>
           <div class="tools-option tools-option-reset" @click="handleToolClick('resetAll')">
-            <span class="tools-option-icon">↺</span>
+            <el-icon class="tools-option-icon"><Refresh /></el-icon>
             <span class="tools-option-label">复原</span>
           </div>
         </div>
       </el-popover>
+      <el-button class="btn btn-theme" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换到浅色' : '切换到暗色'">
+        <el-icon class="btn-icon">
+          <Sunny v-if="themeStore.isDark" />
+          <Moon v-else />
+        </el-icon>
+        <span class="btn-label">{{ themeStore.isDark ? '浅色' : '暗色' }}</span>
+      </el-button>
     </div>
     <div class="header-right">
       <span class="status" :class="{ connected: wsStore.isConnected }">
@@ -406,6 +431,11 @@ defineExpose({ fetchHistoryStatus })
   .btn {
     min-height: 32px;
   }
+
+  .btn-undo,
+  .btn-redo {
+    display: none;
+  }
 }
 
 /* 平板及以上显示更多内容 */
@@ -493,5 +523,19 @@ defineExpose({ fetchHistoryStatus })
 .tools-option-reset:hover {
   background: rgba(248, 113, 113, 0.12);
   color: var(--color-error);
+}
+
+.tools-option.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 撤销/重做仅在移动端工具弹窗中显示 */
+@media (min-width: 768px) {
+  .tools-history-item,
+  .tools-history-divider {
+    display: none;
+  }
 }
 </style>
