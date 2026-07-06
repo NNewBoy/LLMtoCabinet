@@ -26,10 +26,11 @@
 
 | 层级 | 技术 |
 |------|------|
-| 前端 | Vue 3 + TypeScript + Vite + Three.js + Pinia + Element Plus + @element-plus/icons-vue |
+| 前端 | Vue 3 + TypeScript + Vite + Three.js + Pinia + Element Plus（按需导入） + @element-plus/icons-vue |
 | 后端 | Python + FastAPI + SQLite + DeepAgents |
 | 通信 | WebSocket (实时双向) + REST API |
-| UI 风格 | Glassmorphism + Light/Dark Mode + Element Plus 主题覆盖 |
+| UI 风格 | Glassmorphism + Light/Dark Mode + 白紫科技/黑紫星空主题 |
+| 优化 | Vendor 拆包 + 组件懒加载 + Gzip/Brotli 压缩 |
 
 ## 快速开始
 
@@ -198,14 +199,14 @@ npm run dev
 
 - **主色调**：靛蓝紫 `#818cf8`
 - **成功色**：翡翠绿 `#34d399`
-- **浅色主题背景**：浅蓝渐变 `#eef2f8 → #e0e7ff`
-- **暗色主题背景**：深蓝渐变 `#0f172a → #1e1b4b`
-- **毛玻璃效果**：`backdrop-filter: blur(12px)`
-- **边框**：`rgba(148, 163, 184, 0.15)`（暗色）/ `rgba(15, 23, 42, 0.08)`（浅色）
+- **浅色主题**：白紫科技风 — 白色渐变底 `#fafaff → #f5f3ff` + 紫色光斑 + 42px 科技网格
+- **暗色主题**：黑紫星空风 — 近黑渐变 `#040405 → #0a0612` + 紫色星云光斑 + 平铺星点层
+- **毛玻璃效果**：`backdrop-filter: blur(16px) saturate(180%)`
+- **边框**：`rgba(148, 163, 184, 0.15)`（暗色）/ `rgba(15, 23, 42, 0.1)`（浅色）
 - **主题切换**：CSS 变量驱动，`html.dark` 选择器覆盖暗色变量，切换即时生效无需刷新
 - **URI 传参**：`?theme=light|dark` 支持外部平台跳转指定主题
 - **Element Plus 主题覆盖**：`src/styles/theme.css` 统一管理所有组件的浅色/暗色模式样式（按钮、输入框、选择器、对话框、弹出层等），包含禁用态样式
-- **3D 场景主题**：浅色模式背景 `#eef2f8` + 环境光强度 0.8，暗色模式背景 `#0f172a` + 环境光强度 0.5
+- **3D 场景主题**：浅色模式背景 `#eef2f8` + 环境光强度 0.8，暗色模式背景 `#0f172a` + 环境光强度 0.5；视口容器同步主题底色消除首屏白闪
 
 ### 动画效果
 

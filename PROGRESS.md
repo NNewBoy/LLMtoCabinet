@@ -453,6 +453,27 @@ LLMtoCabinet_deeepseek/
 - **SchemePanel 重命名聚焦修复**：`autofocus` 在 v-if 动态插入时不可靠
   - 改用函数 ref `:ref="(el) => { if (el) (renameInputRef as any) = el }"` 捕获实例，`nextTick` 后调用 `focus()`
 
+### 2026-07-06
+- **背景主题重构**（多轮迭代）：
+  - 浅色模式：白紫科技风 — `#fafaff → #f5f3ff` 渐变底 + 紫色光斑 + 42px 科技网格层
+  - 暗色模式：黑紫星空风 — `#040405 → #0a0612` 近黑渐变 + 紫色星云光斑 + 平铺星点星空层
+  - 背景光斑坐标调整至顶部菜单与右侧工具栏可见区域，避免被 3D 视口遮挡浪费
+  - 新增 `--bg-viewport` CSS 变量，视口容器同步主题底色，消除首屏 canvas 加载前白闪
+- **Tab 样式重构**：App.vue PC/移动端 tab 改为横向圆角标签风格（参照 AppHeader nav-link），激活态用底部短下划线替代整块背景
+- **HeaderBar 居中修复**：header 布局从 `flex + space-between` 改为 CSS Grid `1fr auto 1fr`，`header-center` 始终绝对居中
+- **滚动条迁移**：5 个组件的滚动容器全部从浏览器原生滚动条改为 Element Plus `<el-scrollbar>` 组件
+  - ChatPanel `.messages` → `el-scrollbar`（`scrollToBottom` 适配 `wrapRef`）
+  - ComponentPanel `.tree-content` / `.detail-content` → `el-scrollbar`（`treeScrollRef` 适配）
+  - HistoryPanel `.snapshot-list` → `el-scrollbar`
+  - SchemePanel `.scheme-list` → `el-scrollbar`
+  - 移除全部自定义 `::-webkit-scrollbar` 样式
+- **首屏加载性能优化**：
+  - Element Plus 从完整导入改为 `unplugin-vue-components` + `ElementPlusResolver` 按需自动导入（减少 ~70% 体积）
+  - Three.js、Element Plus、Vue/Pinia 拆分为独立 vendor chunk，浏览器可长期缓存
+  - ComponentPanel、HistoryPanel、SchemePanel 改为 `defineAsyncComponent` 懒加载，首屏不加载
+  - 构建产物启用 Gzip + Brotli 双压缩（`vite-plugin-compression`）
+  - 首屏产物从单 bundle 拆为 4 个并行加载的 chunk，gzip 合计约 260KB
+
 ---
 
-*最后更新：2026-07-01*
+*最后更新：2026-07-06*
