@@ -98,7 +98,7 @@
 | ComponentPanel | `ComponentPanel.vue` | ✅ | 组件树 + 属性 + 颜色/材料选择 Element Plus 化 |
 | HistoryPanel | `HistoryPanel.vue` | ✅ | 历史版本列表 |
 | SchemePanel | `SchemePanel.vue` | ✅ | 方案管理（新建/切换/重命名/删除）Element Plus 化 |
-| ToastNotification | `ToastNotification.vue` | ✅ | Toast 通知组件 Glassmorphism 风格 |
+| ~~ToastNotification~~ | ~~`ToastNotification.vue`~~ | ❌ 已移除 | 改用 ElMessage，组件已删除 |
 
 ---
 
@@ -474,6 +474,22 @@ LLMtoCabinet_deeepseek/
   - 构建产物启用 Gzip + Brotli 双压缩（`vite-plugin-compression`）
   - 首屏产物从单 bundle 拆为 4 个并行加载的 chunk，gzip 合计约 260KB
 
+### 2026-07-07
+- **ToastNotification 组件移除**：改用 Element Plus `ElMessage` 命令式 API
+  - 删除 `ToastNotification.vue` 组件（250 行自定义 Toast UI/动画/CSS）
+  - `cabinetStore.ts` / `websocketStore.ts`：移除 `toastCallback` / `setToastCallback` 回调注入机制，`showToast` 直接调用 `ElMessage`
+  - `App.vue`：移除 ToastNotification 导入、`toastRef`、`onMounted` 回调注入、模板组件
+  - `main.ts`：手动导入 `element-plus/es/components/message/style/css`（按需导入模式下命令式 API 样式不会自动加载）
+  - ElMessage 配置：左上角定位（`left: 16px; transform: none`）、显示关闭按钮（`showClose: true`）、持续 1.5s、紧凑间距（`padding: 8px 14px`）
+  - `theme.css`：新增 `.el-message` 全局定位样式，浅色/暗色主题覆盖保留
+- **移动端字体优化**：遵循 `readable-font-size` 准则（正文 ≥16px 防 iOS 自动缩放，最小 12px）
+  - App.vue：tab-btn 11→13px、tab-label 10→12px、mobile-tab-btn 9→12px
+  - SchemePanel.vue：输入框 14→16px、按钮/选择器 12→14px、方案名 14→15px、时间 10→12px
+  - HistoryPanel.vue：索引/时间 10→12px、描述 14→15px
+  - ComponentPanel.vue：标题/组件名 14→15px、类型/计数 12→13px、属性行 11→13px
+  - ChatPanel.vue：消息 13→15px、示例 11→13px、角色标签 11→12px、继续按钮 11→13px
+  - ToastNotification（移除前）：toast 13→14px
+
 ---
 
-*最后更新：2026-07-06*
+*最后更新：2026-07-07*

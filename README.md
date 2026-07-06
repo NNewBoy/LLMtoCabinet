@@ -290,7 +290,7 @@ npm run dev
     │   │   ├── ComponentPanel.vue    # 组件树 + 属性
     │   │   ├── HistoryPanel.vue      # 历史版本
     │   │   ├── SchemePanel.vue       # 方案管理
-    │   │   └── ToastNotification.vue # 通知组件
+    │   │   └── (ToastNotification 已移除，改用 ElMessage)
     │   └── stores/
     │       ├── cabinetStore.ts       # 柜子状态
     │       ├── chatStore.ts          # 对话状态
