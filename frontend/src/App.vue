@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue'
 import HeaderBar from './components/HeaderBar.vue'
 import Viewport3D from './components/Viewport3D.vue'
 import ChatPanel from './components/ChatPanel.vue'
-import ComponentPanel from './components/ComponentPanel.vue'
-import HistoryPanel from './components/HistoryPanel.vue'
-import SchemePanel from './components/SchemePanel.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useWebSocketStore, setToastCallback } from './stores/websocketStore'
 import { useCabinetStore, setToastCallback as setCabinetToastCallback } from './stores/cabinetStore'
 import { useThemeStore } from './stores/theme'
 import { onMounted, ref, watch } from 'vue'
 import { ChatRound, Box, List, Folder } from '@element-plus/icons-vue'
+
+// 非首屏组件懒加载
+const ComponentPanel = defineAsyncComponent(() => import('./components/ComponentPanel.vue'))
+const HistoryPanel = defineAsyncComponent(() => import('./components/HistoryPanel.vue'))
+const SchemePanel = defineAsyncComponent(() => import('./components/SchemePanel.vue'))
 
 const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
