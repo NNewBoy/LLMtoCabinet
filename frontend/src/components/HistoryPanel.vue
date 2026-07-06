@@ -63,22 +63,24 @@ watch(() => cabinetStore.cabinet, () => {
 
 <template>
   <div class="history-panel">
-    <div class="snapshot-list">
-      <div v-if="snapshots.length === 0" class="empty">暂无历史记录</div>
-      <div
-        v-for="snap in [...snapshots].reverse()"
-        :key="snap.index"
-        class="snapshot-item glass-card"
-        :class="{ current: snap.index === currentIndex }"
-        @click="restoreSnapshot(snap.index)"
-      >
-        <div class="snap-info">
-          <span class="snap-index">v{{ snap.index + 1 }}</span>
-          <span class="snap-desc">{{ snap.description }}</span>
+    <el-scrollbar class="snapshot-list-scroll">
+      <div class="snapshot-list-inner">
+        <div v-if="snapshots.length === 0" class="empty">暂无历史记录</div>
+        <div
+          v-for="snap in [...snapshots].reverse()"
+          :key="snap.index"
+          class="snapshot-item glass-card"
+          :class="{ current: snap.index === currentIndex }"
+          @click="restoreSnapshot(snap.index)"
+        >
+          <div class="snap-info">
+            <span class="snap-index">v{{ snap.index + 1 }}</span>
+            <span class="snap-desc">{{ snap.description }}</span>
+          </div>
+          <span class="snap-time">{{ formatTime(snap.timestamp) }}</span>
         </div>
-        <span class="snap-time">{{ formatTime(snap.timestamp) }}</span>
       </div>
-    </div>
+    </el-scrollbar>
   </div>
 </template>
 
@@ -90,9 +92,10 @@ watch(() => cabinetStore.cabinet, () => {
   background: transparent;
 }
 
-.snapshot-list {
+.snapshot-list-scroll {
   flex: 1;
-  overflow-y: auto;
+}
+.snapshot-list-inner {
   padding: var(--spacing-md);
 }
 
@@ -166,7 +169,7 @@ watch(() => cabinetStore.cabinet, () => {
 
 /* 移动端适配 */
 @media (max-width: 767px) {
-  .snapshot-list {
+  .snapshot-list-inner {
     padding: var(--spacing-xs);
   }
 

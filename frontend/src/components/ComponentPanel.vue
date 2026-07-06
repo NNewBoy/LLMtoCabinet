@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { ElScrollbar } from 'element-plus'
 import { useCabinetStore } from '../stores/cabinetStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import type { CabinetComponent } from '../utils/types'
@@ -120,13 +121,13 @@ async function updateMaterial(material: string) {
 }
 
 // 选中组件时自动滚动到对应位置
-const treeContentRef = ref<HTMLElement | null>(null)
+const treeScrollRef = ref<InstanceType<typeof ElScrollbar> | null>(null)
 
 watch(() => cabinetStore.selectedComponentId, async (newId) => {
   if (!newId) return
   await nextTick()
-  // 找到选中的 tree-item 并滚动到可视区域
-  const selectedEl = treeContentRef.value?.querySelector('.tree-item.selected')
+  const wrap = treeScrollRef.value?.wrapRef
+  const selectedEl = wrap?.querySelector('.tree-item.selected')
   if (selectedEl) {
     selectedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
@@ -137,81 +138,84 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   <div class="component-panel">
     <div class="tree-section">
       <div class="section-title">组件树</div>
-      <div class="tree-content" ref="treeContentRef">
-        <div v-if="components.length === 0" class="empty">暂无组件</div>
-        <div v-else class="tree">
-          <template v-for="comp in components" :key="comp.id">
-            <div
-              class="tree-item"
-              :class="{ selected: cabinetStore.selectedComponentId === comp.id }"
-              @click="selectComponent(comp.id)"
-            >
-              <div class="item-content">
-                <el-button
-                  v-if="hasChildren(comp)"
-                  class="expand-btn"
-                  :class="{ expanded: isExpanded(comp.id) }"
-                  link
-                  @click="toggleExpand(comp.id, $event)"
-                >
-                  ▶
-                </el-button>
-                <span v-else class="expand-placeholder"></span>
-                <span class="component-name">{{ comp.name }}</span>
-                <span class="component-type">{{ getComponentTypeLabel(comp.type) }}</span>
-                <span v-if="hasChildren(comp)" class="children-count">
-                  {{ getChildrenCount(comp) }}
-                </span>
-              </div>
-              <div v-if="isExpanded(comp.id) && hasChildren(comp)" class="children">
-                <div
-                  v-for="child in comp.children"
-                  :key="child.id"
-                  class="tree-item child"
-                  :class="{ selected: cabinetStore.selectedComponentId === child.id }"
-                  @click.stop="selectComponent(child.id)"
-                >
-                  <div class="item-content">
-                    <el-button
-                      v-if="hasChildren(child)"
-                      class="expand-btn"
-                      :class="{ expanded: isExpanded(child.id) }"
-                      link
-                      @click="toggleExpand(child.id, $event)"
-                    >
-                      ▶
-                    </el-button>
-                    <span v-else class="expand-placeholder"></span>
-                    <span class="component-name">{{ child.name }}</span>
-                    <span class="component-type">{{ getComponentTypeLabel(child.type) }}</span>
-                  </div>
-                  <div v-if="isExpanded(child.id) && hasChildren(child)" class="children">
-                    <div
-                      v-for="grandchild in child.children"
-                      :key="grandchild.id"
-                      class="tree-item grandchild"
-                      :class="{ selected: cabinetStore.selectedComponentId === grandchild.id }"
-                      @click.stop="selectComponent(grandchild.id)"
-                    >
-                      <div class="item-content">
-                        <span class="expand-placeholder"></span>
-                        <span class="component-name">{{ grandchild.name }}</span>
-                        <span class="component-type">{{ getComponentTypeLabel(grandchild.type) }}</span>
+      <el-scrollbar class="tree-content-scroll" ref="treeScrollRef">
+        <div class="tree-content-inner">
+          <div v-if="components.length === 0" class="empty">暂无组件</div>
+          <div v-else class="tree">
+            <template v-for="comp in components" :key="comp.id">
+              <div
+                class="tree-item"
+                :class="{ selected: cabinetStore.selectedComponentId === comp.id }"
+                @click="selectComponent(comp.id)"
+              >
+                <div class="item-content">
+                  <el-button
+                    v-if="hasChildren(comp)"
+                    class="expand-btn"
+                    :class="{ expanded: isExpanded(comp.id) }"
+                    link
+                    @click="toggleExpand(comp.id, $event)"
+                  >
+                    ▶
+                  </el-button>
+                  <span v-else class="expand-placeholder"></span>
+                  <span class="component-name">{{ comp.name }}</span>
+                  <span class="component-type">{{ getComponentTypeLabel(comp.type) }}</span>
+                  <span v-if="hasChildren(comp)" class="children-count">
+                    {{ getChildrenCount(comp) }}
+                  </span>
+                </div>
+                <div v-if="isExpanded(comp.id) && hasChildren(comp)" class="children">
+                  <div
+                    v-for="child in comp.children"
+                    :key="child.id"
+                    class="tree-item child"
+                    :class="{ selected: cabinetStore.selectedComponentId === child.id }"
+                    @click.stop="selectComponent(child.id)"
+                  >
+                    <div class="item-content">
+                      <el-button
+                        v-if="hasChildren(child)"
+                        class="expand-btn"
+                        :class="{ expanded: isExpanded(child.id) }"
+                        link
+                        @click="toggleExpand(child.id, $event)"
+                      >
+                        ▶
+                      </el-button>
+                      <span v-else class="expand-placeholder"></span>
+                      <span class="component-name">{{ child.name }}</span>
+                      <span class="component-type">{{ getComponentTypeLabel(child.type) }}</span>
+                    </div>
+                    <div v-if="isExpanded(child.id) && hasChildren(child)" class="children">
+                      <div
+                        v-for="grandchild in child.children"
+                        :key="grandchild.id"
+                        class="tree-item grandchild"
+                        :class="{ selected: cabinetStore.selectedComponentId === grandchild.id }"
+                        @click.stop="selectComponent(grandchild.id)"
+                      >
+                        <div class="item-content">
+                          <span class="expand-placeholder"></span>
+                          <span class="component-name">{{ grandchild.name }}</span>
+                          <span class="component-type">{{ getComponentTypeLabel(grandchild.type) }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
+            </template>
+          </div>
         </div>
-      </div>
+      </el-scrollbar>
     </div>
 
     <div class="detail-section">
       <div class="section-title">属性</div>
-      <div class="detail-content">
-        <div v-if="selectedComponent" class="properties">
+      <el-scrollbar class="detail-content-scroll">
+        <div class="detail-content-inner">
+          <div v-if="selectedComponent" class="properties">
           <div class="prop-row">
             <span class="prop-label">名称</span>
             <span class="prop-value">{{ selectedComponent.name }}</span>
@@ -263,7 +267,8 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
           点击组件查看属性
         </div>
       </div>
-    </div>
+    </el-scrollbar>
+  </div>
   </div>
 </template>
 
@@ -294,9 +299,10 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   border-bottom: 1px solid var(--glass-border);
 }
 
-.tree-content {
+.tree-content-scroll {
   flex: 1;
-  overflow-y: auto;
+}
+.tree-content-inner {
   padding: var(--spacing-sm);
 }
 
@@ -307,9 +313,10 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
   overflow: hidden;
 }
 
-.detail-content {
+.detail-content-scroll {
   flex: 1;
-  overflow-y: auto;
+}
+.detail-content-inner {
   padding: var(--spacing-sm);
 }
 
@@ -524,7 +531,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
     flex: 1;
   }
 
-  .tree-content {
+  .tree-content-inner {
     padding: var(--spacing-xs);
   }
 
@@ -532,7 +539,7 @@ watch(() => cabinetStore.selectedComponentId, async (newId) => {
     height: 232px;
   }
 
-  .detail-content {
+  .detail-content-inner {
     padding: var(--spacing-xs);
   }
 

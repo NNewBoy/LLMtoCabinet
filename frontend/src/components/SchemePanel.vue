@@ -156,17 +156,18 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="scheme-list">
-      <div v-if="schemes.length === 0" class="empty">暂无方案</div>
-      <div
-        v-for="scheme in schemes"
-        :key="scheme.id"
-        class="scheme-item glass-card"
-        :class="{ current: scheme.id === wsStore.currentProjectId }"
-        @click="switchScheme(scheme.id)"
-      >
-        <div class="scheme-info">
-          <el-input
+    <el-scrollbar class="scheme-list-scroll">
+      <div class="scheme-list-inner">
+        <div v-if="schemes.length === 0" class="empty">暂无方案</div>
+        <div
+          v-for="scheme in schemes"
+          :key="scheme.id"
+          class="scheme-item glass-card"
+          :class="{ current: scheme.id === wsStore.currentProjectId }"
+          @click="switchScheme(scheme.id)"
+        >
+          <div class="scheme-info">
+            <el-input
             v-if="editingId === scheme.id"
             :ref="(el: any) => { if (el) (renameInputRef as any) = el }"
             v-model="editingName"
@@ -185,7 +186,8 @@ onMounted(() => {
         </div>
       </div>
     </div>
-  </div>
+  </el-scrollbar>
+</div>
 </template>
 
 <style scoped>
@@ -302,9 +304,10 @@ onMounted(() => {
   border-color: rgba(34, 197, 94, 0.45);
 }
 
-.scheme-list {
+.scheme-list-scroll {
   flex: 1;
-  overflow-y: auto;
+}
+.scheme-list-inner {
   padding: var(--spacing-md);
 }
 
@@ -442,7 +445,7 @@ onMounted(() => {
     font-size: 14px;
   }
 
-  .scheme-list {
+  .scheme-list-inner {
     padding: var(--spacing-xs);
   }
 

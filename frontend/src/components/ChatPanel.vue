@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
+import { ElScrollbar } from 'element-plus'
 import { useChatStore } from '../stores/chatStore'
 import { useWebSocketStore } from '../stores/websocketStore'
 import { apiUrl } from '../config'
@@ -7,7 +8,7 @@ import { apiUrl } from '../config'
 const chatStore = useChatStore()
 const wsStore = useWebSocketStore()
 const inputText = ref('')
-const messagesContainer = ref<HTMLDivElement | null>(null)
+const messagesContainer = ref<InstanceType<typeof ElScrollbar> | null>(null)
 
 const examplePrompts = [
   '中间加两块层板形成高度3:2:1的三层空间，上层加一个双开门，下层加一个抽屉',
@@ -43,8 +44,9 @@ function handleKeydown(event: KeyboardEvent) {
 
 async function scrollToBottom() {
   await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  const wrap = messagesContainer.value?.wrapRef
+  if (wrap) {
+    wrap.scrollTop = wrap.scrollHeight
   }
 }
 
@@ -67,9 +69,10 @@ watch(() => chatStore.thinkingSteps.length, () => {
 
 <template>
   <div class="chat-panel">
-    <div class="messages" ref="messagesContainer" role="log" aria-live="polite">
-      <!-- 空状态 -->
-      <div v-if="chatStore.messages.length === 0 && !chatStore.isStreaming" class="empty-state">
+    <el-scrollbar class="messages-scroll" ref="messagesContainer">
+      <div class="messages-inner">
+        <!-- 空状态 -->
+        <div v-if="chatStore.messages.length === 0 && !chatStore.isStreaming" class="empty-state">
         <div class="empty-icon-wrapper">
           <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -184,6 +187,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
         </div>
       </div>
     </div>
+  </el-scrollbar>
 
     <!-- 输入区域 -->
     <div class="chat-input">
@@ -238,29 +242,14 @@ watch(() => chatStore.thinkingSteps.length, () => {
 }
 
 /* ==================== 消息列表 ==================== */
-.messages {
+.messages-scroll {
   flex: 1;
-  overflow-y: auto;
+}
+.messages-inner {
   padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  scroll-behavior: smooth;
-}
-
-/* 滚动条样式 */
-.messages::-webkit-scrollbar {
-  width: 4px;
-}
-.messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-.messages::-webkit-scrollbar-thumb {
-  background: rgba(129, 140, 248, 0.2);
-  border-radius: 4px;
-}
-.messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(129, 140, 248, 0.4);
 }
 
 /* ==================== 空状态 ==================== */
@@ -643,7 +632,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
 
 /* ==================== 移动端适配 ==================== */
 @media (max-width: 767px) {
-  .messages {
+  .messages-inner {
     padding: var(--spacing-sm);
     gap: var(--spacing-xs);
   }
