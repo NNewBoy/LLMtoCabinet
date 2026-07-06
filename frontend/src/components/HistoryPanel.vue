@@ -68,7 +68,7 @@ watch(() => cabinetStore.cabinet, () => {
       <div
         v-for="snap in [...snapshots].reverse()"
         :key="snap.index"
-        class="snapshot-item"
+        class="snapshot-item glass-card"
         :class="{ current: snap.index === currentIndex }"
         @click="restoreSnapshot(snap.index)"
       >
@@ -105,23 +105,15 @@ watch(() => cabinetStore.cabinet, () => {
 
 .snapshot-item {
   padding: var(--spacing-md);
-  border-radius: var(--radius-md);
   cursor: pointer;
   margin-bottom: var(--spacing-sm);
-  transition: all var(--transition-fast);
   display: flex;
   justify-content: space-between;
   align-items: center;
   min-height: 48px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(8px);
-}
-
-.snapshot-item:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateX(4px);
+  background: var(--glass-bg-item);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .snapshot-item.current {

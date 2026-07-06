@@ -161,7 +161,7 @@ onMounted(() => {
       <div
         v-for="scheme in schemes"
         :key="scheme.id"
-        class="scheme-item"
+        class="scheme-item glass-card"
         :class="{ current: scheme.id === wsStore.currentProjectId }"
         @click="switchScheme(scheme.id)"
       >
@@ -201,21 +201,9 @@ onMounted(() => {
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  background: var(--glass-bg);
+  background: var(--glass-bg-item);
   border-bottom: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
   position: relative;
-}
-
-.action-bar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--glass-border-hover) 50%, transparent 100%);
 }
 
 .input-group {
@@ -328,24 +316,16 @@ onMounted(() => {
 }
 
 .scheme-item {
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
+  padding: 0 var(--spacing-md);
   cursor: pointer;
   margin-bottom: var(--spacing-sm);
-  transition: all var(--transition-fast);
   display: flex;
   justify-content: space-between;
   align-items: center;
   min-height: 52px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(8px);
-}
-
-.scheme-item:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateX(4px);
+  background: var(--glass-bg-item);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .scheme-item.current {

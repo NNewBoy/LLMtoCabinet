@@ -80,7 +80,7 @@ watch(() => chatStore.thinkingSteps.length, () => {
           <button
             v-for="prompt in examplePrompts"
             :key="prompt"
-            class="example"
+            class="example glass-card"
             @click="selectExample(prompt)"
           >
             <svg class="example-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -313,26 +313,11 @@ watch(() => chatStore.thinkingSteps.length, () => {
   gap: var(--spacing-sm);
   font-size: 12px;
   color: var(--color-text-muted);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-item);
   padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease-out;
   cursor: pointer;
   text-align: left;
   width: 100%;
-  backdrop-filter: blur(8px);
-}
-
-.example:hover {
-  background: var(--glass-bg-hover);
-  border-color: rgba(129, 140, 248, 0.3);
-  color: var(--color-text-secondary);
-  transform: translateX(4px);
-}
-
-.example:active {
-  transform: translateX(2px) scale(0.98);
 }
 
 .example-icon {
@@ -363,11 +348,12 @@ watch(() => chatStore.thinkingSteps.length, () => {
 }
 
 .message.assistant {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-item);
+  border: 1px solid var(--glass-card-border);
   align-self: flex-start;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--shadow-glass);
 }
 
 .message.system {
@@ -584,13 +570,12 @@ watch(() => chatStore.thinkingSteps.length, () => {
 /* ==================== 输入区域 ==================== */
 .chat-input {
   padding: var(--spacing-md);
-  border-top: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  background: var(--glass-bg-item);
+  border-top: 1px solid var(--glass-card-border);
+  box-shadow: var(--shadow-glass);
 }
 
 .chat-input .el-textarea {

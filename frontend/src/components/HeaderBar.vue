@@ -16,6 +16,7 @@ const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
 const viewportStore = useViewportStore()
 const themeStore = useThemeStore()
+const tipEffect = computed(() => (themeStore.theme === 'light' ? 'light' : 'dark'))
 const projectName = computed(() => cabinetStore.cabinet?.name || '标准柜')
 const canUndo = ref(false)
 const canRedo = ref(false)
@@ -117,7 +118,7 @@ defineExpose({ fetchHistoryStatus })
 </script>
 
 <template>
-  <header class="header-bar">
+  <header class="header-bar glass">
     <div class="header-left">
       <div class="logo-wrapper">
         <h1 class="logo">Cabinet3D</h1>
@@ -125,32 +126,34 @@ defineExpose({ fetchHistoryStatus })
       <span class="project-name">{{ projectName }}</span>
     </div>
     <div class="header-center">
-      <el-button
-        class="btn btn-undo"
-        @click="handleUndo"
-        :disabled="!wsStore.isConnected || !canUndo"
-        title="撤销"
-      >
-        <el-icon class="btn-icon"><RefreshLeft /></el-icon>
-        <span class="btn-label">撤销</span>
-      </el-button>
-      <el-button
-        class="btn btn-redo"
-        @click="handleRedo"
-        :disabled="!wsStore.isConnected || !canRedo"
-        title="重做"
-      >
-        <el-icon class="btn-icon"><RefreshRight /></el-icon>
-        <span class="btn-label">重做</span>
-      </el-button>
-      <el-button class="btn btn-save" @click="handleSave">
-        <el-icon class="btn-icon"><FolderChecked /></el-icon>
-        <span class="btn-label">保存</span>
-      </el-button>
-      <el-button class="btn btn-render" @click="openRenderModal">
-        <el-icon class="btn-icon"><Picture /></el-icon>
-        <span class="btn-label">渲染</span>
-      </el-button>
+      <el-tooltip content="撤销" :effect="tipEffect" placement="bottom">
+        <button
+          class="btn btn-undo"
+          @click="handleUndo"
+          :disabled="!wsStore.isConnected || !canUndo"
+        >
+          <el-icon :size="18" class="btn-icon"><RefreshLeft /></el-icon>
+        </button>
+      </el-tooltip>
+      <el-tooltip content="重做" :effect="tipEffect" placement="bottom">
+        <button
+          class="btn btn-redo"
+          @click="handleRedo"
+          :disabled="!wsStore.isConnected || !canRedo"
+        >
+          <el-icon :size="18" class="btn-icon"><RefreshRight /></el-icon>
+        </button>
+      </el-tooltip>
+      <el-tooltip content="保存" :effect="tipEffect" placement="bottom">
+        <button class="btn btn-save" @click="handleSave">
+          <el-icon :size="18" class="btn-icon"><FolderChecked /></el-icon>
+        </button>
+      </el-tooltip>
+      <el-tooltip content="渲染" :effect="tipEffect" placement="bottom">
+        <button class="btn btn-render" @click="openRenderModal">
+          <el-icon :size="18" class="btn-icon"><Picture /></el-icon>
+        </button>
+      </el-tooltip>
       <el-popover
         :visible="showToolsPopover"
         placement="bottom"
@@ -161,29 +164,11 @@ defineExpose({ fetchHistoryStatus })
         @update:visible="(val: boolean) => showToolsPopover = val"
       >
         <template #reference>
-          <el-button class="btn btn-tools" :class="{ active: showToolsPopover }">
-            <el-icon class="btn-icon"><Tools /></el-icon>
-            <span class="btn-label">工具</span>
-          </el-button>
+          <button class="btn btn-tools" :class="{ active: showToolsPopover }">
+            <el-icon :size="18" class="btn-icon"><Tools /></el-icon>
+          </button>
         </template>
         <div class="tools-list">
-          <div
-            class="tools-option tools-history-item"
-            :class="{ disabled: !wsStore.isConnected || !canUndo }"
-            @click="handleUndo"
-          >
-            <el-icon class="tools-option-icon"><RefreshLeft /></el-icon>
-            <span class="tools-option-label">撤销</span>
-          </div>
-          <div
-            class="tools-option tools-history-item"
-            :class="{ disabled: !wsStore.isConnected || !canRedo }"
-            @click="handleRedo"
-          >
-            <el-icon class="tools-option-icon"><RefreshRight /></el-icon>
-            <span class="tools-option-label">重做</span>
-          </div>
-          <div class="tools-divider tools-history-divider"></div>
           <div
             v-for="item in toolItems"
             :key="item.action"
@@ -202,13 +187,14 @@ defineExpose({ fetchHistoryStatus })
           </div>
         </div>
       </el-popover>
-      <el-button class="btn btn-theme" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换到浅色' : '切换到暗色'">
-        <el-icon class="btn-icon">
-          <Sunny v-if="themeStore.isDark" />
-          <Moon v-else />
-        </el-icon>
-        <span class="btn-label">{{ themeStore.isDark ? '浅色' : '暗色' }}</span>
-      </el-button>
+      <el-tooltip :content="themeStore.isDark ? '切换到浅色' : '切换到暗色'" :effect="tipEffect" placement="bottom">
+        <button class="btn btn-theme" @click="themeStore.toggleTheme()">
+          <el-icon :size="18" class="btn-icon">
+            <Sunny v-if="themeStore.isDark" />
+            <Moon v-else />
+          </el-icon>
+        </button>
+      </el-tooltip>
     </div>
     <div class="header-right">
       <span class="status" :class="{ connected: wsStore.isConnected }">
@@ -222,15 +208,12 @@ defineExpose({ fetchHistoryStatus })
 
 <style scoped>
 .header-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 var(--spacing-lg);
   height: 56px;
-  background: var(--bg-glass-header);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--glass-border);
+  border-radius: 0;
   flex-shrink: 0;
   position: relative;
   z-index: 10;
@@ -248,6 +231,7 @@ defineExpose({ fetchHistoryStatus })
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  justify-self: start;
   position: relative;
   z-index: 1;
 }
@@ -277,33 +261,40 @@ defineExpose({ fetchHistoryStatus })
 .header-center {
   display: flex;
   gap: var(--spacing-sm);
+  justify-self: center;
   position: relative;
   z-index: 1;
-}
-
-.header-center .el-button {
-  margin-left: 0;  
 }
 
 .btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-xs);
-  min-height: 36px;
-  backdrop-filter: blur(8px);
+  width: 36px;
+  height: 36px;
   position: relative;
   overflow: hidden;
-  background: var(--glass-bg);
-  border-color: var(--glass-border);
-  color: var(--color-text-primary);
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-mute);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  color: var(--color-text-disabled);
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: var(--color-text-primary);
+  color: var(--color-primary-hover);
+  background: var(--btn-bg);
+  border-color: var(--btn-border-color);
 }
+
 
 .btn-label {
   display: none;
@@ -312,64 +303,47 @@ defineExpose({ fetchHistoryStatus })
 }
 
 .btn-icon {
-  font-size: 15px;
   position: relative;
   z-index: 1;
 }
 
-.btn-save {
-  background: rgba(52, 211, 153, 0.15);
-  border-color: rgba(52, 211, 153, 0.3);
-  color: var(--color-success);
+.btn-undo {
+  color: var(--color-primary);
 }
 
-.btn-save:hover {
+.btn-redo {
+  color: var(--color-primary);
+}
+
+.btn-save {
+  color: var(--color-success);
+}
+.btn.btn-save:hover {
+  color: var(--color-success);
   background: rgba(52, 211, 153, 0.25);
   border-color: rgba(52, 211, 153, 0.5);
 }
 
 .btn-render {
-  background: rgba(251, 191, 36, 0.15);
-  border-color: rgba(251, 191, 36, 0.3);
   color: var(--color-warning);
 }
-
-.btn-render:hover {
+.btn.btn-render:hover {
+  color: var(--color-warning);
   background: rgba(251, 191, 36, 0.25);
   border-color: rgba(251, 191, 36, 0.5);
 }
 
-.btn-theme {
-  background: rgba(129, 140, 248, 0.1);
-  border-color: rgba(129, 140, 248, 0.2);
-  color: var(--color-text-secondary);
+.btn-theme .btn-icon {
+  transition: transform 0.3s ease;
 }
-
-.btn-theme:hover {
-  background: rgba(129, 140, 248, 0.2);
-  border-color: rgba(129, 140, 248, 0.4);
-  color: var(--color-primary);
-}
-
-.btn-tools {
-  background: rgba(129, 140, 248, 0.15);
-  border-color: rgba(129, 140, 248, 0.3);
-  color: var(--color-primary);
-}
-
-.btn-tools:hover {
-  background: rgba(129, 140, 248, 0.25);
-  border-color: rgba(129, 140, 248, 0.5);
-}
-
-.btn-tools.active {
-  background: rgba(129, 140, 248, 0.3);
-  border-color: var(--color-primary);
+.btn-theme:hover .btn-icon {
+  transform: rotate(30deg);
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  justify-self: end;
   position: relative;
   z-index: 1;
 }
@@ -425,16 +399,11 @@ defineExpose({ fetchHistoryStatus })
   }
 
   .header-center {
-    gap: var(--spacing-xs);
+    gap: 0;
   }
 
   .btn {
     min-height: 32px;
-  }
-
-  .btn-undo,
-  .btn-redo {
-    display: none;
   }
 }
 
@@ -466,6 +435,7 @@ defineExpose({ fetchHistoryStatus })
 .tools-list {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .tools-option {
@@ -513,7 +483,6 @@ defineExpose({ fetchHistoryStatus })
 .tools-divider {
   height: 1px;
   background: var(--glass-border);
-  margin: 4px 0;
 }
 
 .tools-option-reset {

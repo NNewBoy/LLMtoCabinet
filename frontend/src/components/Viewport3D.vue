@@ -1326,6 +1326,7 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggle
   height: 100%;
   display: block;
   cursor: pointer;
+  background: var(--bg-viewport);
 }
 
 .loading-overlay {
@@ -1334,7 +1335,7 @@ defineExpose({ toggleExplode, toggleTransparent, toggleDoors, toggleAxes, toggle
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 26, 46, 0.9);
+  background: var(--bg-viewport);
   color: #888;
   font-size: 16px;
 }

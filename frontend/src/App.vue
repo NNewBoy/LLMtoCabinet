@@ -68,7 +68,7 @@ const tabs = [
         <div class="viewport-wrapper">
           <Viewport3D />
         </div>
-        <div class="tool-panel">
+        <div class="tool-panel glass">
           <div class="tool-tabs">
             <el-button
               v-for="tab in tabs"
@@ -117,7 +117,7 @@ const tabs = [
           <span class="tab-label">{{ tab.label }}</span>
         </el-button>
       </div>
-      <div class="mobile-tool-panel">
+      <div class="mobile-tool-panel glass">
         <div v-show="activeTab === 'chat'" class="tab-panel">
           <ChatPanel />
         </div>
@@ -157,50 +157,51 @@ const tabs = [
   flex: 1;
   position: relative;
   overflow: hidden;
+  background: var(--bg-viewport);
 }
 
 .tool-panel {
   width: 360px;
   display: flex;
   flex-direction: column;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-left: 1px solid var(--glass-border);
   flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 0;
 }
 
 .tool-tabs {
   display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: blur(8px);
+  background: var(--glass-bg-item);
 }
 
 .tab-btn {
   flex: 1;
+  position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
-  padding: 12px 8px;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
   margin: 0;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: 10px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  min-height: 48px;
+  transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1), background 150ms cubic-bezier(0.16, 1, 0.3, 1);
   height: auto;
-  position: relative;
   --el-button-bg-color: transparent;
   --el-button-border-color: transparent;
   --el-button-hover-bg-color: transparent;
   --el-button-hover-border-color: transparent;
-  --el-button-hover-text-color: var(--color-text-secondary);
+  --el-button-hover-text-color: var(--color-primary);
   --el-button-active-bg-color: transparent;
   --el-button-active-border-color: transparent;
   --el-button-active-text-color: var(--color-primary);
@@ -208,30 +209,24 @@ const tabs = [
   box-shadow: none;
 }
 
-.tab-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(129, 140, 248, 0) 0%, rgba(129, 140, 248, 0.1) 100%);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
 .tab-btn:hover {
-  color: var(--color-text-secondary);
-}
-
-.tab-btn:hover::before {
-  opacity: 1;
+  color: var(--color-primary);
+  background: rgba(129, 140, 248, 0.08);
 }
 
 .tab-btn.active {
   color: var(--color-primary);
-  background: rgba(129, 140, 248, 0.15);
 }
 
-.tab-btn.active::before {
-  opacity: 1;
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary);
 }
 
 .tab-icon {
@@ -245,8 +240,6 @@ const tabs = [
 .tab-label {
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
 
 .tool-content {
@@ -271,6 +264,7 @@ const tabs = [
   min-height: 180px;
   position: relative;
   overflow: hidden;
+  background: var(--bg-viewport);
 }
 
 .mobile-header {
@@ -279,6 +273,9 @@ const tabs = [
 
 .mobile-tabs {
   display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   border-top: 1px solid var(--glass-border);
@@ -287,25 +284,28 @@ const tabs = [
 
 .mobile-tab-btn {
   flex: 1;
+  position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 1px;
-  padding: 6px 2px;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
   background: none;
   border: none;
-  border-radius: 0;
+  border-radius: 10px;
   color: var(--color-text-muted);
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  min-height: 44px;
+  transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1), background 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 40px;
   height: auto;
   --el-button-bg-color: transparent;
   --el-button-border-color: transparent;
   --el-button-hover-bg-color: transparent;
   --el-button-hover-border-color: transparent;
-  --el-button-hover-text-color: var(--color-text-secondary);
+  --el-button-hover-text-color: var(--color-primary);
   --el-button-active-bg-color: transparent;
   --el-button-active-border-color: transparent;
   --el-button-active-text-color: var(--color-primary);
@@ -315,13 +315,23 @@ const tabs = [
 
 .mobile-tab-btn:hover,
 .mobile-tab-btn:active {
-  color: var(--color-text-secondary);
-  background: rgba(129, 140, 248, 0.1);
+  color: var(--color-primary);
+  background: rgba(129, 140, 248, 0.08);
 }
 
 .mobile-tab-btn.active {
   color: var(--color-primary);
-  background: rgba(129, 140, 248, 0.15);
+}
+
+.mobile-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary);
 }
 
 .mobile-tool-panel {
@@ -330,6 +340,7 @@ const tabs = [
   position: relative;
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
+  border-radius: 0;
 }
 
 /* 响应式断点 */
