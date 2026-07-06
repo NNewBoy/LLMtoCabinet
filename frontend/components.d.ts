@@ -26,7 +26,6 @@ declare module 'vue' {
     HistoryPanel: typeof import('./src/components/HistoryPanel.vue')['default']
     RenderModal: typeof import('./src/components/RenderModal.vue')['default']
     SchemePanel: typeof import('./src/components/SchemePanel.vue')['default']
-    ToastNotification: typeof import('./src/components/ToastNotification.vue')['default']
     Viewport3D: typeof import('./src/components/Viewport3D.vue')['default']
   }
 }
