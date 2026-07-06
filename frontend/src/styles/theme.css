@@ -729,6 +729,14 @@ html:not(.dark) .el-select-dropdown__item.selected {
   color: var(--color-primary);
 }
 
+/* Message 消息提示 - 左上角定位，紧凑间距 */
+.el-message {
+  left: 16px !important;
+  transform: none !important;
+  align-items: center;
+  padding: 8px 14px;
+}
+
 /* Message 消息提示 */
 html:not(.dark) .el-message {
   background: rgba(255, 255, 255, 0.95);

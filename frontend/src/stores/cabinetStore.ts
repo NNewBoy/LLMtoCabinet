@@ -2,18 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Cabinet, CabinetComponent } from '../utils/types'
 import { apiUrl } from '../config'
-
-// Toast 通知回调（由 App.vue 注入）
-let toastCallback: ((message: string, type: string) => void) | null = null
-
-export function setToastCallback(callback: (message: string, type: string) => void) {
-  toastCallback = callback
-}
+import { ElMessage } from 'element-plus'
 
 function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
-  if (toastCallback) {
-    toastCallback(message, type)
-  }
+  ElMessage({ message, type, duration: 1500, showClose: true })
 }
 
 export const useCabinetStore = defineStore('cabinet', () => {

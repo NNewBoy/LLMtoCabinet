@@ -3,9 +3,8 @@ import { defineAsyncComponent } from 'vue'
 import HeaderBar from './components/HeaderBar.vue'
 import Viewport3D from './components/Viewport3D.vue'
 import ChatPanel from './components/ChatPanel.vue'
-import ToastNotification from './components/ToastNotification.vue'
-import { useWebSocketStore, setToastCallback } from './stores/websocketStore'
-import { useCabinetStore, setToastCallback as setCabinetToastCallback } from './stores/cabinetStore'
+import { useWebSocketStore } from './stores/websocketStore'
+import { useCabinetStore } from './stores/cabinetStore'
 import { useThemeStore } from './stores/theme'
 import { onMounted, ref, watch } from 'vue'
 import { ChatRound, Box, List, Folder } from '@element-plus/icons-vue'
@@ -19,7 +18,6 @@ const wsStore = useWebSocketStore()
 const cabinetStore = useCabinetStore()
 const themeStore = useThemeStore()
 const activeTab = ref<'chat' | 'component' | 'history' | 'scheme'>('chat')
-const toastRef = ref<InstanceType<typeof ToastNotification> | null>(null)
 const isMobile = ref(false)
 
 // 检测是否为移动端
@@ -30,13 +28,6 @@ function checkMobile() {
 onMounted(() => {
   // 初始化主题：优先 URI 参数 ?theme=light|dark，其次 localStorage，默认 dark
   themeStore.init()
-
-  // 注入 Toast 回调
-  const toastFn = (message: string, type: string) => {
-    toastRef.value?.addToast(message, type as any)
-  }
-  setToastCallback(toastFn)
-  setCabinetToastCallback(toastFn)
 
   const savedId = localStorage.getItem('lastProjectId') || 'default'
   wsStore.connect(savedId)
@@ -135,8 +126,6 @@ const tabs = [
         </div>
       </div>
     </template>
-
-    <ToastNotification ref="toastRef" />
   </div>
 </template>
 

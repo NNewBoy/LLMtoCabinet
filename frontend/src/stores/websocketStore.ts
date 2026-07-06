@@ -4,18 +4,10 @@ import type { WsMessage, Cabinet } from '../utils/types'
 import { useCabinetStore } from './cabinetStore'
 import { useChatStore } from './chatStore'
 import { apiUrl, wsUrl } from '../config'
-
-// Toast 通知回调（由 App.vue 注入）
-let toastCallback: ((message: string, type: string) => void) | null = null
-
-export function setToastCallback(callback: (message: string, type: string) => void) {
-  toastCallback = callback
-}
+import { ElMessage } from 'element-plus'
 
 export function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
-  if (toastCallback) {
-    toastCallback(message, type)
-  }
+  ElMessage({ message, type, duration: 1500, showClose: true })
 }
 
 export const useWebSocketStore = defineStore('websocket', () => {
