@@ -5,7 +5,7 @@ gunicorn==22.0.0
 
 # Database
 sqlalchemy[asyncio]==2.0.30
-aiosqlite==0.20.3
+aiosqlite==0.20.0
 
 # Data validation
 pydantic==2.13.4

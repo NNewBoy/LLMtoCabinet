@@ -25,6 +25,8 @@ declare module 'vue' {
     HeaderBar: typeof import('./src/components/HeaderBar.vue')['default']
     HistoryPanel: typeof import('./src/components/HistoryPanel.vue')['default']
     RenderModal: typeof import('./src/components/RenderModal.vue')['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
+    RouterView: typeof import('vue-router')['RouterView']
     SchemePanel: typeof import('./src/components/SchemePanel.vue')['default']
     Viewport3D: typeof import('./src/components/Viewport3D.vue')['default']
   }
