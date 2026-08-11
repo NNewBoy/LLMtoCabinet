@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-tocabinet
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-worker-tocabinet
+  progressDeadlineSeconds: 600
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: celery-worker-tocabinet
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-node1
+      imagePullSecrets:
+      - name: aliyun-acr-secret
+      containers:
+      - name: worker
+        image: crpi-v27gqzero2fjya51.cn-guangzhou.personal.cr.aliyuncs.com/llmproject/backend_tocabinet:latest
+        args: ["-A", "celery_app", "worker", "--loglevel=info", "--concurrency=1", "--queues=tocabinet_queue"]
+        envFrom:
+        - configMapRef: {name: tocabinet-config}
+        - secretRef: {name: tocabinet-secret}
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {cpu: 1000m, memory: 1Gi}
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: data
+        persistentVolumeClaim: {claimName: tocabinet-db-data}

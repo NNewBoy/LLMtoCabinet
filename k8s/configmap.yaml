@@ -1,0 +1,17 @@
+# LLMtoCabinet 非敏感配置（可安全提交 Git，Jenkins 自动 apply）
+# 注意：Namespace 与 Redis 由 LLMBLOG 的 k8s/ 共用（namespace=app, Service=redis:6379）
+# Redis DB 分配：LLMBLOG 用 DB 0/1，LLMChatRAG 用 DB 2/3，LLMImageRender 用 DB 4/5，LLMtoCabinet 用 DB 6/7
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tocabinet-config
+  namespace: app
+data:
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  CELERY_BROKER_DB: "6"
+  CELERY_BACKEND_DB: "7"
+  CELERY_QUEUE: "tocabinet_queue"
+  LOG_LEVEL: "INFO"
+  CORS_ORIGINS: "http://localhost,http://127.0.0.1"

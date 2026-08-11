@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-tocabinet
+  namespace: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-tocabinet
+  progressDeadlineSeconds: 600
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: backend-tocabinet
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-node1
+      imagePullSecrets:
+      - name: aliyun-acr-secret
+      containers:
+      - name: backend-tocabinet
+        image: crpi-v27gqzero2fjya51.cn-guangzhou.personal.cr.aliyuncs.com/llmproject/backend_tocabinet:latest
+        ports:
+        - containerPort: 8001
+        envFrom:
+        - configMapRef: {name: tocabinet-config}
+        - secretRef: {name: tocabinet-secret}
+        startupProbe:
+          httpGet: {path: /health, port: 8001}
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /health, port: 8001}
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet: {path: /health, port: 8001}
+          periodSeconds: 10
+          failureThreshold: 3
+        resources:
+          requests: {cpu: 200m, memory: 256Mi}
+          limits: {cpu: 2000m, memory: 2Gi}
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: data
+        persistentVolumeClaim: {claimName: tocabinet-db-data}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-tocabinet
+  namespace: app
+spec:
+  selector: {app: backend-tocabinet}
+  ports:
+  - port: 8001
+    targetPort: 8001
+  type: ClusterIP

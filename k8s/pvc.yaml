@@ -1,0 +1,36 @@
+# LLMtoCabinet 持久化存储
+# 部署前需在 k8s-node1 创建目录：
+#   sudo mkdir -p /data/tocabinet/db
+#   sudo chmod -R 777 /data/tocabinet
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-tocabinet-db
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes: ["ReadWriteOnce"]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - {key: kubernetes.io/hostname, operator: In, values: ["k8s-node1"]}
+  hostPath:
+    path: /data/tocabinet/db
+    type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tocabinet-db-data
+  namespace: app
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 1Gi

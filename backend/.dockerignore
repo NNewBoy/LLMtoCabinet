@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+*.pyo
+venv
+.venv
+.env
+*.db
+*.db-wal
+*.db-shm
+.git
+.vscode
+.idea
+*.log
+data/

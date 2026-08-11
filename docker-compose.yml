@@ -1,0 +1,54 @@
+services:
+  backend-tocabinet:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_DB=6
+      - CELERY_BACKEND_DB=7
+    volumes:
+      - db-data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: ./backend
+    command: ["celery", "-A", "celery_app", "worker", "--loglevel=info", "--concurrency=1", "--queues=tocabinet_queue"]
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_DB=6
+      - CELERY_BACKEND_DB=7
+    volumes:
+      - db-data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-tocabinet
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  redis-data:
