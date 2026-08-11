@@ -9,3 +9,10 @@ import App from './App.vue'
 const app = createApp(App)
 app.use(createPinia())
 app.mount('#app')
+
+// 记录访客量（fire-and-forget，不影响首屏渲染）
+fetch('/api/v1/visit/record', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ title: 'LLM柜子3D模型在线编辑器' }),
+}).catch(() => {})
