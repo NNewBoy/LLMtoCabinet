@@ -22,7 +22,7 @@ EXPOSE 8001
 # Gunicorn 管理 2 个 Uvicorn Worker
 # WebSocket 需要 uvicorn[standard] 的 asyncio 支持
 CMD ["gunicorn", "main:app", \
-     "--workers", "2", \
+     "--workers", "1", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--bind", "0.0.0.0:8001", \
      "--timeout", "120", \
