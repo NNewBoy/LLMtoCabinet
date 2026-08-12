@@ -14,7 +14,7 @@ export function wsUrl(projectId: string): string {
   return `${protocol}//${window.location.host}${API_BASE}${WS_PATH}/${projectId}`
 }
 
-// 构建 API URL
+// 构建 ImageRender API URL（跨服务调用 → LLMImageRender 后端）
 export function renderApiUrl(path: string): string {
   return `${path}`
 }

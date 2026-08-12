@@ -20,6 +20,12 @@ spec:
           service:
             name: frontend-tocabinet
             port: {number: 80}
+      - path: /render_api
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-tocabinet
+            port: {number: 80}
       - path: /llmtocabinet/api
         pathType: Prefix
         backend:
@@ -36,6 +42,12 @@ spec:
     http:
       paths:
       - path: /llmtocabinet/ws
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-tocabinet
+            port: {number: 80}
+      - path: /render_api
         pathType: Prefix
         backend:
           service:
